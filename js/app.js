@@ -43,22 +43,90 @@ function cardHTML(d, lang, t){
     (d.spicy ? `<span class="badge badge--spicy">🌶 ${t.spicy}</span>` : '') +
     (d.veg   ? `<span class="badge badge--veg">🥬 ${t.veg}</span>`   : '');
 
+  const priceHTML = hasSale(d)
+    ? `<span class="card__price"><span class="price-old">${fmtPrice(d.price)}</span> <span class="price-new">${fmtPrice(dishPrice(d))}</span></span>`
+    : `<span class="card__price">${fmtPrice(d.price)}</span>`;
+
+  const saleBadge = hasSale(d) ? `<span class="sale-badge">−20%</span>` : '';
+
   return `
     <article class="card">
       <div class="card__imgwrap">
         <img class="card__img" src="${d.img || `img/menu/${d.id}.jpg`}" alt="${d.name[lang]}"
              onerror="this.outerHTML='<div class=\\'card__img--ph\\'>${d.name[lang].replace(/'/g,'')}</div>'">
         <div class="card__badges">${badges}</div>
+        ${saleBadge}
       </div>
       <div class="card__body">
         <h4 class="card__name">${d.name[lang]}</h4>
         <p class="card__desc">${d.desc[lang]}</p>
         <div class="card__foot">
-          <span class="card__price">${fmtPrice(d.price)}</span>
-          <button class="card__add" onclick="Cart.add(${d.id}); openCart();">${t.add}</button>
+          ${priceHTML}
+          <div class="card__ctrl" data-id="${d.id}">${cardCtrlHTML(d, t)}</div>
         </div>
       </div>
     </article>`;
+}
+
+/* Контрол карточки: кнопка "У кошик" либо степпер −/+, если товар уже в корзине */
+function cardCtrlHTML(d, t){
+  const qty = Cart.items[d.id] || 0;
+  if(qty > 0){
+    return `<div class="card-stepper">
+      <button class="step-btn" onclick="Cart.setQty(${d.id}, ${qty-1})" aria-label="−">−</button>
+      <span class="step-val">${qty}</span>
+      <button class="step-btn" onclick="Cart.setQty(${d.id}, ${qty+1})" aria-label="+">+</button>
+    </div>`;
+  }
+  return `<button class="card__add" onclick="Cart.add(${d.id})">${t.add}</button>`;
+}
+
+/* Обновить контролы всех видимых карточек под текущее состояние корзины */
+function syncMenuControls(){
+  const t = I18N[window.currentLang || 'ua'];
+  document.querySelectorAll('.card__ctrl').forEach(el=>{
+    const d = MENU.find(x => x.id == el.dataset.id);
+    if(d) el.innerHTML = cardCtrlHTML(d, t);
+  });
+}
+
+/* Мобильная плашка корзины снизу */
+function updateOrderBar(){
+  const bar = document.getElementById('orderBar');
+  if(!bar) return;
+  const n = Cart.count();
+  if(n <= 0){ bar.classList.remove('is-visible'); document.body.classList.remove('has-order-bar'); return; }
+  const lang = window.currentLang || 'ua';
+  document.getElementById('orderBarInfo').textContent = `${n} ${pluralItems(n, lang)}, ${fmtPrice(Cart.total())}`;
+  bar.classList.add('is-visible');
+  document.body.classList.add('has-order-bar');
+}
+
+/* Десктопный тост "Товар додано до кошика" */
+let addToastTimer = null;
+function notifyAdd(){
+  const el = document.getElementById('addToast');
+  if(!el) return;
+  el.classList.add('is-visible');
+  clearTimeout(addToastTimer);
+  addToastTimer = setTimeout(()=> el.classList.remove('is-visible'), 1800);
+}
+
+/* Склонение слова "товар" по числу */
+function pluralItems(n, lang){
+  const forms = {
+    ua: ['товар','товари','товарів'],
+    ru: ['товар','товара','товаров'],
+    en: ['item','items','items'],
+    vn: ['món','món','món']
+  };
+  const f = forms[lang] || forms.ua;
+  const m10 = n % 10, m100 = n % 100;
+  let i;
+  if(m10 === 1 && m100 !== 11) i = 0;
+  else if(m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) i = 1;
+  else i = 2;
+  return f[i];
 }
 
 /* ---------- ЯЗЫК ---------- */
@@ -144,6 +212,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('cartBtn').addEventListener('click', openCart);
   document.getElementById('cartClose').addEventListener('click', closeCart);
   document.getElementById('overlay').addEventListener('click', closeCart);
+  document.getElementById('orderBar').addEventListener('click', openCart);
 
   // checkout
   document.getElementById('checkoutBtn').addEventListener('click', ()=>{

@@ -13,7 +13,7 @@ const CONFIG = {
   SUPABASE_URL:      "https://wqovkezgzpwyyxavrrtv.supabase.co",   // напр. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: "sb_publishable_Xhpgpka8R3sThsfqCDikhQ_DxpK9if0",   // публичный anon-ключ
   TG_BOT_TOKEN:      "8870609367:AAHHkAfiOgXcenmrBxZCHUdL75bitLxqGyQ",   // токен Telegram-бота (для авто-уведомлений; необязательно)
-  TG_CHAT_ID:        "524375262",   // твой chat_id в Telegram (куда слать заказы)
+  TG_CHAT_ID:        "-5211957542",   // твой chat_id в Telegram (куда слать заказы)
   WHATSAPP:          "84367021338" // запасной канал заказа
 };
 
@@ -164,7 +164,7 @@ function renderMyOrders(orders){
       : '';
     const items = Array.isArray(o.items) ? o.items : [];
     const list = items.map(i=> `<li>${i.name} × ${i.qty}</li>`).join('');
-    const payText = o.payment === 'cash' ? 'Готівка кур\'єру' : 'QR кур\'єру';
+    const payText = o.payment === 'cash' ? 'Готівка кур\'єру' : (o.payment === 'qr' ? 'QR кур\'єру' : '');
     return `
       <div class="order-card">
         <div class="order-card__top">
@@ -172,7 +172,7 @@ function renderMyOrders(orders){
           <strong class="order-card__total">${fmtPrice(o.total || 0)}</strong>
         </div>
         <ul class="order-card__items">${list}</ul>
-        <div class="order-card__pay">💳 ${payText}</div>
+        ${payText ? `<div class="order-card__pay">💳 ${payText}</div>` : ''}
       </div>`;
   }).join('');
 }
@@ -190,7 +190,6 @@ async function sendOrder(){
   const name    = document.getElementById('ordName').value.trim();
   const phone   = document.getElementById('ordPhone').value.trim();
   const address = document.getElementById('ordAddress').value.trim();
-  const pay     = document.querySelector('input[name="pay"]:checked').value;
   const comment = document.getElementById('ordComment').value.trim();
   const lat     = document.getElementById('ordLat').value.trim();
   const lng     = document.getElementById('ordLng').value.trim();
@@ -204,13 +203,12 @@ async function sendOrder(){
 
   const items = Cart.list(lang);
   const total = Cart.total();
-  const payText = pay === 'cash' ? 'Готівка кур\'єру' : 'QR кур\'єру';
 
   // 1) Сохранить в Supabase (если настроен)
   if(supa){
     try{
       await supa.from('orders').insert([{
-        customer_name: name, phone, address, payment: pay,
+        customer_name: name, phone, address,
         comment, items, total,
         lat: lat || null, lng: lng || null,
         user_id: currentUser ? currentUser.id : null
@@ -220,7 +218,7 @@ async function sendOrder(){
 
   // 2) Текст заказа
   let msg = `🍣 НОВЕ ЗАМОВЛЕННЯ NiNi Sushi\n\n`;
-  msg += `👤 ${name}\n📞 ${phone}\n📍 ${address}\n💳 ${payText}\n`;
+  msg += `👤 ${name}\n📞 ${phone}\n📍 ${address}\n`;
   if(lat && lng){
     msg += `📍 Координати: ${lat},${lng}\n🗺 https://maps.google.com/?q=${lat},${lng}\n`;
   }
@@ -240,13 +238,13 @@ async function sendOrder(){
     const data = await res.json();
     if(!res.ok || !data.ok) throw new Error('Telegram response not ok');
 
-    note.textContent = '✅ Замовлення відправлено!';
-    note.classList.add('is-ok');
+    note.textContent = '';
     Cart.clear();
-    setTimeout(()=> closeModal('orderModal'), 1500);
+    closeModal('orderModal');
+    openModal('orderSuccessModal');
   }catch(e){
     console.warn('TG error', e);
-    note.textContent = '❌ Помилка відправки, спробуйте ще раз';
+    note.textContent = '❌ Sending failed, please try again';
     note.classList.add('is-error');
   }finally{
     sendBtn.disabled = false;

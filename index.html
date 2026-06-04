@@ -120,6 +120,21 @@
     </div>
   </aside>
 
+  <!-- ===== МОБИЛЬНАЯ ПЛАШКА КОРЗИНЫ ===== -->
+  <button class="order-bar" id="orderBar" type="button">
+    <span class="order-bar__info" id="orderBarInfo"></span>
+    <span class="order-bar__cta">
+      <span data-i18n="order_bar_cta">Оформити</span>
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 4h-2l-1 2H2v2h2l3.6 7.6-1.3 2.4c-.2.3-.3.7-.3 1 0 1.1.9 2 2 2h12v-2H8.4c-.1 0-.2-.1-.2-.2v-.1l.9-1.7h7.4c.7 0 1.4-.4 1.7-1l3.6-6.5c.1-.1.1-.3.1-.5 0-.6-.4-1-1-1H6.2L5.3 4H7Z"/><circle fill="currentColor" cx="9" cy="21" r="1.5"/><circle fill="currentColor" cx="18" cy="21" r="1.5"/></svg>
+    </span>
+  </button>
+
+  <!-- ===== ТОСТ "ДОБАВЛЕНО В КОРЗИНУ" (десктоп) ===== -->
+  <div class="add-toast" id="addToast">
+    <svg class="add-toast__check" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#3DBB6B"/><path d="M6.5 12.5l3.5 3.5 7-7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span data-i18n="added_toast">Товар додано до кошика</span>
+  </div>
+
   <!-- ===== МОДАЛКА ЗАКАЗА ===== -->
   <div class="modal" id="orderModal">
     <div class="modal__box">
@@ -134,17 +149,12 @@
         <input type="text" id="ordAddress" autocomplete="street-address">
         <div id="ordMap" style="height:220px;border-radius:12px;margin:8px 0;"></div>
         <div class="map-btns">
-          <button type="button" class="btn btn--primary" id="btnGeo">📍 Моя геолокація</button>
-          <button type="button" class="btn btn--ghost" id="btnPickMap">Вибрати на карті</button>
+          <button type="button" class="btn btn--primary" id="btnGeo" data-i18n="map_geo">📍 Моя геолокація</button>
+          <button type="button" class="btn btn--ghost" id="btnPickMap" data-i18n="map_pick">Вибрати на карті</button>
         </div>
-        <small class="map-hint">Уточніть квартиру/поверх у коментарі нижче</small>
+        <small class="map-hint" data-i18n="map_hint">Уточніть квартиру/поверх у коментарі нижче</small>
         <input type="hidden" id="ordLat">
         <input type="hidden" id="ordLng">
-        <label data-i18n="order_pay">Оплата</label>
-        <div class="radio-row">
-          <label class="radio"><input type="radio" name="pay" value="cash" checked> <span data-i18n="pay_cash">Готівка кур'єру</span></label>
-          <label class="radio"><input type="radio" name="pay" value="qr"> <span data-i18n="pay_qr">QR кур'єру</span></label>
-        </div>
         <label data-i18n="order_comment">Коментар</label>
         <textarea id="ordComment" rows="2"></textarea>
         <button class="btn btn--primary btn--full" id="orderSend" data-i18n="order_send">Підтвердити замовлення</button>
@@ -187,6 +197,19 @@
       </div>
       <h3 class="account__title" data-i18n="my_orders">Мої замовлення</h3>
       <div class="account__orders" id="accountOrders"></div>
+    </div>
+  </div>
+
+  <!-- ===== МОДАЛКА УСПЕШНОГО ЗАКАЗА ===== -->
+  <div class="modal" id="orderSuccessModal">
+    <div class="modal__box modal__box--center">
+      <button class="modal__close" data-close>✕</button>
+      <div class="success__icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="success__title" data-i18n="success_title">✅ Замовлення відправлено!</h3>
+      <p class="success__text" data-i18n="success_text">Наш менеджер зв'яжеться з вами найближчим часом для підтвердження.</p>
+      <button class="btn btn--primary btn--full" data-close data-i18n="success_ok">Добре</button>
     </div>
   </div>
 

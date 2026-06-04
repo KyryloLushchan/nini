@@ -54,7 +54,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · КАЛІФОРНІЯ ---------- */
   {
-    id: 4, cat: "rolls", sub: "california", price: 159000,          // ФОТО: Каліфорнія з лососем
+    id: 4, cat: "rolls", sub: "california", price: 159000, img: "img/menu/6.jpg", // ФОТО: Каліфорнія з лососем
     name: { ua: "Каліфорнія з лососем", ru: "Калифорния с лососем", en: "California with Salmon", vn: "California cá hồi" },
     desc: {
       ua: "Рис, Лосось, Авокадо, Огірок, Тобіко, Норі",
@@ -64,7 +64,7 @@ const MENU = [
     }
   },
   {
-    id: 5, cat: "rolls", sub: "california", price: 109000,          // ФОТО: Каліфорнія з креветкою
+    id: 5, cat: "rolls", sub: "california", price: 109000, img: "img/menu/4.jpg", // ФОТО: Каліфорнія з креветкою
     name: { ua: "Каліфорнія з креветкою", ru: "Калифорния с креветкой", en: "California with Shrimp", vn: "California tôm" },
     desc: {
       ua: "Рис, Креветка, Авокадо, Огірок, Тобіко, Норі",
@@ -74,7 +74,7 @@ const MENU = [
     }
   },
   {
-    id: 6, cat: "rolls", sub: "california", price: 159000,          // ФОТО: Каліфорнія з тунцем
+    id: 6, cat: "rolls", sub: "california", price: 159000, img: "img/menu/5.jpg", // ФОТО: Каліфорнія з тунцем
     name: { ua: "Каліфорнія з тунцем", ru: "Калифорния с тунцом", en: "California with Tuna", vn: "California cá ngừ" },
     desc: {
       ua: "Рис, Тунець, Авокадо, Огірок, Тобіко, Норі",
@@ -148,7 +148,7 @@ const MENU = [
     }
   },
   {
-    id: 13, cat: "rolls", sub: "dragon", price: 219000,             // ФОТО: Золотий Дракон
+    id: 13, cat: "rolls", sub: "dragon", price: 219000, img: "img/menu/11.jpg", // ФОТО: Золотий Дракон
     name: { ua: "Золотий Дракон", ru: "Золотой Дракон", en: "Golden Dragon", vn: "Rồng vàng" },
     desc: {
       ua: "Рис, Вугор, Лосось, Тунець, Авокадо, Тобіко, Омлет, Норі",
@@ -158,7 +158,7 @@ const MENU = [
     }
   },
   {
-    id: 14, cat: "rolls", sub: "dragon", price: 189000,             // ФОТО: Тигровий Дракон
+    id: 14, cat: "rolls", sub: "dragon", price: 189000, img: "img/menu/13.jpg", // ФОТО: Тигровий Дракон
     name: { ua: "Тигровий Дракон", ru: "Дракон Тигровый", en: "Tiger Dragon", vn: "Rồng hổ" },
     desc: {
       ua: "Рис, Креветка, Вугор, Краб, Крем-сир, Авокадо, Огірок, Соус унагі, Норі",
@@ -337,14 +337,37 @@ const MENU = [
   }
 
   /* ---------- НАПИТКИ ---------- */
-  /* Пусто. Добавь сюда позже по образцу:
   ,{
-    id: 31, cat: "drinks", sub: "drinks", price: 25000,
-    name: { ua: "Кока-Кола 0.33", ru: "Кока-Кола 0.33", en: "Coca-Cola 0.33", vn: "Coca-Cola 0.33" },
+    id: 31, cat: "drinks", sub: "drinks", price: 15000, img: "img/menu/Вода.png", // ФОТО: Вода
+    name: { ua: "Вода", ru: "Вода", en: "Water", vn: "Nước" },
+    desc: { ua: "", ru: "", en: "", vn: "" }
+  },
+  {
+    id: 32, cat: "drinks", sub: "drinks", price: 20000, img: "img/menu/Pepsi.png", // ФОТО: Pepsi
+    name: { ua: "Pepsi", ru: "Pepsi", en: "Pepsi", vn: "Pepsi" },
+    desc: { ua: "", ru: "", en: "", vn: "" }
+  },
+  {
+    id: 33, cat: "drinks", sub: "drinks", price: 20000, img: "img/menu/Ppsi Zero.png", // ФОТО: Pepsi Zero
+    name: { ua: "Pepsi Zero", ru: "Pepsi Zero", en: "Pepsi Zero", vn: "Pepsi Zero" },
+    desc: { ua: "", ru: "", en: "", vn: "" }
+  },
+  {
+    id: 34, cat: "drinks", sub: "drinks", price: 20000, img: "img/menu/Pepsi Zero lime.jpeg", // ФОТО: Pepsi Zero Lime
+    name: { ua: "Pepsi Zero Lime", ru: "Pepsi Zero Lime", en: "Pepsi Zero Lime", vn: "Pepsi Zero Lime" },
     desc: { ua: "", ru: "", en: "", vn: "" }
   }
-  */
 ];
+
+/* ===== СКИДКА −20% на всё, кроме напитков (drinks) ===== */
+const SALE = 0.20;
+/* Действующая цена блюда: со скидкой, кроме категории drinks */
+function dishPrice(d){
+  if(!d) return 0;
+  return d.cat === 'drinks' ? d.price : Math.round(d.price * (1 - SALE));
+}
+/* Есть ли скидка у блюда (для бейджа и зачёркнутой цены) */
+function hasSale(d){ return !!d && d.cat !== 'drinks'; }
 
 /* ===== ПЕРЕВОДЫ ИНТЕРФЕЙСА ===== */
 const I18N = {
@@ -361,7 +384,13 @@ const I18N = {
     order_name: "Ім'я", order_phone: "Телефон", order_address: "Адреса",
     order_pay: "Оплата", pay_cash: "Готівка кур'єру", pay_qr: "QR кур'єру",
     order_comment: "Коментар", order_send: "Підтвердити замовлення",
-    email: "Email", password: "Пароль", my_orders: "Мої замовлення"
+    email: "Email", password: "Пароль", my_orders: "Мої замовлення",
+    map_geo: "📍 Моя геолокація", map_pick: "Вибрати на карті",
+    map_hint: "Уточніть квартиру/поверх у коментарі нижче",
+    success_title: "✅ Замовлення відправлено!",
+    success_text: "Наш менеджер зв'яжеться з вами найближчим часом для підтвердження.",
+    success_ok: "Добре",
+    order_bar_cta: "Оформити", added_toast: "Товар додано до кошика"
   },
   ru: {
     nav_sushi: "Суши", nav_rolls: "Роллы", nav_hot: "Горячие роллы", nav_drinks: "Напитки",
@@ -376,7 +405,13 @@ const I18N = {
     order_name: "Имя", order_phone: "Телефон", order_address: "Адрес",
     order_pay: "Оплата", pay_cash: "Наличные курьеру", pay_qr: "QR курьеру",
     order_comment: "Комментарий", order_send: "Подтвердить заказ",
-    email: "Email", password: "Пароль", my_orders: "Мои заказы"
+    email: "Email", password: "Пароль", my_orders: "Мои заказы",
+    map_geo: "📍 Моя геолокация", map_pick: "Выбрать на карте",
+    map_hint: "Уточните квартиру/этаж в комментарии ниже",
+    success_title: "✅ Заказ отправлен!",
+    success_text: "Наш менеджер свяжется с вами в ближайшее время для подтверждения.",
+    success_ok: "Хорошо",
+    order_bar_cta: "Оформить", added_toast: "Товар добавлен в корзину"
   },
   en: {
     nav_sushi: "Sushi", nav_rolls: "Rolls", nav_hot: "Hot Rolls", nav_drinks: "Drinks",
@@ -391,7 +426,13 @@ const I18N = {
     order_name: "Name", order_phone: "Phone", order_address: "Address",
     order_pay: "Payment", pay_cash: "Cash to courier", pay_qr: "QR to courier",
     order_comment: "Comment", order_send: "Confirm order",
-    email: "Email", password: "Password", my_orders: "My orders"
+    email: "Email", password: "Password", my_orders: "My orders",
+    map_geo: "📍 My location", map_pick: "Pick on map",
+    map_hint: "Add apartment/floor in the comment below",
+    success_title: "✅ Order sent!",
+    success_text: "Our manager will contact you shortly to confirm.",
+    success_ok: "OK",
+    order_bar_cta: "Checkout", added_toast: "Added to cart"
   },
   vn: {
     nav_sushi: "Sushi", nav_rolls: "Cuộn", nav_hot: "Cuộn nóng", nav_drinks: "Đồ uống",
@@ -406,7 +447,13 @@ const I18N = {
     order_name: "Tên", order_phone: "Điện thoại", order_address: "Địa chỉ",
     order_pay: "Thanh toán", pay_cash: "Tiền mặt cho shipper", pay_qr: "QR cho shipper",
     order_comment: "Ghi chú", order_send: "Xác nhận đơn hàng",
-    email: "Email", password: "Mật khẩu", my_orders: "Đơn hàng của tôi"
+    email: "Email", password: "Mật khẩu", my_orders: "Đơn hàng của tôi",
+    map_geo: "📍 Vị trí của tôi", map_pick: "Chọn trên bản đồ",
+    map_hint: "Ghi rõ căn hộ/tầng trong ghi chú bên dưới",
+    success_title: "✅ Đã gửi đơn hàng!",
+    success_text: "Quản lý của chúng tôi sẽ sớm liên hệ với bạn để xác nhận.",
+    success_ok: "Đồng ý",
+    order_bar_cta: "Đặt hàng", added_toast: "Đã thêm vào giỏ"
   }
 };
 
