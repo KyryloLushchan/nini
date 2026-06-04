@@ -419,6 +419,11 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
   .card__desc{ display:none; }
   .card__price{ font-size:16px; }
   .card__add{ padding:8px 12px; font-size:12px; }
+  /* на узких карточках кладём цену и контрол в столбик, чтобы влезал "+" */
+  .card__foot{ flex-direction:column; align-items:stretch; gap:10px; }
+  .card__ctrl{ width:100%; }
+  .card__add{ width:100%; }
+  .card-stepper{ justify-content:space-between; }
   .cat-title{ font-size:24px; }
   .footer__inner{ gap:26px; }
   .lang__current{ padding:8px 8px; }
