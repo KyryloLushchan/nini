@@ -3,7 +3,7 @@
    Рендер меню, языки, навигация, открытие панелей/модалок.
    ============================================================ */
 
-window.currentLang = 'ua';
+window.currentLang = 'ru';
 
 /* ---------- РЕНДЕР МЕНЮ ---------- */
 function renderMenu(){
@@ -242,5 +242,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 
   // язык по умолчанию
-  setLang('ua');
+  setLang('ru');
 });
