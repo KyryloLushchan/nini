@@ -390,7 +390,8 @@ const I18N = {
     success_title: "✅ Замовлення відправлено!",
     success_text: "Наш менеджер зв'яжеться з вами найближчим часом для підтвердження.",
     success_ok: "Добре",
-    order_bar_cta: "Оформити", added_toast: "Товар додано до кошика"
+    order_bar_cta: "Оформити", added_toast: "Товар додано до кошика",
+    forgot_password: "Забули пароль?"
   },
   ru: {
     nav_sushi: "Суши", nav_rolls: "Роллы", nav_hot: "Горячие роллы", nav_drinks: "Напитки",
@@ -411,7 +412,8 @@ const I18N = {
     success_title: "✅ Заказ отправлен!",
     success_text: "Наш менеджер свяжется с вами в ближайшее время для подтверждения.",
     success_ok: "Хорошо",
-    order_bar_cta: "Оформить", added_toast: "Товар добавлен в корзину"
+    order_bar_cta: "Оформить", added_toast: "Товар добавлен в корзину",
+    forgot_password: "Забыли пароль?"
   },
   en: {
     nav_sushi: "Sushi", nav_rolls: "Rolls", nav_hot: "Hot Rolls", nav_drinks: "Drinks",
@@ -432,7 +434,8 @@ const I18N = {
     success_title: "✅ Order sent!",
     success_text: "Our manager will contact you shortly to confirm.",
     success_ok: "OK",
-    order_bar_cta: "Checkout", added_toast: "Added to cart"
+    order_bar_cta: "Checkout", added_toast: "Added to cart",
+    forgot_password: "Forgot password?"
   },
   vn: {
     nav_sushi: "Sushi", nav_rolls: "Cuộn", nav_hot: "Cuộn nóng", nav_drinks: "Đồ uống",
@@ -453,7 +456,8 @@ const I18N = {
     success_title: "✅ Đã gửi đơn hàng!",
     success_text: "Quản lý của chúng tôi sẽ sớm liên hệ với bạn để xác nhận.",
     success_ok: "Đồng ý",
-    order_bar_cta: "Đặt hàng", added_toast: "Đã thêm vào giỏ"
+    order_bar_cta: "Đặt hàng", added_toast: "Đã thêm vào giỏ",
+    forgot_password: "Quên mật khẩu?"
   }
 };
 

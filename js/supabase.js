@@ -61,6 +61,38 @@ function initAuthUI(){
   tabReg.addEventListener('click',   ()=>{ authMode='register'; tabReg.classList.add('is-active'); tabLogin.classList.remove('is-active'); submit.textContent = I18N[currentLang].register; });
 
   submit.addEventListener('click', handleAuth);
+
+  const forgot = document.getElementById('forgotPassword');
+  if(forgot) forgot.addEventListener('click', handleForgotPassword);
+}
+
+async function handleForgotPassword(){
+  const note  = document.getElementById('authNote');
+  note.className = 'form__note';
+
+  let email = document.getElementById('authEmail').value.trim();
+  if(!email){
+    email = (prompt('Введіть email для відновлення пароля:') || '').trim();
+  }
+  if(!email){ note.textContent = '⚠️ Вкажіть email'; note.classList.add('is-error'); return; }
+
+  if(!supa){
+    note.textContent = 'Supabase ще не налаштовано (див. README.md).';
+    note.classList.add('is-error');
+    return;
+  }
+
+  try{
+    const { error } = await supa.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://kyrylolushchan.github.io/nini/reset.html'
+    });
+    if(error){ note.textContent = error.message; note.classList.add('is-error'); return; }
+    note.textContent = '✅ Лист для відновлення надіслано на пошту';
+    note.classList.add('is-ok');
+  }catch(err){
+    note.textContent = 'Помилка: ' + err.message;
+    note.classList.add('is-error');
+  }
 }
 
 async function handleAuth(){

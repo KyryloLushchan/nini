@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ua">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NiNi Sushi — Новий пароль</title>
+  <link rel="icon" href="img/logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --coral:#FB4B23; --coral-dark:#E03A14; --coral-soft:#FFE9E2;
+      --ink:#1F1B18; --muted:#8A817C; --line:#EFE7E1; --bg-soft:#FBF6F2;
+      --font-disp:'Baloo 2', system-ui, sans-serif;
+      --font-body:'Nunito Sans', system-ui, sans-serif;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family:var(--font-body); color:var(--ink);
+      background:
+        radial-gradient(800px 360px at 80% -10%, var(--coral-soft), transparent 60%),
+        linear-gradient(180deg, #fff 0%, var(--bg-soft) 100%);
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+    }
+    .card{
+      background:#fff; width:100%; max-width:400px; border-radius:22px;
+      padding:34px 28px; box-shadow:0 18px 50px rgba(251,75,35,.14); text-align:center;
+    }
+    .logo{ width:84px; height:84px; border-radius:50%; box-shadow:0 8px 22px rgba(0,0,0,.12); margin:0 auto 18px; display:block; }
+    h1{ font-family:var(--font-disp); font-weight:800; font-size:26px; margin-bottom:6px; }
+    .sub{ color:var(--muted); font-size:14px; margin-bottom:22px; }
+    label{ display:block; text-align:left; font-weight:700; font-size:13px; margin-bottom:6px; }
+    input{
+      width:100%; padding:13px 14px; border:1px solid var(--line); border-radius:12px;
+      font-family:inherit; font-size:15px; background:var(--bg-soft); transition:.15s;
+    }
+    input:focus{ outline:none; border-color:var(--coral); background:#fff; }
+    .btn{
+      width:100%; margin-top:18px; background:var(--coral); color:#fff; border:none; cursor:pointer;
+      border-radius:999px; padding:14px; font-family:var(--font-disp); font-weight:700; font-size:16px;
+      transition:.15s;
+    }
+    .btn:hover{ background:var(--coral-dark); transform:translateY(-2px); }
+    .btn:disabled{ opacity:.6; cursor:default; transform:none; }
+    .note{ font-size:14px; margin-top:16px; min-height:20px; }
+    .note.is-ok{ color:#3DBB6B; font-weight:700; }
+    .note.is-error{ color:var(--coral); }
+    .home-link{
+      display:inline-block; margin-top:14px; color:var(--coral); font-weight:700;
+      font-family:var(--font-disp); text-decoration:none;
+    }
+    .home-link:hover{ text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="img/logo.jpg" alt="NiNi Sushi" class="logo">
+    <h1>Новий пароль</h1>
+    <p class="sub">Введіть новий пароль для вашого акаунта</p>
+
+    <div id="formBox">
+      <label for="newPassword">Пароль</label>
+      <input type="password" id="newPassword" autocomplete="new-password" placeholder="••••••••">
+      <button class="btn" id="saveBtn">Зберегти</button>
+    </div>
+
+    <p class="note" id="note"></p>
+    <a class="home-link" id="homeLink" href="index.html" style="display:none;">На головну</a>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL      = "https://wqovkezgzpwyyxavrrtv.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Xhpgpka8R3sThsfqCDikhQ_DxpK9if0";
+
+    // Supabase сам подхватит сессию восстановления из ссылки письма (detectSessionInUrl)
+    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const note     = document.getElementById('note');
+    const saveBtn  = document.getElementById('saveBtn');
+    const input    = document.getElementById('newPassword');
+    const formBox  = document.getElementById('formBox');
+    const homeLink = document.getElementById('homeLink');
+
+    saveBtn.addEventListener('click', async ()=>{
+      note.className = 'note';
+      const pass = input.value;
+      if(!pass || pass.length < 6){
+        note.textContent = '⚠️ Пароль має містити щонайменше 6 символів';
+        note.classList.add('is-error');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      try{
+        const { error } = await supa.auth.updateUser({ password: pass });
+        if(error) throw error;
+
+        formBox.style.display = 'none';
+        note.textContent = '✅ Пароль змінено';
+        note.classList.add('is-ok');
+        homeLink.style.display = 'inline-block';
+      }catch(err){
+        note.textContent = '❌ ' + (err.message || 'Помилка зміни пароля');
+        note.classList.add('is-error');
+        saveBtn.disabled = false;
+      }
+    });
+
+    input.addEventListener('keydown', e=>{ if(e.key === 'Enter') saveBtn.click(); });
+  </script>
+</body>
+</html>

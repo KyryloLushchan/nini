@@ -353,6 +353,8 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 }
 .form input:focus, .form textarea:focus{ outline:none; border-color:var(--coral); background:#fff; }
 .form .btn{ margin-top:18px; }
+.auth__forgot{ background:none; color:var(--coral); font-size:13px; font-weight:600; text-align:center; margin-top:10px; }
+.auth__forgot:hover{ text-decoration:underline; }
 .form__note{ font-size:13px; color:var(--muted); margin-top:10px; text-align:center; min-height:18px; }
 .form__note.is-error{ color:var(--coral); }
 .form__note.is-ok{ color:#3DBB6B; }
