@@ -13,7 +13,7 @@ const CONFIG = {
   SUPABASE_URL:      "https://wqovkezgzpwyyxavrrtv.supabase.co",   // напр. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: "sb_publishable_Xhpgpka8R3sThsfqCDikhQ_DxpK9if0",   // публичный anon-ключ
   TG_BOT_TOKEN:      "8870609367:AAHHkAfiOgXcenmrBxZCHUdL75bitLxqGyQ",   // токен Telegram-бота (для авто-уведомлений; необязательно)
-  TG_CHAT_ID:        "-5211957542",   // твой chat_id в Telegram (куда слать заказы)
+  TG_CHAT_ID:        "-1003907561257",   // chat_id группы "Nini Orders" (супергруппа)
   WHATSAPP:          "84367021338" // запасной канал заказа
 };
 
