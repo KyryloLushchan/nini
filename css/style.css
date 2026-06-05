@@ -355,6 +355,21 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .form .btn{ margin-top:18px; }
 .auth__forgot{ background:none; color:var(--coral); font-size:13px; font-weight:600; text-align:center; margin-top:10px; }
 .auth__forgot:hover{ text-decoration:underline; }
+.auth__forgot:disabled{ opacity:.5; cursor:default; text-decoration:none; }
+
+/* индикатор ожидания при сбросе пароля */
+.note-loading{ display:inline-flex; align-items:center; gap:8px; color:var(--muted); }
+.spinner{
+  width:16px; height:16px; flex:none; border-radius:50%;
+  border:2px solid var(--coral-soft); border-top-color:var(--coral);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* крупное сообщение об успешной отправке письма */
+.reset-ok{ display:flex; flex-direction:column; align-items:center; gap:8px; padding:6px 0; }
+.reset-ok__check{ font-size:32px; line-height:1; }
+.reset-ok__text{ font-size:16.5px; font-weight:700; color:#3DBB6B; line-height:1.4; }
 .form__note{ font-size:13px; color:var(--muted); margin-top:10px; text-align:center; min-height:18px; }
 .form__note.is-error{ color:var(--coral); }
 .form__note.is-ok{ color:#3DBB6B; }

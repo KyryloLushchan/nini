@@ -67,14 +67,17 @@ function initAuthUI(){
 }
 
 async function handleForgotPassword(){
-  const note  = document.getElementById('authNote');
+  const note   = document.getElementById('authNote');
+  const forgot = document.getElementById('forgotPassword');
+  const t = I18N[window.currentLang || 'ua'];
   note.className = 'form__note';
+  note.textContent = '';
 
   let email = document.getElementById('authEmail').value.trim();
   if(!email){
-    email = (prompt('Введіть email для відновлення пароля:') || '').trim();
+    email = (prompt('Email:') || '').trim();
   }
-  if(!email){ note.textContent = '⚠️ Вкажіть email'; note.classList.add('is-error'); return; }
+  if(!email){ note.textContent = '⚠️ Email'; note.classList.add('is-error'); return; }
 
   if(!supa){
     note.textContent = 'Supabase ще не налаштовано (див. README.md).';
@@ -82,16 +85,26 @@ async function handleForgotPassword(){
     return;
   }
 
+  // индикатор ожидания + блокировка ссылки
+  if(forgot) forgot.disabled = true;
+  note.innerHTML = `<span class="note-loading"><span class="spinner"></span> ${t.reset_sending}</span>`;
+
   try{
     const { error } = await supa.auth.resetPasswordForEmail(email, {
       redirectTo: 'https://kyrylolushchan.github.io/nini/reset.html'
     });
-    if(error){ note.textContent = error.message; note.classList.add('is-error'); return; }
-    note.textContent = '✅ Лист для відновлення надіслано на пошту';
-    note.classList.add('is-ok');
+    if(error){
+      note.className = 'form__note is-error';
+      note.textContent = error.message;
+      return;
+    }
+    note.className = 'form__note is-ok';
+    note.innerHTML = `<span class="reset-ok"><span class="reset-ok__check">✅</span><span class="reset-ok__text">${t.reset_sent}</span></span>`;
   }catch(err){
+    note.className = 'form__note is-error';
     note.textContent = 'Помилка: ' + err.message;
-    note.classList.add('is-error');
+  }finally{
+    if(forgot) forgot.disabled = false;
   }
 }
 

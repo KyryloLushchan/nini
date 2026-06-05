@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ua">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NiNi Sushi — Новий пароль</title>
+  <title>NiNi Sushi</title>
   <link rel="icon" href="img/logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +27,15 @@
       background:#fff; width:100%; max-width:400px; border-radius:22px;
       padding:34px 28px; box-shadow:0 18px 50px rgba(251,75,35,.14); text-align:center;
     }
+    .langbar{ display:flex; justify-content:center; gap:6px; margin-bottom:18px; }
+    .langbar button{
+      background:var(--bg-soft); color:var(--muted); border:none; cursor:pointer;
+      font-family:var(--font-disp); font-weight:700; font-size:13px;
+      padding:6px 11px; border-radius:9px; transition:.15s;
+    }
+    .langbar button.is-active{ background:var(--coral); color:#fff; }
+    .langbar button:hover{ color:var(--coral); }
+    .langbar button.is-active:hover{ color:#fff; }
     .logo{ width:84px; height:84px; border-radius:50%; box-shadow:0 8px 22px rgba(0,0,0,.12); margin:0 auto 18px; display:block; }
     h1{ font-family:var(--font-disp); font-weight:800; font-size:26px; margin-bottom:6px; }
     .sub{ color:var(--muted); font-size:14px; margin-bottom:22px; }
@@ -55,18 +64,24 @@
 </head>
 <body>
   <div class="card">
+    <div class="langbar" id="langbar">
+      <button data-lang="ua">UA</button>
+      <button data-lang="ru">RU</button>
+      <button data-lang="en">EN</button>
+      <button data-lang="vn">VN</button>
+    </div>
     <img src="img/logo.jpg" alt="NiNi Sushi" class="logo">
-    <h1>Новий пароль</h1>
-    <p class="sub">Введіть новий пароль для вашого акаунта</p>
+    <h1 id="title">Новый пароль</h1>
+    <p class="sub" id="sub">Введите новый пароль для вашего аккаунта</p>
 
     <div id="formBox">
-      <label for="newPassword">Пароль</label>
+      <label for="newPassword" id="passLabel">Пароль</label>
       <input type="password" id="newPassword" autocomplete="new-password" placeholder="••••••••">
-      <button class="btn" id="saveBtn">Зберегти</button>
+      <button class="btn" id="saveBtn">Сохранить</button>
     </div>
 
     <p class="note" id="note"></p>
-    <a class="home-link" id="homeLink" href="index.html" style="display:none;">На головну</a>
+    <a class="home-link" id="homeLink" href="index.html" style="display:none;">На главную</a>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -77,17 +92,64 @@
     // Supabase сам подхватит сессию восстановления из ссылки письма (detectSessionInUrl)
     const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    /* ---------- Переводы ---------- */
+    const I18N = {
+      ua: { title:"Новий пароль", sub:"Введіть новий пароль для вашого акаунта", label:"Пароль",
+            save:"Зберегти", success:"✅ Пароль змінено", home:"На головну",
+            weak:"⚠️ Пароль має містити щонайменше 6 символів", err:"Помилка зміни пароля" },
+      ru: { title:"Новый пароль", sub:"Введите новый пароль для вашего аккаунта", label:"Пароль",
+            save:"Сохранить", success:"✅ Пароль изменён", home:"На главную",
+            weak:"⚠️ Пароль должен содержать минимум 6 символов", err:"Ошибка смены пароля" },
+      en: { title:"New password", sub:"Enter a new password for your account", label:"Password",
+            save:"Save", success:"✅ Password changed", home:"Home",
+            weak:"⚠️ Password must be at least 6 characters", err:"Failed to change password" },
+      vn: { title:"Mật khẩu mới", sub:"Nhập mật khẩu mới cho tài khoản của bạn", label:"Mật khẩu",
+            save:"Lưu", success:"✅ Đã đổi mật khẩu", home:"Trang chủ",
+            weak:"⚠️ Mật khẩu phải có ít nhất 6 ký tự", err:"Không thể đổi mật khẩu" }
+    };
+
     const note     = document.getElementById('note');
     const saveBtn  = document.getElementById('saveBtn');
     const input    = document.getElementById('newPassword');
     const formBox  = document.getElementById('formBox');
     const homeLink = document.getElementById('homeLink');
 
+    let lang = detectLang();
+
+    function detectLang(){
+      const p = new URLSearchParams(location.search).get('lang');
+      if(p && I18N[p]) return p;
+      const n = (navigator.language || '').slice(0,2).toLowerCase();
+      const map = { uk:'ua', ru:'ru', en:'en', vi:'vn' };
+      return map[n] || 'ru';
+    }
+
+    function applyLang(l){
+      lang = I18N[l] ? l : 'ru';
+      const t = I18N[lang];
+      document.documentElement.lang = (lang === 'ua' ? 'uk' : lang === 'vn' ? 'vi' : lang);
+      document.getElementById('title').textContent = t.title;
+      document.getElementById('sub').textContent = t.sub;
+      document.getElementById('passLabel').textContent = t.label;
+      saveBtn.textContent = t.save;
+      homeLink.textContent = t.home;
+      document.querySelectorAll('#langbar button').forEach(b=>{
+        b.classList.toggle('is-active', b.dataset.lang === lang);
+      });
+    }
+
+    document.querySelectorAll('#langbar button').forEach(b=>{
+      b.addEventListener('click', ()=> applyLang(b.dataset.lang));
+    });
+
+    applyLang(lang);
+
     saveBtn.addEventListener('click', async ()=>{
       note.className = 'note';
+      const t = I18N[lang];
       const pass = input.value;
       if(!pass || pass.length < 6){
-        note.textContent = '⚠️ Пароль має містити щонайменше 6 символів';
+        note.textContent = t.weak;
         note.classList.add('is-error');
         return;
       }
@@ -98,11 +160,11 @@
         if(error) throw error;
 
         formBox.style.display = 'none';
-        note.textContent = '✅ Пароль змінено';
+        note.textContent = t.success;
         note.classList.add('is-ok');
         homeLink.style.display = 'inline-block';
       }catch(err){
-        note.textContent = '❌ ' + (err.message || 'Помилка зміни пароля');
+        note.textContent = '❌ ' + (err.message || t.err);
         note.classList.add('is-error');
         saveBtn.disabled = false;
       }
