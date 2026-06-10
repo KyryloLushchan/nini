@@ -93,8 +93,8 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 /* язык */
 .lang{ position:relative; }
 .lang__current{
-  font-family:var(--font-disp); font-weight:700; font-size:14px;
-  padding:8px 12px; border-radius:999px; color:var(--ink);
+  font-family:var(--font-disp); font-weight:700; font-size:35px; line-height:1;
+  padding:6px 10px; border-radius:999px; color:var(--ink);
 }
 .lang__current:hover{ background:var(--coral-soft); color:var(--coral); }
 .lang__menu{
@@ -104,7 +104,7 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 }
 .lang__menu.is-open{ display:flex; }
 .lang__menu button{
-  text-align:left; padding:8px 12px; border-radius:9px; font-weight:600; font-size:14px;
+  text-align:left; padding:6px 10px; border-radius:9px; font-weight:600; font-size:35px; line-height:1;
 }
 .lang__menu button:hover{ background:var(--coral-soft); color:var(--coral); }
 
@@ -141,6 +141,13 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .hero__tagline{
   font-size:clamp(17px,2.4vw,23px); color:rgba(255,255,255,.94); margin:16px 0 0;
   text-shadow:0 2px 14px rgba(0,0,0,.5);
+}
+.hours{
+  display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+  padding:7px 13px; border:1.5px solid #000; border-radius:999px;
+  background:transparent;
+  font-family:var(--font-disp); font-weight:700; font-size:14px;
+  color:#000; letter-spacing:.2px;
 }
 .hero__socials{ display:flex; flex-wrap:wrap; gap:12px; margin-top:26px; }
 .soc{
@@ -445,6 +452,10 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
   .cat-title{ font-size:24px; }
   .footer__inner{ gap:26px; }
   .lang__current{ padding:8px 8px; }
+  /* в шапке оставляем только часы без подписи, чтобы влезло */
+  .header__inner{ gap:10px; }
+  .hours{ padding:6px 10px; font-size:12.5px; }
+  .hours__label{ display:none; }
 }
 
 /* мобильное выпадающее nav-меню */
