@@ -51,6 +51,28 @@ const MENU = [
     }
   },
 
+  /* ---------- РОЛЛЫ · ЗАПЕЧЕНІ ---------- */
+  {
+    id: 35, cat: "rolls", sub: "baked", price: 200000, img: "img/menu/34.jpg", // ФОТО: Запечений з лососем
+    name: { ua: "Запечений з лососем", ru: "Запечённый с лососем", en: "Baked Salmon", vn: "Cuộn nướng cá hồi" },
+    desc: {
+      ua: "Крем-сир Філадельфія, Авокадо, Сирна шапочка, Лосось, Теріякі",
+      ru: "Крем-сыр Филадельфия, Авокадо, Сырная шапочка, Лосось, Терияки",
+      en: "Philadelphia cream cheese, Avocado, Cheese cap, Salmon, Teriyaki",
+      vn: "Phô mai Philadelphia, Bơ, Phô mai phủ, Cá hồi, Sốt teriyaki"
+    }
+  },
+  {
+    id: 36, cat: "rolls", sub: "baked", price: 175000, img: "img/menu/35.jpg", // ФОТО: Запечений з куркою
+    name: { ua: "Запечений з куркою", ru: "Запечённый с курицей", en: "Baked Chicken", vn: "Cuộn nướng gà" },
+    desc: {
+      ua: "Омлет у японському стилі, Авокадо, Сирна шапочка, Курка, Теріякі, Кріп",
+      ru: "Омлет в японском стиле, Авокадо, Сырная шапочка, Курица, Терияки, Укроп",
+      en: "Japanese-style omelette, Avocado, Cheese cap, Chicken, Teriyaki, Dill",
+      vn: "Trứng cuộn kiểu Nhật, Bơ, Phô mai phủ, Gà, Sốt teriyaki, Thì là"
+    }
+  },
+
   /* ---------- РОЛЛЫ · SPICY TUNA ROLL ---------- */
   {
     id: 20, cat: "rolls", sub: "spicy", price: 199000, spicy: true, // ФОТО: Spicy Tuna roll
@@ -353,7 +375,7 @@ const I18N = {
 /* Порядок категорий и подгрупп для рендера */
 const CATEGORIES = ["rolls", "sushi", "drinks"];
 const SUBGROUPS = {
-  rolls: ["philadelphia", "spicy", "dragon", "maki"],
+  rolls: ["philadelphia", "baked", "spicy", "dragon", "maki"],
   sushi: ["gunkan", "nigiri"],
   drinks: ["drinks"]
 };
