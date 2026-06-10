@@ -451,9 +451,12 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
   .card-stepper{ justify-content:space-between; }
   .cat-title{ font-size:24px; }
   .footer__inner{ gap:26px; }
-  .lang__current{ padding:8px 8px; }
+  /* флаг меньше в 1.5 раза и прижат вправо */
+  .lang__current{ padding:4px 6px; font-size:23px; }
+  .lang{ margin-left:6px; }
   /* в шапке оставляем только часы без подписи, чтобы влезло */
-  .header__inner{ gap:10px; }
+  .header__inner{ gap:8px; }
+  .logo__img{ flex-shrink:0; }              /* лого всегда видно */
   .hours{ padding:6px 10px; font-size:12.5px; }
   .hours__label{ display:none; }
 }
