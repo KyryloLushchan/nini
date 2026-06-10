@@ -53,7 +53,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · ЗАПЕЧЕНІ ---------- */
   {
-    id: 35, cat: "rolls", sub: "baked", price: 200000, img: "img/menu/34.jpg", // ФОТО: Запечений з лососем
+    id: 35, cat: "rolls", sub: "baked", price: 200000, img: "img/menu/34.png", // ФОТО: Запечений з лососем
     name: { ua: "Запечений з лососем", ru: "Запечённый с лососем", en: "Baked Salmon", vn: "Cuộn nướng cá hồi" },
     desc: {
       ua: "Крем-сир Філадельфія, Авокадо, Сирна шапочка, Лосось, Теріякі",
@@ -63,7 +63,7 @@ const MENU = [
     }
   },
   {
-    id: 36, cat: "rolls", sub: "baked", price: 175000, img: "img/menu/35.jpg", // ФОТО: Запечений з куркою
+    id: 36, cat: "rolls", sub: "baked", price: 175000, img: "img/menu/35.png", // ФОТО: Запечений з куркою
     name: { ua: "Запечений з куркою", ru: "Запечённый с курицей", en: "Baked Chicken", vn: "Cuộn nướng gà" },
     desc: {
       ua: "Омлет у японському стилі, Авокадо, Сирна шапочка, Курка, Теріякі, Кріп",
