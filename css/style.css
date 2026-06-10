@@ -430,16 +430,17 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 }
 @media (max-width:560px){
   :root{ --header-h:62px; }
-  .grid{ grid-template-columns:repeat(2,1fr); gap:12px; }
-  .card__body{ padding:11px 11px 13px; }
-  .card__name{ font-size:14px; }
-  .card__desc{ display:none; }
-  .card__price{ font-size:16px; }
-  .card__add{ padding:8px 12px; font-size:12px; }
-  /* на узких карточках кладём цену и контрол в столбик, чтобы влезал "+" */
-  .card__foot{ flex-direction:column; align-items:stretch; gap:10px; }
-  .card__ctrl{ width:100%; }
-  .card__add{ width:100%; }
+  /* одна колонка на телефоне — как в примере, с полным составом */
+  .grid{ grid-template-columns:1fr; gap:14px; }
+  .card__body{ padding:13px 15px 15px; }
+  .card__name{ font-size:16px; }
+  .card__desc{ display:block; font-size:13px; margin:7px 0 13px; }
+  .card__price{ font-size:18px; }
+  .card__add{ padding:9px 14px; font-size:13px; }
+  /* в одну колонку места хватает — цена и кнопка в один ряд */
+  .card__foot{ flex-direction:row; align-items:center; gap:10px; }
+  .card__ctrl{ width:auto; }
+  .card__add{ width:auto; }
   .card-stepper{ justify-content:space-between; }
   .cat-title{ font-size:24px; }
   .footer__inner{ gap:26px; }

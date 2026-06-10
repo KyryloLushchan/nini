@@ -133,7 +133,8 @@ function pluralItems(n, lang){
 function setLang(lang){
   window.currentLang = lang;
   document.documentElement.lang = lang;
-  document.getElementById('langBtn').textContent = lang.toUpperCase() + ' ▾';
+  const LANG_FLAGS = { ua:'🇺🇦', ru:'🇷🇺', en:'🇬🇧', vn:'🇻🇳' };
+  document.getElementById('langBtn').textContent = (LANG_FLAGS[lang] || lang.toUpperCase()) + ' ▾';
 
   // перевод всех статических элементов
   document.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -180,9 +181,8 @@ function buildMobileNav(){
   const mnav = document.createElement('nav');
   mnav.className = 'mnav'; mnav.id = 'mnav';
   mnav.innerHTML = `
-    <a href="#cat-sushi"  data-i18n="nav_sushi">Суші</a>
     <a href="#cat-rolls"  data-i18n="nav_rolls">Роли</a>
-    <a href="#cat-hot"    data-i18n="nav_hot">Гарячі роли</a>
+    <a href="#cat-sushi"  data-i18n="nav_sushi">Суші</a>
     <a href="#cat-drinks" data-i18n="nav_drinks">Напої</a>`;
   document.body.appendChild(mnav);
   mnav.querySelectorAll('a').forEach(a=> a.addEventListener('click', ()=> mnav.classList.remove('is-open')));
