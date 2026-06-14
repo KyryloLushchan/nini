@@ -12,8 +12,6 @@
 const CONFIG = {
   SUPABASE_URL:      "https://wqovkezgzpwyyxavrrtv.supabase.co",   // напр. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: "sb_publishable_Xhpgpka8R3sThsfqCDikhQ_DxpK9if0",   // публичный anon-ключ
-  TG_BOT_TOKEN:      "8870609367:AAHHkAfiOgXcenmrBxZCHUdL75bitLxqGyQ",   // токен Telegram-бота (для авто-уведомлений; необязательно)
-  TG_CHAT_ID:        "-1003907561257",   // chat_id группы "Nini Orders" (супергруппа)
   WHATSAPP:          "84367021338" // запасной канал заказа
 };
 
@@ -272,23 +270,24 @@ async function sendOrder(){
   items.forEach(i=>{ msg += `• ${i.name} × ${i.qty} = ${fmtPrice(i.sum)}\n`; });
   msg += `— — —\n💰 РАЗОМ: ${fmtPrice(total)}`;
 
-  // 3) Отправка заявки в Telegram (фоном)
+  // 3) Отправка заявки через Supabase Edge Function (токен бота спрятан на сервере)
   const sendBtn = document.getElementById('orderSend');
   sendBtn.disabled = true;
   try{
-    const res = await fetch(`https://api.telegram.org/bot${CONFIG.TG_BOT_TOKEN}/sendMessage`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ chat_id: CONFIG.TG_CHAT_ID, text: msg })
+    const res = await fetch("https://wqovkezgzpwyyxavrrtv.supabase.co/functions/v1/send-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: msg })
     });
     const data = await res.json();
-    if(!res.ok || !data.ok) throw new Error('Telegram response not ok');
+    if(!res.ok || !data.ok) throw new Error('Edge Function response not ok');
 
     note.textContent = '';
     Cart.clear();
     closeModal('orderModal');
     openModal('orderSuccessModal');
   }catch(e){
-    console.warn('TG error', e);
+    console.warn('Edge Function error', e);
     note.textContent = '❌ Sending failed, please try again';
     note.classList.add('is-error');
   }finally{
