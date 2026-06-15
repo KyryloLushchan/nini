@@ -97,7 +97,7 @@ const MENU = [
     }
   },
   {
-    id: 13, cat: "rolls", sub: "dragon", price: 219000, img: "img/menu/11.jpg", // ФОТО: Золотий Дракон
+    id: 13, cat: "rolls", sub: "dragon", price: 219000, img: "img/menu/36.jpg", // ФОТО: Золотий Дракон
     name: { ua: "Золотий Дракон", ru: "Золотой Дракон", en: "Golden Dragon", vn: "Rồng vàng" },
     desc: {
       ua: "Рис, Вугор, Лосось, Тунець, Авокадо, Тобіко, Омлет, Норі",
@@ -149,7 +149,7 @@ const MENU = [
     }
   },
   {
-    id: 11, cat: "rolls", sub: "maki", price: 105000, img: "img/menu/36.jpg", // ФОТО: Макі Вугор
+    id: 11, cat: "rolls", sub: "maki", price: 105000, img: "img/menu/33.png", // ФОТО: Макі Вугор
     name: { ua: "Макі Вугор", ru: "Маки с угрем", en: "Maki Eel", vn: "Maki lươn" },
     desc: {
       ua: "Рис, Вугор, Норі ½",
