@@ -31,7 +31,7 @@ const MENU = [
     }
   },
   {
-    id: 2, cat: "rolls", sub: "philadelphia", price: 199000,        // ФОТО: Філадельфія з лососем та авокадо
+    id: 2, cat: "rolls", sub: "philadelphia", price: 199000, img: "img/menu/36.jpg", // ФОТО: Філадельфія з лососем та авокадо
     name: { ua: "Філадельфія з лососем та авокадо", ru: "Филадельфия с лососем и авокадо", en: "Philadelphia Salmon & Avocado", vn: "Philadelphia cá hồi & bơ" },
     desc: {
       ua: "Рис, Лосось, Авокадо, Крем-сир, Тобіко, Норі",
@@ -149,7 +149,7 @@ const MENU = [
     }
   },
   {
-    id: 11, cat: "rolls", sub: "maki", price: 105000, img: "img/menu/33.png", // ФОТО: Макі Вугор
+    id: 11, cat: "rolls", sub: "maki", price: 105000, img: "img/menu/37.jpg", // ФОТО: Макі Вугор
     name: { ua: "Макі Вугор", ru: "Маки с угрем", en: "Maki Eel", vn: "Maki lươn" },
     desc: {
       ua: "Рис, Вугор, Норі ½",
