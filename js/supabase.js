@@ -276,7 +276,11 @@ async function sendOrder(){
   try{
     const res = await fetch("https://wqovkezgzpwyyxavrrtv.supabase.co/functions/v1/send-order", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": CONFIG.SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + CONFIG.SUPABASE_ANON_KEY
+      },
       body: JSON.stringify({ text: msg })
     });
     const data = await res.json();
