@@ -232,16 +232,24 @@ async function sendOrder(){
 
   const name    = document.getElementById('ordName').value.trim();
   const phone   = document.getElementById('ordPhone').value.trim();
+  let   telegram= document.getElementById('ordTelegram').value.trim();
   const address = document.getElementById('ordAddress').value.trim();
   const comment = document.getElementById('ordComment').value.trim();
   const lat     = document.getElementById('ordLat').value.trim();
   const lng     = document.getElementById('ordLng').value.trim();
 
-  if(!name || !phone || !address){
-    note.textContent = '⚠️ Заповни ім\'я, телефон і адресу';
+  // поле Telegram обязательно только для ua/ru
+  const telegramRequired = (lang === 'ua' || lang === 'ru');
+
+  if(!name || !phone || !address || (telegramRequired && !telegram)){
+    note.textContent = telegramRequired
+      ? '⚠️ Заповни ім\'я, телефон, Telegram і адресу'
+      : '⚠️ Заповни ім\'я, телефон і адресу';
     note.classList.add('is-error');
     return;
   }
+  // нормализуем: гарантируем ведущий @
+  if(telegram && telegram[0] !== '@') telegram = '@' + telegram;
   if(Cart.count() === 0){ note.textContent='Кошик порожній'; note.classList.add('is-error'); return; }
 
   const items = Cart.list(lang);
@@ -261,7 +269,9 @@ async function sendOrder(){
 
   // 2) Текст заказа
   let msg = `🍣 НОВЕ ЗАМОВЛЕННЯ NiNi Sushi\n\n`;
-  msg += `👤 ${name}\n📞 ${phone}\n📍 ${address}\n`;
+  msg += `👤 ${name}\n📞 ${phone}\n`;
+  if(telegram) msg += `✈️ ${telegram}\n`;
+  msg += `📍 ${address}\n`;
   if(lat && lng){
     msg += `📍 Координати: ${lat},${lng}\n🗺 https://maps.google.com/?q=${lat},${lng}\n`;
   }

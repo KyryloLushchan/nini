@@ -142,6 +142,10 @@ function setLang(lang){
     if(I18N[lang][key]) el.textContent = I18N[lang][key];
   });
 
+  // поле Telegram показываем только для ua/ru
+  const tgRow = document.getElementById('ordTelegramRow');
+  if(tgRow) tgRow.style.display = (lang === 'ua' || lang === 'ru') ? 'contents' : 'none';
+
   renderMenu();
   Cart.render();
   updateAuthLabels();
