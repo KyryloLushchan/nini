@@ -90,8 +90,22 @@ function initOrderMap(){
   const btnGeo = document.getElementById('btnGeo');
   if(btnGeo){
     btnGeo.addEventListener('click', ()=>{
-      if(!navigator.geolocation){ return; }
+      const status = document.getElementById('geoStatus');
+      const setStatus = (txt, ok)=>{ if(status){ status.textContent = txt; status.className = 'geo-status' + (ok ? ' is-ok' : (txt ? ' is-error' : '')); } };
+
+      if(!navigator.geolocation){
+        setStatus('⚠️ Геолокація не підтримується вашим браузером');
+        return;
+      }
+      // Геолокация работает только в защищённом контексте (https)
+      if(window.isSecureContext === false){
+        setStatus('⚠️ Геолокація доступна лише на захищеному сайті (https)');
+        return;
+      }
+
       btnGeo.disabled = true;
+      setStatus('⏳ Визначаю місцезнаходження…', true);
+
       navigator.geolocation.getCurrentPosition(
         (pos)=>{
           const { latitude: lat, longitude: lng } = pos.coords;
@@ -99,9 +113,17 @@ function initOrderMap(){
           placeMarker(lat, lng);
           setOrderPoint(lat, lng, true);
           btnGeo.disabled = false;
+          setStatus('✅ Місцезнаходження визначено', true);
         },
-        ()=>{ btnGeo.disabled = false; }, // отказ/ошибка — тихо
-        { enableHighAccuracy: true, timeout: 10000 }
+        (err)=>{
+          btnGeo.disabled = false;
+          let m = '⚠️ Не вдалося визначити місцезнаходження';
+          if(err && err.code === 1) m = '⚠️ Доступ до геолокації заборонено. Дозвольте його в налаштуваннях браузера та спробуйте знову';
+          else if(err && err.code === 2) m = '⚠️ Місцезнаходження недоступне. Виберіть точку на карті вручну';
+          else if(err && err.code === 3) m = '⚠️ Час очікування вийшов. Спробуйте ще раз або виберіть точку на карті';
+          setStatus(m);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
       );
     });
   }

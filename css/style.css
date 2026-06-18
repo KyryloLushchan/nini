@@ -61,6 +61,9 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .map-btns{ display:flex; gap:10px; margin:8px 0 4px; }
 .map-btns .btn{ flex:1; padding:11px 16px; font-size:14px; margin-top:0; }
 .map-hint{ display:block; color:var(--muted); font-size:12px; margin-bottom:6px; }
+.geo-status{ font-size:12.5px; margin:2px 0 6px; min-height:16px; }
+.geo-status.is-error{ color:var(--coral); }
+.geo-status.is-ok{ color:#3DBB6B; }
 @media (max-width:480px){
   .map-btns{ flex-direction:column; }
 }
