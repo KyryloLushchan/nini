@@ -112,7 +112,7 @@ serve(async (req) => {
 
     // Позиции: только из меню, qty 1..30, максимум 40 строк
     const raw = Array.isArray(body.items) ? body.items.slice(0, 40) : [];
-    const lines: { name: string; qty: number; sum: number }[] = [];
+    const lines: { id: number; name: string; qty: number; price: number; sum: number }[] = [];
     let total = 0;
     for (const it of raw) {
       const dish = MENU[String(it?.id)];
@@ -120,9 +120,10 @@ serve(async (req) => {
       if (!dish || !Number.isFinite(qty) || qty < 1 || qty > 30) {
         return json({ ok: false, error: "invalid item" }, 400);
       }
-      const sum = dishPrice(dish) * qty;
+      const price = dishPrice(dish);
+      const sum = price * qty;
       total += sum;
-      lines.push({ name: dish.n[lang] ?? dish.n.ua, qty, sum });
+      lines.push({ id: Number(it.id), name: dish.n[lang] ?? dish.n.ua, qty, price, sum });
     }
     if (lines.length === 0) return json({ ok: false, error: "empty cart" }, 400);
 
@@ -167,6 +168,44 @@ serve(async (req) => {
       body: JSON.stringify({ chat_id: CHAT_ID, text: msg }),
     });
     const data = await tg.json();
+
+    // Сохранение заказа в БД (через service-role, best-effort — не валим заказ при ошибке).
+    // Прямую запись анон-ключом мы запрещаем политиками, поэтому пишем только отсюда.
+    try {
+      const SB_URL = Deno.env.get("SUPABASE_URL");
+      const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+      if (SB_URL && SERVICE) {
+        // user_id берём ТОЛЬКО из проверенного JWT пользователя (клиенту не верим)
+        let user_id: string | null = null;
+        const userToken = clean(body.userToken, 4000);
+        if (userToken) {
+          const ur = await fetch(`${SB_URL}/auth/v1/user`, {
+            headers: { Authorization: `Bearer ${userToken}`, apikey: ANON ?? SERVICE },
+          });
+          if (ur.ok) {
+            const u = await ur.json().catch(() => null);
+            if (u && typeof u.id === "string") user_id = u.id;
+          }
+        }
+        await fetch(`${SB_URL}/rest/v1/orders`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SERVICE,
+            Authorization: `Bearer ${SERVICE}`,
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            customer_name: name, phone, address, comment,
+            items: lines, total,
+            lat: lat || null, lng: lng || null,
+            user_id,
+          }),
+        });
+      }
+    } catch (_e) { /* запись в БД не критична для отправки заказа */ }
+
     return json({ ok: data.ok === true }, data.ok ? 200 : 500);
   } catch (e) {
     return json({ ok: false, error: String(e) }, 500);

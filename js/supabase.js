@@ -261,27 +261,21 @@ async function sendOrder(){
   }
 
   const items = Cart.list(lang);
-  const total = Cart.total();
 
-  // 1) Сохранить в Supabase (если настроен)
+  // JWT пользователя (если вошёл) — сервер сам проверит его и привяжет заказ
+  let userToken = '';
   if(supa){
-    try{
-      await supa.from('orders').insert([{
-        customer_name: name, phone, address,
-        comment, items, total,
-        lat: lat || null, lng: lng || null,
-        user_id: currentUser ? currentUser.id : null
-      }]);
-    }catch(e){ console.warn('Supabase insert error', e); }
+    try{ const { data } = await supa.auth.getSession(); userToken = data?.session?.access_token || ''; }catch(_e){}
   }
 
-  // 2) Отправка СТРУКТУРИРОВАННОГО заказа — текст собирает и проверяет сервер
-  //    (клиент не присылает готовый текст, поэтому endpoint нельзя спамить произвольными сообщениями)
+  // Отправка СТРУКТУРИРОВАННОГО заказа — текст собирает, проверяет и СОХРАНЯЕТ в БД сервер
+  // (клиент не пишет в БД напрямую и не присылает готовый текст — endpoint нельзя спамить)
   const payload = {
     name, phone, telegram, address, comment,
     lat: lat || '', lng: lng || '',
     lang,
     turnstileToken: tsToken,
+    userToken,
     items: items.map(i => ({ id: i.id, qty: i.qty }))
   };
 
