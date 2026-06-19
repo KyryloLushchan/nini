@@ -40,6 +40,7 @@ function renderMenu(){
 
 function cardHTML(d, lang, t){
   const badges =
+    (d.neu   ? `<span class="badge badge--new">${t.badge_new || 'NEW'}</span>` : '') +
     (d.spicy ? `<span class="badge badge--spicy">🌶 ${t.spicy}</span>` : '') +
     (d.veg   ? `<span class="badge badge--veg">🥬 ${t.veg}</span>`   : '');
 

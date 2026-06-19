@@ -219,6 +219,7 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 }
 .badge--spicy{ background:#FF6A2B; }
 .badge--veg{ background:#3DBB6B; }
+.badge--new{ background:#2B6BFF; letter-spacing:.5px; text-transform:uppercase; }
 .card__body{ padding:14px 15px 16px; display:flex; flex-direction:column; flex:1; }
 .card__name{ font-family:var(--font-disp); font-weight:700; font-size:16px; line-height:1.2; }
 .card__desc{ font-size:12.5px; color:var(--muted); margin:7px 0 14px; flex:1; }

@@ -19,9 +19,21 @@
    ============================================================ */
 
 const MENU = [
+  /* ---------- РОЛЛЫ · НОВИНКА ---------- */
+  {
+    id: 38, cat: "rolls", sub: "new", price: 189000, neu: true, img: "img/menu/38.png", // ФОТО: Spicy Tokyo roll
+    name: { ua: "Spicy Tokyo roll", ru: "Spicy Tokyo roll", en: "Spicy Tokyo roll", vn: "Spicy Tokyo roll" },
+    desc: {
+      ua: "Лосось, Авокадо, Омлет, Крем-сир Філадельфія, Спайсі майонез",
+      ru: "Лосось, Авокадо, Омлет, Крем-сыр Филадельфия, Спайси майонез",
+      en: "Salmon, Avocado, Omelette, Philadelphia cream cheese, Spicy mayo",
+      vn: "Cá hồi, Bơ, Trứng cuộn, Phô mai Philadelphia, Sốt mayo cay"
+    }
+  },
+
   /* ---------- РОЛЛЫ · ФІЛАДЕЛЬФІЯ ---------- */
   {
-    id: 1, cat: "rolls", sub: "philadelphia", price: 189000,        // ФОТО: Філадельфія з лососем
+    id: 1, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/1.png", // ФОТО: Філадельфія з лососем
     name: { ua: "Філадельфія з лососем", ru: "Филадельфия с лососем", en: "Philadelphia with Salmon", vn: "Philadelphia cá hồi" },
     desc: {
       ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
@@ -41,7 +53,7 @@ const MENU = [
     }
   },
   {
-    id: 3, cat: "rolls", sub: "philadelphia", price: 189000,        // ФОТО: Філадельфія Гриль
+    id: 3, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/3.png", // ФОТО: Філадельфія Гриль
     name: { ua: "Філадельфія Гриль", ru: "Филадельфия Гриль", en: "Philadelphia Grill", vn: "Philadelphia nướng" },
     desc: {
       ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
@@ -87,7 +99,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · ДРАКОНИ ---------- */
   {
-    id: 12, cat: "rolls", sub: "dragon", price: 219000,             // ФОТО: Червоний Дракон
+    id: 12, cat: "rolls", sub: "dragon", price: 219000, img: "img/menu/12.png", // ФОТО: Червоний Дракон
     name: { ua: "Червоний Дракон", ru: "Красный Дракон", en: "Red Dragon", vn: "Rồng đỏ" },
     desc: {
       ua: "Рис, Лосось, Вугор, Авокадо, Тобіко, Омлет, Норі",
@@ -282,6 +294,7 @@ const I18N = {
     nav_sushi: "Суші", nav_rolls: "Роли", nav_hot: "Гарячі роли", nav_drinks: "Напої",
     hero_tagline: "Свіжі суші з доставкою", hero_btn: "Переглянути меню",
     hours_label: "Години роботи:", hours_time: "🕘 16:00 – 20:00",
+    sub_new: "Новинки", badge_new: "Новинка",
     sub_philadelphia: "Філадельфія", sub_california: "Каліфорнія", sub_maki: "Макі",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Дракони", sub_baked: "Запечені", sub_felix: "Фелікс",
     sub_nigiri: "Нігірі", sub_gunkan: "Гункан", sub_drinks: "Напої",
@@ -306,6 +319,7 @@ const I18N = {
     nav_sushi: "Суши", nav_rolls: "Роллы", nav_hot: "Горячие роллы", nav_drinks: "Напитки",
     hero_tagline: "Свежие суши с доставкой", hero_btn: "Смотреть меню",
     hours_label: "Часы работы:", hours_time: "🕘 16:00 – 20:00",
+    sub_new: "Новинки", badge_new: "Новинка",
     sub_philadelphia: "Филадельфия", sub_california: "Калифорния", sub_maki: "Маки",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Драконы", sub_baked: "Запечённые", sub_felix: "Феликс",
     sub_nigiri: "Нигири", sub_gunkan: "Гункан", sub_drinks: "Напитки",
@@ -330,6 +344,7 @@ const I18N = {
     nav_sushi: "Sushi", nav_rolls: "Rolls", nav_hot: "Hot Rolls", nav_drinks: "Drinks",
     hero_tagline: "Fresh sushi delivered", hero_btn: "View menu",
     hours_label: "Working hours:", hours_time: "🕘 4:00 – 8:00 PM",
+    sub_new: "New", badge_new: "New",
     sub_philadelphia: "Philadelphia", sub_california: "California", sub_maki: "Maki",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Dragons", sub_baked: "Baked", sub_felix: "Felix",
     sub_nigiri: "Nigiri", sub_gunkan: "Gunkan", sub_drinks: "Drinks",
@@ -354,6 +369,7 @@ const I18N = {
     nav_sushi: "Sushi", nav_rolls: "Cuộn", nav_hot: "Cuộn nóng", nav_drinks: "Đồ uống",
     hero_tagline: "Sushi tươi giao tận nơi", hero_btn: "Xem thực đơn",
     hours_label: "Giờ làm việc:", hours_time: "🕘 16h00 – 20h00",
+    sub_new: "Mới", badge_new: "Mới",
     sub_philadelphia: "Philadelphia", sub_california: "California", sub_maki: "Maki",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Rồng", sub_baked: "Nướng", sub_felix: "Felix",
     sub_nigiri: "Nigiri", sub_gunkan: "Gunkan", sub_drinks: "Đồ uống",
@@ -379,7 +395,7 @@ const I18N = {
 /* Порядок категорий и подгрупп для рендера */
 const CATEGORIES = ["rolls", "sushi", "drinks"];
 const SUBGROUPS = {
-  rolls: ["philadelphia", "baked", "spicy", "dragon", "maki"],
+  rolls: ["new", "philadelphia", "baked", "spicy", "dragon", "maki"],
   sushi: ["gunkan", "nigiri"],
   drinks: ["drinks"]
 };

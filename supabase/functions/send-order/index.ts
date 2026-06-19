@@ -58,6 +58,7 @@ const MENU: Record<string, Dish> = {
   "34":{"p":20000,"c":"drinks","n":{"ua":"Pepsi Zero Lime","ru":"Pepsi Zero Lime","en":"Pepsi Zero Lime","vn":"Pepsi Zero Lime"}},
   "35":{"p":200000,"c":"rolls","n":{"ua":"Запечений з лососем","ru":"Запечённый с лососем","en":"Baked Salmon","vn":"Cuộn nướng cá hồi"}},
   "36":{"p":175000,"c":"rolls","n":{"ua":"Запечений з куркою","ru":"Запечённый с курицей","en":"Baked Chicken","vn":"Cuộn nướng gà"}},
+  "38":{"p":189000,"c":"rolls","n":{"ua":"Spicy Tokyo roll","ru":"Spicy Tokyo roll","en":"Spicy Tokyo roll","vn":"Spicy Tokyo roll"}},
 };
 const SALE = 0.20;
 const dishPrice = (d: Dish) => d.c === "drinks" ? d.p : Math.round(d.p * (1 - SALE));
