@@ -47,7 +47,7 @@ serve(async (req) => {
         chat_id: chatId,
         text: GREETING,
         reply_markup: {
-          inline_keyboard: [[{ text: "🛒 Відкрити меню", url: SITE }]],
+          inline_keyboard: [[{ text: "🛒 Відкрити меню", web_app: { url: SITE } }]],
         },
       });
     }
