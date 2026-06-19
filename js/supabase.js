@@ -267,20 +267,15 @@ async function sendOrder(){
     }catch(e){ console.warn('Supabase insert error', e); }
   }
 
-  // 2) Текст заказа
-  let msg = `🍣 НОВЕ ЗАМОВЛЕННЯ NiNi Sushi\n\n`;
-  msg += `👤 ${name}\n📞 ${phone}\n`;
-  if(telegram) msg += `✈️ ${telegram}\n`;
-  msg += `📍 ${address}\n`;
-  if(lat && lng){
-    msg += `📍 Координати: ${lat},${lng}\n🗺 https://maps.google.com/?q=${lat},${lng}\n`;
-  }
-  if(comment) msg += `📝 ${comment}\n`;
-  msg += `\n— — —\n`;
-  items.forEach(i=>{ msg += `• ${i.name} × ${i.qty} = ${fmtPrice(i.sum)}\n`; });
-  msg += `— — —\n💰 РАЗОМ: ${fmtPrice(total)}`;
+  // 2) Отправка СТРУКТУРИРОВАННОГО заказа — текст собирает и проверяет сервер
+  //    (клиент не присылает готовый текст, поэтому endpoint нельзя спамить произвольными сообщениями)
+  const payload = {
+    name, phone, telegram, address, comment,
+    lat: lat || '', lng: lng || '',
+    lang,
+    items: items.map(i => ({ id: i.id, qty: i.qty }))
+  };
 
-  // 3) Отправка заявки через Supabase Edge Function (токен бота спрятан на сервере)
   const sendBtn = document.getElementById('orderSend');
   sendBtn.disabled = true;
   try{
@@ -291,7 +286,7 @@ async function sendOrder(){
         "apikey": CONFIG.SUPABASE_ANON_KEY,
         "Authorization": "Bearer " + CONFIG.SUPABASE_ANON_KEY
       },
-      body: JSON.stringify({ text: msg })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if(!res.ok || !data.ok) throw new Error('Edge Function response not ok');
