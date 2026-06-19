@@ -288,7 +288,7 @@ async function sendOrder(){
   const sendBtn = document.getElementById('orderSend');
   sendBtn.disabled = true;
   try{
-    const res = await fetch("https://wqovkezgzpwyyxavrrtv.supabase.co/functions/v1/send-order", {
+    const res = await fetch("https://rdxlvebvwjzfmzvguqaf.supabase.co/functions/v1/send-order", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
