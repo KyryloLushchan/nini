@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -166,6 +167,7 @@
         <input type="hidden" id="ordLng">
         <label data-i18n="order_comment">Коментар</label>
         <textarea id="ordComment" rows="2"></textarea>
+        <div class="cf-turnstile" id="ordTurnstile" data-sitekey="0x4AAAAAADnyoSrGF4AbPEDy"></div>
         <button class="btn btn--primary btn--full" id="orderSend" data-i18n="order_send">Підтвердити замовлення</button>
         <p class="form__note" id="orderNote"></p>
       </div>

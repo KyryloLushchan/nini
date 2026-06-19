@@ -252,6 +252,14 @@ async function sendOrder(){
   if(telegram && telegram[0] !== '@') telegram = '@' + telegram;
   if(Cart.count() === 0){ note.textContent='Кошик порожній'; note.classList.add('is-error'); return; }
 
+  // Проверка «я не робот» (Cloudflare Turnstile)
+  const tsToken = (window.turnstile && typeof turnstile.getResponse === 'function') ? turnstile.getResponse() : '';
+  if(!tsToken){
+    note.textContent = '⚠️ Підтвердіть, що ви не робот';
+    note.classList.add('is-error');
+    return;
+  }
+
   const items = Cart.list(lang);
   const total = Cart.total();
 
@@ -273,6 +281,7 @@ async function sendOrder(){
     name, phone, telegram, address, comment,
     lat: lat || '', lng: lng || '',
     lang,
+    turnstileToken: tsToken,
     items: items.map(i => ({ id: i.id, qty: i.qty }))
   };
 
@@ -301,6 +310,8 @@ async function sendOrder(){
     note.classList.add('is-error');
   }finally{
     sendBtn.disabled = false;
+    // токен Turnstile одноразовый — сбрасываем виджет для следующей попытки
+    try{ if(window.turnstile && typeof turnstile.reset === 'function') turnstile.reset(); }catch(_e){}
   }
 }
 

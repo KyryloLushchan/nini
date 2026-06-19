@@ -125,8 +125,26 @@ serve(async (req) => {
     }
     if (lines.length === 0) return json({ ok: false, error: "empty cart" }, 400);
 
-    // Анти-спам
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+
+    // Проверка Cloudflare Turnstile (главная защита от ботов)
+    const TURNSTILE_SECRET = Deno.env.get("TURNSTILE_SECRET");
+    if (TURNSTILE_SECRET) {
+      const token = clean(body.turnstileToken, 4000);
+      if (!token) return json({ ok: false, error: "captcha required" }, 403);
+      const form = new URLSearchParams();
+      form.append("secret", TURNSTILE_SECRET);
+      form.append("response", token);
+      if (ip !== "unknown") form.append("remoteip", ip);
+      const vr = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        body: form,
+      });
+      const vj = await vr.json().catch(() => ({ success: false }));
+      if (!vj.success) return json({ ok: false, error: "captcha failed" }, 403);
+    }
+
+    // Анти-спам (доп. слой)
     const fp = `${phone}|${lines.map((l) => l.name + "x" + l.qty).join(",")}`;
     if (tooMany(ip)) return json({ ok: false, error: "rate limited" }, 429);
     if (isDup(fp)) return json({ ok: false, error: "duplicate" }, 429);
