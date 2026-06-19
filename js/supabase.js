@@ -10,8 +10,8 @@
    ============================================================ */
 
 const CONFIG = {
-  SUPABASE_URL:      "https://wqovkezgzpwyyxavrrtv.supabase.co",   // напр. https://xxxx.supabase.co
-  SUPABASE_ANON_KEY: "sb_publishable_Xhpgpka8R3sThsfqCDikhQ_DxpK9if0",   // публичный anon-ключ
+  SUPABASE_URL:      "https://rdxlvebvwjzfmzvguqaf.supabase.co",   // напр. https://xxxx.supabase.co
+  SUPABASE_ANON_KEY: "sb_publishable_PDCTi1UKKDVl2-29eN-QKQ_anyhzzzf",   // публичный anon-ключ
   WHATSAPP:          "84367021338" // запасной канал заказа
 };
 
