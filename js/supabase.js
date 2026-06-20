@@ -33,6 +33,10 @@ let supa = null;
 
 let currentUser = null;
 
+/* На странице несколько Turnstile-виджетов — берём/сбрасываем токен конкретного */
+function turnstileGet(id){ try{ const el=document.getElementById(id); return (window.turnstile && el) ? (turnstile.getResponse(el) || '') : ''; }catch(_e){ return ''; } }
+function turnstileReset(id){ try{ const el=document.getElementById(id); if(window.turnstile && el) turnstile.reset(el); }catch(_e){} }
+
 async function refreshUser(){
   if(!supa) return;
   const { data } = await supa.auth.getUser();
@@ -91,8 +95,10 @@ async function handleForgotPassword(){
   note.innerHTML = `<span class="note-loading"><span class="spinner"></span> ${t.reset_sending}</span>`;
 
   try{
+    const captchaToken = turnstileGet('authTurnstile');
     const { error } = await supa.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://kyrylolushchan.github.io/nini/reset.html'
+      redirectTo: 'https://kyrylolushchan.github.io/nini/reset.html',
+      captchaToken: captchaToken || undefined
     });
     if(error){
       note.className = 'form__note is-error';
@@ -106,6 +112,7 @@ async function handleForgotPassword(){
     note.textContent = 'Помилка: ' + err.message;
   }finally{
     if(forgot) forgot.disabled = false;
+    turnstileReset('authTurnstile');
   }
 }
 
@@ -124,11 +131,13 @@ async function handleAuth(){
   }
 
   try{
+    const captchaToken = turnstileGet('authTurnstile');
+    const options = captchaToken ? { captchaToken } : undefined;
     let res;
     if(authMode === 'register'){
-      res = await supa.auth.signUp({ email, password: pass });
+      res = await supa.auth.signUp({ email, password: pass, options });
     } else {
-      res = await supa.auth.signInWithPassword({ email, password: pass });
+      res = await supa.auth.signInWithPassword({ email, password: pass, options });
     }
     if(res.error){ note.textContent = res.error.message; note.classList.add('is-error'); return; }
 
@@ -139,6 +148,8 @@ async function handleAuth(){
   }catch(err){
     note.textContent = 'Помилка: ' + err.message;
     note.classList.add('is-error');
+  }finally{
+    turnstileReset('authTurnstile');
   }
 }
 
@@ -256,7 +267,7 @@ async function sendOrder(){
   if(Cart.count() === 0){ note.textContent='Кошик порожній'; note.classList.add('is-error'); return; }
 
   // Проверка «я не робот» (Cloudflare Turnstile)
-  const tsToken = (window.turnstile && typeof turnstile.getResponse === 'function') ? turnstile.getResponse() : '';
+  const tsToken = turnstileGet('ordTurnstile');
   if(!tsToken){
     note.textContent = '⚠️ Підтвердіть, що ви не робот';
     note.classList.add('is-error');
@@ -319,7 +330,7 @@ async function sendOrder(){
   }finally{
     sendBtn.disabled = false;
     // токен Turnstile одноразовый — сбрасываем виджет для следующей попытки
-    try{ if(window.turnstile && typeof turnstile.reset === 'function') turnstile.reset(); }catch(_e){}
+    turnstileReset('ordTurnstile');
   }
 }
 
