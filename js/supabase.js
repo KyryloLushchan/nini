@@ -295,6 +295,17 @@ async function sendOrder(){
       body: JSON.stringify(payload)
     });
     const data = await res.json();
+    if(res.status === 403 && data.error === 'region not allowed'){
+      const msg = {
+        ua: '🚫 Доставка доступна лише у В\'єтнамі',
+        ru: '🚫 Доставка доступна только во Вьетнаме',
+        en: '🚫 Delivery is available only in Vietnam',
+        vn: '🚫 Chỉ giao hàng trong Việt Nam'
+      };
+      note.textContent = msg[lang] || msg.en;
+      note.classList.add('is-error');
+      return;
+    }
     if(!res.ok || !data.ok) throw new Error('Edge Function response not ok');
 
     note.textContent = '';

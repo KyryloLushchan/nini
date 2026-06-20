@@ -65,6 +65,21 @@ const dishPrice = (d: Dish) => d.c === "drinks" ? d.p : Math.round(d.p * (1 - SA
 const fmtPrice = (v: number) => v.toLocaleString("ru-RU").replace(/,/g, " ") + "₫";
 const clean = (s: unknown, max = 300) => String(s ?? "").trim().slice(0, max);
 
+/* Страна по IP (fail-open: при ошибке возвращаем null → заказ пропускаем) */
+async function ipCountry(ip: string): Promise<string | null> {
+  if (!ip || ip === "unknown") return null;
+  const norm = (c: unknown) => (typeof c === "string" && /^[A-Za-z]{2}$/.test(c) ? c.toUpperCase() : null);
+  try {
+    const r = await fetch(`https://api.country.is/${ip}`, { signal: AbortSignal.timeout(4000) });
+    if (r.ok) { const d = await r.json().catch(() => null); const c = norm(d?.country); if (c) return c; }
+  } catch { /* пробуем запасной */ }
+  try {
+    const r = await fetch(`https://ipwho.is/${ip}?fields=country_code,success`, { signal: AbortSignal.timeout(4000) });
+    if (r.ok) { const d = await r.json().catch(() => null); if (d?.success) return norm(d?.country_code); }
+  } catch { /* fail-open */ }
+  return null;
+}
+
 /* ===== Лёгкий rate-limit / дедуп (в памяти инстанса) ===== */
 const hits: Map<string, number[]> = new Map();          // ip -> timestamps
 const recent: Map<string, number> = new Map();          // fingerprint -> ts
@@ -128,6 +143,16 @@ serve(async (req) => {
     if (lines.length === 0) return json({ ok: false, error: "empty cart" }, 400);
 
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+
+    // Гео-ограничение: заказы только из разрешённой страны (по умолчанию VN).
+    // fail-open: если страну определить не удалось — заказ пропускаем.
+    const ALLOWED_COUNTRY = (Deno.env.get("ALLOWED_COUNTRY") || "VN").toUpperCase();
+    if (ALLOWED_COUNTRY) {
+      const country = await ipCountry(ip);
+      if (country && country !== ALLOWED_COUNTRY) {
+        return json({ ok: false, error: "region not allowed", country }, 403);
+      }
+    }
 
     // Проверка Cloudflare Turnstile (главная защита от ботов)
     const TURNSTILE_SECRET = Deno.env.get("TURNSTILE_SECRET");
