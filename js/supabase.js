@@ -20,7 +20,10 @@ let supa = null;
 (function loadSupabase(){
   if(!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) return;
   const s = document.createElement('script');
-  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  // фиксированная версия + SRI: если CDN скомпрометируют, чужой код не выполнится
+  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.2/dist/umd/supabase.js";
+  s.integrity = "sha384-nD3dwv4+ZqdYnmZKe/249ImlV04om7xTCcsoSeQYI+RO+XlKPoqAWaJR1M5SJH9p";
+  s.crossOrigin = "anonymous";
   s.onload = ()=>{
     supa = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     refreshUser();
