@@ -80,25 +80,50 @@ async function ipCountry(ip: string): Promise<string | null> {
   return null;
 }
 
-/* ===== Лёгкий rate-limit / дедуп (в памяти инстанса) ===== */
-const hits: Map<string, number[]> = new Map();          // ip -> timestamps
-const recent: Map<string, number> = new Map();          // fingerprint -> ts
-const RATE_MAX = 5, RATE_WINDOW = 60_000, DEDUP_WINDOW = 90_000;
+/* ===== Надёжный rate-limit / дедуп через таблицу order_rate (общая для всех инстансов) =====
+   Возвращает причину отказа ('rate limited' | 'duplicate') или null. fail-open при ошибке. */
+const RATE_MAX = 5, RATE_WINDOW_MS = 60_000, DEDUP_WINDOW_MS = 90_000;
 
-function tooMany(ip: string): boolean {
+async function dbThrottle(sbUrl: string, service: string, ip: string, fp: string): Promise<string | null> {
+  const h = { apikey: service, Authorization: `Bearer ${service}` };
   const now = Date.now();
-  const arr = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW);
-  arr.push(now);
-  hits.set(ip, arr);
-  return arr.length > RATE_MAX;
-}
-function isDup(fp: string): boolean {
-  const now = Date.now();
-  const last = recent.get(fp);
-  recent.set(fp, now);
-  // подчистим старое
-  for (const [k, t] of recent) if (now - t > DEDUP_WINDOW) recent.delete(k);
-  return last !== undefined && now - last < DEDUP_WINDOW;
+  const since60 = new Date(now - RATE_WINDOW_MS).toISOString();
+  const since90 = new Date(now - DEDUP_WINDOW_MS).toISOString();
+  try {
+    // сколько заказов с этого IP за окно
+    const rc = await fetch(
+      `${sbUrl}/rest/v1/order_rate?select=id&ip=eq.${encodeURIComponent(ip)}&created_at=gte.${since60}`,
+      { headers: { ...h, Prefer: "count=exact", Range: "0-0" } },
+    );
+    const total = parseInt((rc.headers.get("content-range") ?? "").split("/")[1] ?? "0", 10) || 0;
+    if (total >= RATE_MAX) return "rate limited";
+
+    // тот же заказ (fingerprint) недавно
+    const rd = await fetch(
+      `${sbUrl}/rest/v1/order_rate?select=id&fingerprint=eq.${encodeURIComponent(fp)}&created_at=gte.${since90}&limit=1`,
+      { headers: h },
+    );
+    const dup = await rd.json().catch(() => []);
+    if (Array.isArray(dup) && dup.length) return "duplicate";
+
+    // фиксируем попытку
+    await fetch(`${sbUrl}/rest/v1/order_rate`, {
+      method: "POST",
+      headers: { ...h, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ ip, fingerprint: fp }),
+    });
+    // изредка подчищаем старое, чтобы таблица не росла
+    if (Math.random() < 0.05) {
+      const old = new Date(now - 3_600_000).toISOString();
+      await fetch(`${sbUrl}/rest/v1/order_rate?created_at=lt.${old}`, {
+        method: "DELETE",
+        headers: { ...h, Prefer: "return=minimal" },
+      });
+    }
+    return null;
+  } catch {
+    return null; // fail-open
+  }
 }
 
 serve(async (req) => {
@@ -171,10 +196,16 @@ serve(async (req) => {
       if (!vj.success) return json({ ok: false, error: "captcha failed" }, 403);
     }
 
-    // Анти-спам (доп. слой)
+    // Анти-спам: надёжный rate-limit/дедуп через БД (общий для всех инстансов)
     const fp = `${phone}|${lines.map((l) => l.name + "x" + l.qty).join(",")}`;
-    if (tooMany(ip)) return json({ ok: false, error: "rate limited" }, 429);
-    if (isDup(fp)) return json({ ok: false, error: "duplicate" }, 429);
+    {
+      const sbUrl = Deno.env.get("SUPABASE_URL");
+      const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (sbUrl && service) {
+        const reason = await dbThrottle(sbUrl, service, ip, fp);
+        if (reason) return json({ ok: false, error: reason }, 429);
+      }
+    }
 
     // Текст заказа собирает СЕРВЕР
     let msg = `🍣 НОВЕ ЗАМОВЛЕННЯ NiNi Sushi\n\n`;
