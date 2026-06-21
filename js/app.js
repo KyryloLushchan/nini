@@ -24,7 +24,7 @@ function renderMenu(){
     }
 
     SUBGROUPS[cat].forEach(sub=>{
-      const dishes = dishesInCat.filter(d => d.sub === sub);
+      const dishes = dishesInCat.filter(d => d.sub === sub && !d.hidden);
       if(dishes.length === 0) return;
       html += `<h3 class="sub-title">${t['sub_'+sub] || ''}</h3>`;
       html += `<div class="grid">`;
@@ -50,6 +50,14 @@ function cardHTML(d, lang, t){
 
   const saleBadge = hasSale(d) ? `<span class="sale-badge">−20%</span>` : '';
 
+  // Тумблер LUX/LIGHT (если у блюда есть лайт-версия или это сама лайт-версия)
+  const isLite = !!d.luxId;
+  const counterpartId = isLite ? d.luxId : d.liteId;
+  const toggleHTML = counterpartId
+    ? `<img class="variant-toggle" src="${isLite ? 'img/100.jpg' : 'img/101.jpg'}"
+            alt="LUX / LIGHT" title="LUX / LIGHT" onclick="switchVariant(this, ${counterpartId})">`
+    : '';
+
   return `
     <article class="card">
       <div class="card__imgwrap">
@@ -61,6 +69,7 @@ function cardHTML(d, lang, t){
       <div class="card__body">
         <h4 class="card__name">${d.name[lang]}</h4>
         <p class="card__desc">${d.desc[lang]}</p>
+        ${toggleHTML}
         <div class="card__foot">
           ${priceHTML}
           <div class="card__ctrl" data-id="${d.id}">${cardCtrlHTML(d, t)}</div>
@@ -80,6 +89,15 @@ function cardCtrlHTML(d, t){
     </div>`;
   }
   return `<button class="card__add" onclick="Cart.add(${d.id})">${t.add}</button>`;
+}
+
+/* Переключение LUX <-> LIGHT: перерисовываем карточку другим вариантом */
+function switchVariant(el, id){
+  const card = el.closest('.card');
+  const d = MENU.find(x => x.id == id);
+  if(!card || !d) return;
+  const lang = window.currentLang || 'ua';
+  card.outerHTML = cardHTML(d, lang, I18N[lang]);
 }
 
 /* Обновить контролы всех видимых карточек под текущее состояние корзины */

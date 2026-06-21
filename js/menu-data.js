@@ -33,7 +33,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · ФІЛАДЕЛЬФІЯ ---------- */
   {
-    id: 1, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/1.png", // ФОТО: Філадельфія з лососем
+    id: 1, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/1.png", liteId: 90, // ФОТО: Філадельфія з лососем
     name: { ua: "Філадельфія з лососем", ru: "Филадельфия с лососем", en: "Philadelphia with Salmon", vn: "Philadelphia cá hồi" },
     desc: {
       ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
@@ -53,8 +53,30 @@ const MENU = [
     }
   },
   {
-    id: 3, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/3.png", // ФОТО: Філадельфія Гриль
+    id: 3, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/3.png", liteId: 91, // ФОТО: Філадельфія Гриль
     name: { ua: "Філадельфія Гриль", ru: "Филадельфия Гриль", en: "Philadelphia Grill", vn: "Philadelphia nướng" },
+    desc: {
+      ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
+      ru: "Рис, Лосось, Огурец, Крем-сыр, Нори",
+      en: "Rice, Salmon, Cucumber, Cream cheese, Nori",
+      vn: "Cơm, Cá hồi, Dưa leo, Phô mai kem, Rong biển"
+    }
+  },
+
+  /* ---- LIGHT-версии Філадельфій (скрыты; доступны тумблером LUX/LIGHT на родительской карточке) ---- */
+  {
+    id: 90, cat: "rolls", sub: "philadelphia", price: 135000, hidden: true, luxId: 1, img: "img/menu/42.jpg", // LIGHT: Філадельфія з лососем
+    name: { ua: "Філадельфія з лососем (Light)", ru: "Филадельфия с лососем (Light)", en: "Philadelphia with Salmon (Light)", vn: "Philadelphia cá hồi (Light)" },
+    desc: {
+      ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
+      ru: "Рис, Лосось, Огурец, Крем-сыр, Нори",
+      en: "Rice, Salmon, Cucumber, Cream cheese, Nori",
+      vn: "Cơm, Cá hồi, Dưa leo, Phô mai kem, Rong biển"
+    }
+  },
+  {
+    id: 91, cat: "rolls", sub: "philadelphia", price: 135000, hidden: true, luxId: 3, img: "img/menu/41.jpg", // LIGHT: Філадельфія Гриль
+    name: { ua: "Філадельфія Гриль (Light)", ru: "Филадельфия Гриль (Light)", en: "Philadelphia Grill (Light)", vn: "Philadelphia nướng (Light)" },
     desc: {
       ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
       ru: "Рис, Лосось, Огурец, Крем-сыр, Нори",

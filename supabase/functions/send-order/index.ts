@@ -59,6 +59,8 @@ const MENU: Record<string, Dish> = {
   "35":{"p":200000,"c":"rolls","n":{"ua":"Запечений з лососем","ru":"Запечённый с лососем","en":"Baked Salmon","vn":"Cuộn nướng cá hồi"}},
   "36":{"p":175000,"c":"rolls","n":{"ua":"Запечений з куркою","ru":"Запечённый с курицей","en":"Baked Chicken","vn":"Cuộn nướng gà"}},
   "38":{"p":189000,"c":"rolls","n":{"ua":"Spicy Tokyo roll","ru":"Spicy Tokyo roll","en":"Spicy Tokyo roll","vn":"Spicy Tokyo roll"}},
+  "90":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія з лососем (Light)","ru":"Филадельфия с лососем (Light)","en":"Philadelphia with Salmon (Light)","vn":"Philadelphia cá hồi (Light)"}},
+  "91":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія Гриль (Light)","ru":"Филадельфия Гриль (Light)","en":"Philadelphia Grill (Light)","vn":"Philadelphia nướng (Light)"}},
 };
 const SALE = 0.20;
 const dishPrice = (d: Dish) => d.c === "drinks" ? d.p : Math.round(d.p * (1 - SALE));
