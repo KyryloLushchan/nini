@@ -21,7 +21,7 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
-    id: 38, cat: "rolls", sub: "new", price: 189000, neu: true, img: "img/menu/38.png", // ФОТО: Spicy Tokyo roll
+    id: 38, cat: "rolls", sub: "new", price: 189000, neu: true, img: "img/menu/38.jpg", // ФОТО: Spicy Tokyo roll
     name: { ua: "Spicy Tokyo roll", ru: "Spicy Tokyo roll", en: "Spicy Tokyo roll", vn: "Spicy Tokyo roll" },
     desc: {
       ua: "Лосось, Авокадо, Омлет, Крем-сир Філадельфія, Спайсі майонез",
@@ -33,7 +33,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · ФІЛАДЕЛЬФІЯ ---------- */
   {
-    id: 1, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/1.png", liteId: 90, // ФОТО: Філадельфія з лососем
+    id: 1, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/1.jpg", liteId: 90, // ФОТО: Філадельфія з лососем
     name: { ua: "Філадельфія з лососем", ru: "Филадельфия с лососем", en: "Philadelphia with Salmon", vn: "Philadelphia cá hồi" },
     desc: {
       ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
@@ -53,7 +53,7 @@ const MENU = [
     }
   },
   {
-    id: 3, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/3.png", liteId: 91, // ФОТО: Філадельфія Гриль
+    id: 3, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/3.jpg", liteId: 91, // ФОТО: Філадельфія Гриль
     name: { ua: "Філадельфія Гриль", ru: "Филадельфия Гриль", en: "Philadelphia Grill", vn: "Philadelphia nướng" },
     desc: {
       ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
@@ -121,7 +121,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · ДРАКОНИ ---------- */
   {
-    id: 12, cat: "rolls", sub: "dragon", price: 219000, img: "img/menu/12.png", // ФОТО: Червоний Дракон
+    id: 12, cat: "rolls", sub: "dragon", price: 219000, img: "img/menu/12.jpg", // ФОТО: Червоний Дракон
     name: { ua: "Червоний Дракон", ru: "Красный Дракон", en: "Red Dragon", vn: "Rồng đỏ" },
     desc: {
       ua: "Рис, Лосось, Вугор, Авокадо, Тобіко, Омлет, Норі",
