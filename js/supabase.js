@@ -295,7 +295,9 @@ async function sendOrder(){
   };
 
   const sendBtn = document.getElementById('orderSend');
+  const sendBtnHTML = sendBtn.innerHTML;
   sendBtn.disabled = true;
+  sendBtn.innerHTML = '<span class="spinner spinner--btn"></span>';
   try{
     const res = await fetch("https://rdxlvebvwjzfmzvguqaf.supabase.co/functions/v1/send-order", {
       method: "POST",
@@ -330,6 +332,7 @@ async function sendOrder(){
     note.classList.add('is-error');
   }finally{
     sendBtn.disabled = false;
+    sendBtn.innerHTML = sendBtnHTML;
     // токен Turnstile одноразовый — сбрасываем виджет для следующей попытки
     turnstileReset('ordTurnstile');
   }
