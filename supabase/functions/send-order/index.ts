@@ -144,6 +144,9 @@ serve(async (req) => {
     const telegram = clean(body.telegram, 80);
     const address = clean(body.address, 300);
     const comment = clean(body.comment, 500);
+    // количество человек: целое 1..50, иначе игнорируем
+    const peopleNum = Math.floor(Number(body.people));
+    const people = (Number.isFinite(peopleNum) && peopleNum >= 1 && peopleNum <= 50) ? peopleNum : null;
     const lat = clean(body.lat, 40);
     const lng = clean(body.lng, 40);
 
@@ -212,6 +215,7 @@ serve(async (req) => {
     msg += `👤 ${name}\n📞 ${phone}\n`;
     if (telegram) msg += `✈️ ${telegram}\n`;
     msg += `📍 ${address}\n`;
+    if (people) msg += `👥 Осіб: ${people}\n`;
     if (lat && lng) msg += `📍 Координати: ${lat},${lng}\n🗺 https://maps.google.com/?q=${lat},${lng}\n`;
     if (comment) msg += `📝 ${comment}\n`;
     msg += `\n— — —\n`;

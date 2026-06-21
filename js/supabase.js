@@ -248,6 +248,7 @@ async function sendOrder(){
   const phone   = document.getElementById('ordPhone').value.trim();
   let   telegram= document.getElementById('ordTelegram').value.trim();
   const address = document.getElementById('ordAddress').value.trim();
+  const people  = document.getElementById('ordPeople').value.trim();
   const comment = document.getElementById('ordComment').value.trim();
   const lat     = document.getElementById('ordLat').value.trim();
   const lng     = document.getElementById('ordLng').value.trim();
@@ -285,7 +286,7 @@ async function sendOrder(){
   // Отправка СТРУКТУРИРОВАННОГО заказа — текст собирает, проверяет и СОХРАНЯЕТ в БД сервер
   // (клиент не пишет в БД напрямую и не присылает готовый текст — endpoint нельзя спамить)
   const payload = {
-    name, phone, telegram, address, comment,
+    name, phone, telegram, address, comment, people,
     lat: lat || '', lng: lng || '',
     lang,
     turnstileToken: tsToken,

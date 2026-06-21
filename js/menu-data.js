@@ -87,7 +87,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · SPICY TUNA ROLL ---------- */
   {
-    id: 20, cat: "rolls", sub: "spicy", price: 199000, spicy: true, // ФОТО: Spicy Tuna roll
+    id: 20, cat: "rolls", sub: "spicy", price: 199000, spicy: true, img: "img/menu/39.jpg", // ФОТО: Spicy Tuna roll
     name: { ua: "Spicy Tuna roll", ru: "Spicy Tuna roll", en: "Spicy Tuna roll", vn: "Spicy Tuna roll" },
     desc: {
       ua: "Рис, Тунець, Крем-сир, Авокадо, Тобіко, Салат айсберг, Шірача + Майонез, Норі",
@@ -304,7 +304,7 @@ const I18N = {
     login: "Вхід", register: "Реєстрація", logout: "Вийти",
     order_name: "Ім'я", order_phone: "Телефон", order_telegram: "Telegram", order_address: "Адреса",
     order_pay: "Оплата", pay_cash: "Готівка кур'єру", pay_qr: "QR кур'єру",
-    order_comment: "Коментар", order_send: "Підтвердити замовлення",
+    order_people: "Кількість осіб", order_comment: "Коментар", order_send: "Підтвердити замовлення",
     email: "Email", password: "Пароль", my_orders: "Мої замовлення",
     map_geo: "📍 Моя геолокація", map_pick: "Вибрати на карті",
     map_hint: "Уточніть квартиру/поверх у коментарі нижче",
@@ -329,7 +329,7 @@ const I18N = {
     login: "Вход", register: "Регистрация", logout: "Выйти",
     order_name: "Имя", order_phone: "Телефон", order_telegram: "Telegram", order_address: "Адрес",
     order_pay: "Оплата", pay_cash: "Наличные курьеру", pay_qr: "QR курьеру",
-    order_comment: "Комментарий", order_send: "Подтвердить заказ",
+    order_people: "Количество человек", order_comment: "Комментарий", order_send: "Подтвердить заказ",
     email: "Email", password: "Пароль", my_orders: "Мои заказы",
     map_geo: "📍 Моя геолокация", map_pick: "Выбрать на карте",
     map_hint: "Уточните квартиру/этаж в комментарии ниже",
@@ -354,7 +354,7 @@ const I18N = {
     login: "Log in", register: "Sign up", logout: "Log out",
     order_name: "Name", order_phone: "Phone", order_telegram: "Telegram", order_address: "Address",
     order_pay: "Payment", pay_cash: "Cash to courier", pay_qr: "QR to courier",
-    order_comment: "Comment", order_send: "Confirm order",
+    order_people: "Number of people", order_comment: "Comment", order_send: "Confirm order",
     email: "Email", password: "Password", my_orders: "My orders",
     map_geo: "📍 My location", map_pick: "Pick on map",
     map_hint: "Add apartment/floor in the comment below",
@@ -379,7 +379,7 @@ const I18N = {
     login: "Đăng nhập", register: "Đăng ký", logout: "Đăng xuất",
     order_name: "Tên", order_phone: "Điện thoại", order_telegram: "Telegram", order_address: "Địa chỉ",
     order_pay: "Thanh toán", pay_cash: "Tiền mặt cho shipper", pay_qr: "QR cho shipper",
-    order_comment: "Ghi chú", order_send: "Xác nhận đơn hàng",
+    order_people: "Số người", order_comment: "Ghi chú", order_send: "Xác nhận đơn hàng",
     email: "Email", password: "Mật khẩu", my_orders: "Đơn hàng của tôi",
     map_geo: "📍 Vị trí của tôi", map_pick: "Chọn trên bản đồ",
     map_hint: "Ghi rõ căn hộ/tầng trong ghi chú bên dưới",
