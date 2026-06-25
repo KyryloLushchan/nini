@@ -54,9 +54,9 @@ function cardHTML(d, lang, t){
   const isLite = !!d.luxId;
   const counterpartId = isLite ? d.luxId : d.liteId;
   const toggleHTML = counterpartId
-    ? `<div class="variant-switch" title="LUX / LIGHT" onclick="switchVariant(this, ${counterpartId})">
+    ? `<div class="variant-switch ${isLite ? 'is-light' : 'is-lux'}" title="LUX / LIGHT" onclick="switchVariant(this, ${counterpartId})">
          <span class="variant-switch__lux">LUX</span>
-         <img class="variant-toggle" src="${isLite ? 'img/100.jpg' : 'img/101.jpg'}" alt="LUX / LIGHT">
+         <span class="vtoggle"><span class="vtoggle__knob"></span></span>
          <span class="variant-switch__light">LIGHT</span>
        </div>`
     : '';

@@ -223,12 +223,15 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .card__body{ padding:14px 15px 16px; display:flex; flex-direction:column; flex:1; }
 .card__name{ font-family:var(--font-disp); font-weight:700; font-size:16px; line-height:1.2; }
 .card__desc{ font-size:12.5px; color:var(--muted); margin:7px 0 14px; flex:1; }
-.variant-switch{ display:flex; align-items:center; justify-content:flex-end; gap:7px; margin:0 0 8px; cursor:pointer; user-select:none; }
-.variant-switch span{ font-family:var(--font-disp); font-weight:800; font-size:12px; letter-spacing:.4px; }
-.variant-switch__lux{ color:#C8912E; }
-.variant-switch__light{ color:#3DBB6B; }
-.variant-toggle{ display:block; height:34px; width:auto; transition:transform .12s ease; }
-.variant-switch:hover .variant-toggle{ transform:scale(1.04); }
+.variant-switch{ display:flex; align-items:center; justify-content:flex-end; gap:8px; margin:0 0 8px; cursor:pointer; user-select:none; }
+.variant-switch__lux, .variant-switch__light{ font-family:var(--font-disp); font-weight:800; font-size:12px; letter-spacing:.4px; color:#bdb6b0; transition:color .2s; }
+.variant-switch.is-lux .variant-switch__lux{ color:#C8912E; }
+.variant-switch.is-light .variant-switch__light{ color:#3DBB6B; }
+/* бело-зелёный тумблер */
+.vtoggle{ position:relative; flex:none; width:46px; height:26px; border-radius:999px; background:#d6d2cd; transition:background .2s ease; }
+.variant-switch.is-light .vtoggle{ background:#3DBB6B; }
+.vtoggle__knob{ position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:left .2s ease; }
+.variant-switch.is-light .vtoggle__knob{ left:23px; }
 .card__foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .card__price{ font-family:var(--font-disp); font-weight:800; font-size:18px; }
 
