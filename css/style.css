@@ -223,8 +223,12 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .card__body{ padding:14px 15px 16px; display:flex; flex-direction:column; flex:1; }
 .card__name{ font-family:var(--font-disp); font-weight:700; font-size:16px; line-height:1.2; }
 .card__desc{ font-size:12.5px; color:var(--muted); margin:7px 0 14px; flex:1; }
-.variant-toggle{ display:block; height:38px; width:auto; max-width:100%; margin:0 0 8px auto; border-radius:999px; cursor:pointer; user-select:none; transition:transform .12s ease; }
-.variant-toggle:hover{ transform:scale(1.04); }
+.variant-switch{ display:flex; align-items:center; justify-content:flex-end; gap:7px; margin:0 0 8px; cursor:pointer; user-select:none; }
+.variant-switch span{ font-family:var(--font-disp); font-weight:800; font-size:12px; letter-spacing:.4px; }
+.variant-switch__lux{ color:#C8912E; }
+.variant-switch__light{ color:#3DBB6B; }
+.variant-toggle{ display:block; height:34px; width:auto; transition:transform .12s ease; }
+.variant-switch:hover .variant-toggle{ transform:scale(1.04); }
 .card__foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .card__price{ font-family:var(--font-disp); font-weight:800; font-size:18px; }
 
