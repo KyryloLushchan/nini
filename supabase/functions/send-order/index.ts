@@ -168,7 +168,7 @@ serve(async (req) => {
       const price = dishPrice(dish);
       const sum = price * qty;
       total += sum;
-      lines.push({ id: Number(it.id), name: dish.n[lang] ?? dish.n.ua, qty, price, sum });
+      lines.push({ id: Number(it.id), name: dish.n.en ?? dish.n.ua, qty, price, sum });
     }
     if (lines.length === 0) return json({ ok: false, error: "empty cart" }, 400);
 
@@ -212,17 +212,17 @@ serve(async (req) => {
       }
     }
 
-    // Текст заказа собирает СЕРВЕР
-    let msg = `🍣 НОВЕ ЗАМОВЛЕННЯ NiNi Sushi\n\n`;
+    // Текст заказа собирает СЕРВЕР (всегда на английском, независимо от языка клиента)
+    let msg = `🍣 NEW ORDER NiNi Sushi\n\n`;
     msg += `👤 ${name}\n📞 ${phone}\n`;
     if (telegram) msg += `✈️ ${telegram}\n`;
     msg += `📍 ${address}\n`;
-    if (people) msg += `👥 Осіб: ${people}\n`;
-    if (lat && lng) msg += `📍 Координати: ${lat},${lng}\n🗺 https://maps.google.com/?q=${lat},${lng}\n`;
+    if (people) msg += `👥 People: ${people}\n`;
+    if (lat && lng) msg += `📍 Coordinates: ${lat},${lng}\n🗺 https://maps.google.com/?q=${lat},${lng}\n`;
     if (comment) msg += `📝 ${comment}\n`;
     msg += `\n— — —\n`;
     for (const l of lines) msg += `• ${l.name} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
-    msg += `— — —\n💰 РАЗОМ: ${fmtPrice(total)}`;
+    msg += `— — —\n💰 TOTAL: ${fmtPrice(total)}`;
 
     const tg = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
       method: "POST",
