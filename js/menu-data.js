@@ -21,16 +21,6 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
-    id: 38, cat: "rolls", sub: "new", price: 189000, neu: true, img: "img/menu/38.jpg", // ФОТО: Spicy Tokyo roll
-    name: { ua: "Spicy Tokyo roll", ru: "Spicy Tokyo roll", en: "Spicy Tokyo roll", vn: "Spicy Tokyo roll" },
-    desc: {
-      ua: "Лосось, Авокадо, Омлет, Крем-сир Філадельфія, Спайсі майонез",
-      ru: "Лосось, Авокадо, Омлет, Крем-сыр Филадельфия, Спайси майонез",
-      en: "Salmon, Avocado, Omelette, Philadelphia cream cheese, Spicy mayo",
-      vn: "Cá hồi, Bơ, Trứng cuộn, Phô mai Philadelphia, Sốt mayo cay"
-    }
-  },
-  {
     id: 43, cat: "rolls", sub: "new", price: 147500, neu: true, img: "img/menu/43.jpg", // ФОТО: Yamamoto set
     name: { ua: "Yamamoto set", ru: "Yamamoto set", en: "Yamamoto set", vn: "Yamamoto set" },
     desc: {
@@ -38,6 +28,16 @@ const MENU = [
       ru: "Лосось, тобико, васаби, little bit спайси майонез",
       en: "Salmon, tobiko, wasabi, little bit spicy mayo",
       vn: "Cá hồi, tobiko, wasabi, little bit sốt mayo cay"
+    }
+  },
+  {
+    id: 38, cat: "rolls", sub: "new", price: 189000, neu: true, img: "img/menu/38.jpg", // ФОТО: Spicy Tokyo roll
+    name: { ua: "Spicy Tokyo roll", ru: "Spicy Tokyo roll", en: "Spicy Tokyo roll", vn: "Spicy Tokyo roll" },
+    desc: {
+      ua: "Лосось, Авокадо, Омлет, Крем-сир Філадельфія, Спайсі майонез",
+      ru: "Лосось, Авокадо, Омлет, Крем-сыр Филадельфия, Спайси майонез",
+      en: "Salmon, Avocado, Omelette, Philadelphia cream cheese, Spicy mayo",
+      vn: "Cá hồi, Bơ, Trứng cuộn, Phô mai Philadelphia, Sốt mayo cay"
     }
   },
 
