@@ -59,6 +59,38 @@
     .hidden{ display:none !important; }
     .center-load{ text-align:center; color:var(--muted); padding:24px 0; display:flex; gap:10px; align-items:center; justify-content:center; }
 
+    /* danger-кнопка (удаление) */
+    .btn--danger{ background:#fff; color:var(--coral); border:1.5px solid var(--coral); box-shadow:none; }
+    .btn--danger:hover{ background:var(--coral); color:#fff; }
+
+    /* ---- Калькуляция ---- */
+    .calc-top{ display:flex; justify-content:flex-end; margin-bottom:10px; }
+    .dish-form{ margin-bottom:16px; }
+    .dish-form__actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+    .dish-form__actions .btn{ margin-top:0; }
+    .dish-form__actions #dishDelete{ margin-left:auto; }
+
+    .dish-card{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-bottom:14px; }
+    .dish-card__head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .dish-card__name{ font-family:var(--font-disp); font-weight:800; font-size:17px; }
+    .dish-card__meta{ font-size:13px; color:var(--muted); margin-top:2px; }
+    .dish-card__meta .off{ color:var(--coral); font-weight:700; }
+    .dish-card__edit{ flex:none; padding:8px 16px; font-size:14px; }
+
+    .recipe-list{ list-style:none; margin:12px 0 0; padding:12px 0 0; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
+    .recipe-row{ display:flex; align-items:center; gap:10px; }
+    .recipe-row__name{ flex:1; font-weight:600; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .recipe-row__amount{ width:96px; flex:none; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:var(--bg-soft); text-align:right; }
+    .recipe-row__amount:focus{ outline:none; border-color:var(--coral); background:#fff; }
+    .recipe-row__unit{ width:48px; flex:none; font-size:13px; color:var(--muted); }
+    .recipe-row__del{ flex:none; width:30px; height:30px; border-radius:8px; color:var(--coral); font-size:16px; line-height:1; background:var(--coral-soft); }
+    .recipe-empty{ color:var(--muted); font-size:13px; margin:12px 0 0; padding-top:12px; border-top:1px solid var(--line); }
+
+    .recipe-add{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .recipe-add__sel{ flex:1; min-width:140px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:var(--bg-soft); }
+    .recipe-add__amt{ width:96px; flex:none; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:var(--bg-soft); text-align:right; }
+    .recipe-add .btn{ margin-top:0; padding:9px 16px; font-size:14px; }
+
     @media (max-width:480px){
       .admin__title{ font-size:19px; }
       table.stock th, table.stock td{ padding:10px 8px; font-size:14px; }
@@ -95,6 +127,7 @@
       <div class="tabs">
         <button id="tabStock"  class="tabs__btn is-active" data-tab="stock">Остатки</button>
         <button id="tabIncome" class="tabs__btn"           data-tab="income">Приход</button>
+        <button id="tabCalc"   class="tabs__btn"           data-tab="calc">Калькуляция</button>
       </div>
 
       <!-- Остатки -->
@@ -115,6 +148,38 @@
           <input id="incNote" type="text" placeholder="напр. поставка от …">
           <button id="incSubmit" class="btn btn--primary btn--full">Добавить приход</button>
           <p id="incNoteMsg" class="form__note"></p>
+        </div>
+      </div>
+
+      <!-- Калькуляция -->
+      <div id="panelCalc" class="hidden">
+        <div class="calc-top">
+          <button id="addDishBtn" class="btn btn--primary">＋ Блюдо</button>
+        </div>
+        <p id="calcNote" class="form__note"></p>
+
+        <!-- форма блюда (добавить / изменить) -->
+        <div id="dishForm" class="card-box dish-form hidden">
+          <div class="form">
+            <label for="dishCode">Код</label>
+            <input id="dishCode" type="text" placeholder="напр. R-01">
+            <label for="dishName">Название *</label>
+            <input id="dishName" type="text" placeholder="Название блюда">
+            <label for="dishCategory">Категория</label>
+            <input id="dishCategory" type="text" placeholder="напр. Роллы">
+            <label for="dishPrice">Цена</label>
+            <input id="dishPrice" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+            <div class="dish-form__actions">
+              <button id="dishSave" class="btn btn--primary">Сохранить</button>
+              <button id="dishCancel" class="btn btn--ghost">Отмена</button>
+              <button id="dishDelete" class="btn btn--danger hidden">Удалить блюдо</button>
+            </div>
+            <p id="dishNote" class="form__note"></p>
+          </div>
+        </div>
+
+        <div id="calcBody">
+          <div class="center-load"><span class="spinner"></span> Загрузка…</div>
         </div>
       </div>
     </section>
