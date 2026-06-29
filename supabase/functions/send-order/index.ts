@@ -31,7 +31,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 /* ===== Серверное меню (источник правды для цен/названий) ===== */
-type Dish = { p: number; c: string; n: Record<string, string> };
+type Dish = { p: number; c: string; n: Record<string, string>; noSale?: boolean };
 const MENU: Record<string, Dish> = {
   "1":{"p":189000,"c":"rolls","n":{"ua":"Філадельфія з лососем","ru":"Филадельфия с лососем","en":"Philadelphia with Salmon","vn":"Philadelphia cá hồi"}},
   "2":{"p":199000,"c":"rolls","n":{"ua":"Філадельфія з лососем та авокадо","ru":"Филадельфия с лососем и авокадо","en":"Philadelphia Salmon & Avocado","vn":"Philadelphia cá hồi & bơ"}},
@@ -59,11 +59,12 @@ const MENU: Record<string, Dish> = {
   "35":{"p":200000,"c":"rolls","n":{"ua":"Запечений з лососем","ru":"Запечённый с лососем","en":"Baked Salmon","vn":"Cuộn nướng cá hồi"}},
   "36":{"p":175000,"c":"rolls","n":{"ua":"Запечений з куркою","ru":"Запечённый с курицей","en":"Baked Chicken","vn":"Cuộn nướng gà"}},
   "38":{"p":189000,"c":"rolls","n":{"ua":"Spicy Tokyo roll","ru":"Spicy Tokyo roll","en":"Spicy Tokyo roll","vn":"Spicy Tokyo roll"}},
+  "43":{"p":118000,"c":"rolls","noSale":true,"n":{"ua":"Yamamoto set","ru":"Yamamoto set","en":"Yamamoto set","vn":"Yamamoto set"}},
   "90":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія з лососем (Light)","ru":"Филадельфия с лососем (Light)","en":"Philadelphia with Salmon (Light)","vn":"Philadelphia cá hồi (Light)"}},
   "91":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія Гриль (Light)","ru":"Филадельфия Гриль (Light)","en":"Philadelphia Grill (Light)","vn":"Philadelphia nướng (Light)"}},
 };
 const SALE = 0.20;
-const dishPrice = (d: Dish) => d.c === "drinks" ? d.p : Math.round(d.p * (1 - SALE));
+const dishPrice = (d: Dish) => (d.c === "drinks" || d.noSale) ? d.p : Math.round(d.p * (1 - SALE));
 const fmtPrice = (v: number) => v.toLocaleString("ru-RU").replace(/,/g, " ") + "₫";
 const clean = (s: unknown, max = 300) => String(s ?? "").trim().slice(0, max);
 

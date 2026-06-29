@@ -30,6 +30,16 @@ const MENU = [
       vn: "Cá hồi, Bơ, Trứng cuộn, Phô mai Philadelphia, Sốt mayo cay"
     }
   },
+  {
+    id: 43, cat: "rolls", sub: "new", price: 118000, neu: true, noSale: true, img: "img/menu/43.jpg", // ФОТО: Yamamoto set
+    name: { ua: "Yamamoto set", ru: "Yamamoto set", en: "Yamamoto set", vn: "Yamamoto set" },
+    desc: {
+      ua: "Лосось, тобіко, васабі, little bit spicy mayo",
+      ru: "Лосось, тобико, васаби, little bit spicy mayo",
+      en: "Salmon, tobiko, wasabi, little bit spicy mayo",
+      vn: "Cá hồi, tobiko, wasabi, little bit spicy mayo"
+    }
+  },
 
   /* ---------- РОЛЛЫ · ФІЛАДЕЛЬФІЯ ---------- */
   {
@@ -305,10 +315,10 @@ const SALE = 0.20;
 /* Действующая цена блюда: со скидкой, кроме категории drinks */
 function dishPrice(d){
   if(!d) return 0;
-  return d.cat === 'drinks' ? d.price : Math.round(d.price * (1 - SALE));
+  return (d.cat === 'drinks' || d.noSale) ? d.price : Math.round(d.price * (1 - SALE));
 }
 /* Есть ли скидка у блюда (для бейджа и зачёркнутой цены) */
-function hasSale(d){ return !!d && d.cat !== 'drinks'; }
+function hasSale(d){ return !!d && d.cat !== 'drinks' && !d.noSale; }
 
 /* ===== ПЕРЕВОДЫ ИНТЕРФЕЙСА ===== */
 const I18N = {
