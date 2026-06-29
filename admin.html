@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' https://cdn.jsdelivr.net;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data:;
+    connect-src 'self' https://rdxlvebvwjzfmzvguqaf.supabase.co;
+    base-uri 'self';
+    form-action 'self';
+  ">
+  <title>NiNi Sushi — Склад (админ)</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="img/logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ---- Админка склада: локальные стили поверх переменных сайта ---- */
+    body{ background:var(--bg-soft); font-family:var(--font-body); color:var(--ink); }
+    .admin{ max-width:760px; margin:0 auto; padding:18px 16px 60px; }
+
+    .admin__head{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:18px;
+    }
+    .admin__title{ font-family:var(--font-disp); font-weight:800; font-size:22px; }
+    .admin__title span{ color:var(--coral); }
+    .admin__user{ font-size:13px; color:var(--muted); margin-right:auto; }
+
+    .card-box{
+      background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:18px;
+    }
+
+    /* центрированная карточка входа */
+    .login-wrap{ min-height:80vh; display:flex; align-items:center; justify-content:center; }
+    .login-wrap .card-box{ width:100%; max-width:380px; }
+    .login-wrap .admin__title{ text-align:center; margin-bottom:6px; }
+    .login-sub{ text-align:center; color:var(--muted); font-size:14px; margin-bottom:14px; }
+
+    /* таблица остатков */
+    .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table.stock{ width:100%; border-collapse:collapse; font-size:15px; }
+    table.stock th, table.stock td{ padding:11px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
+    table.stock th{ font-family:var(--font-disp); font-weight:700; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.02em; }
+    table.stock td.num, table.stock th.num{ text-align:right; }
+    table.stock tr.is-low td{ background:#FFECEC; }
+    table.stock tr.is-low .stock-val{ color:var(--coral); font-weight:800; }
+    .stock-empty{ text-align:center; color:var(--muted); padding:24px 0; }
+
+    .badge-low{ display:inline-block; margin-left:6px; font-size:11px; font-weight:800; color:#fff; background:var(--coral); padding:2px 7px; border-radius:999px; vertical-align:middle; }
+
+    .hidden{ display:none !important; }
+    .center-load{ text-align:center; color:var(--muted); padding:24px 0; display:flex; gap:10px; align-items:center; justify-content:center; }
+
+    @media (max-width:480px){
+      .admin__title{ font-size:19px; }
+      table.stock th, table.stock td{ padding:10px 8px; font-size:14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin">
+
+    <!-- ===== ВХОД ===== -->
+    <section id="loginView" class="login-wrap hidden">
+      <div class="card-box">
+        <div class="admin__title">NiNi <span>Sushi</span> · Склад</div>
+        <p class="login-sub">Вход для персонала</p>
+        <div class="form">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="username" placeholder="you@example.com">
+          <label for="password">Пароль</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+          <button id="loginBtn" class="btn btn--primary btn--full">Войти</button>
+          <p id="loginNote" class="form__note"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== СКЛАД ===== -->
+    <section id="appView" class="hidden">
+      <div class="admin__head">
+        <div class="admin__title">NiNi <span>Sushi</span> · Склад</div>
+        <span id="userEmail" class="admin__user"></span>
+        <button id="logoutBtn" class="btn btn--ghost">Выйти</button>
+      </div>
+
+      <div class="tabs">
+        <button id="tabStock"  class="tabs__btn is-active" data-tab="stock">Остатки</button>
+        <button id="tabIncome" class="tabs__btn"           data-tab="income">Приход</button>
+      </div>
+
+      <!-- Остатки -->
+      <div id="panelStock" class="card-box">
+        <div id="stockBody">
+          <div class="center-load"><span class="spinner"></span> Загрузка…</div>
+        </div>
+      </div>
+
+      <!-- Приход -->
+      <div id="panelIncome" class="card-box hidden">
+        <div class="form">
+          <label for="incIngredient">Ингредиент</label>
+          <select id="incIngredient"></select>
+          <label for="incAmount">Количество</label>
+          <input id="incAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+          <label for="incNote">Примечание (необязательно)</label>
+          <input id="incNote" type="text" placeholder="напр. поставка от …">
+          <button id="incSubmit" class="btn btn--primary btn--full">Добавить приход</button>
+          <p id="incNoteMsg" class="form__note"></p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
