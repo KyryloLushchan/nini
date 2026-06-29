@@ -8,18 +8,39 @@
    ============================================================ */
 (function(){
   const ALLOWED = 'VN';
+  const norm = c => (typeof c === 'string' && /^[A-Za-z]{2}$/.test(c) ? c.toUpperCase() : null);
 
-  async function getCountry(){
-    const norm = c => (typeof c === 'string' && /^[A-Za-z]{2}$/.test(c) ? c.toUpperCase() : null);
+  /* Часовой пояс устройства указывает на Вьетнам — сильный сигнал «я тут».
+     Если да, сайт открываем всегда (защита от ложных срабатываний IP-гео). */
+  function tzLooksVN(){
+    try{
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      return tz === 'Asia/Ho_Chi_Minh' || tz === 'Asia/Saigon';
+    }catch(e){ return false; }
+  }
+
+  async function fromCountryIs(){
     try{
       const r = await fetch('https://api.country.is', { signal: AbortSignal.timeout(4000) });
-      if(r.ok){ const d = await r.json(); const c = norm(d && d.country); if(c) return c; }
+      if(r.ok){ const d = await r.json(); return norm(d && d.country); }
     }catch(e){}
+    return null;
+  }
+  async function fromIpWho(){
     try{
       const r = await fetch('https://ipwho.is/?fields=country_code,success', { signal: AbortSignal.timeout(4000) });
       if(r.ok){ const d = await r.json(); if(d && d.success) return norm(d.country_code); }
     }catch(e){}
     return null;
+  }
+
+  /* Блокируем ТОЛЬКО при уверенности: оба сервиса ответили и оба говорят «не VN».
+     Если хоть один вернул VN, не ответил, или сервисы расходятся — показываем сайт
+     (fail-open, чтобы не отсекать реальных гостей из Вьетнама из-за кривого IP-гео). */
+  async function isOutsideVN(){
+    const known = (await Promise.all([fromCountryIs(), fromIpWho()])).filter(Boolean);
+    if(known.length < 2) return false;
+    return known.every(c => c !== ALLOWED);
   }
 
   function showBlock(){
@@ -46,5 +67,7 @@
     document.body.style.overflow = 'hidden';
   }
 
-  getCountry().then(c => { if(c && c !== ALLOWED) showBlock(); });
+  if(!tzLooksVN()){
+    isOutsideVN().then(outside => { if(outside) showBlock(); });
+  }
 })();

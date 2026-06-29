@@ -68,19 +68,26 @@ const dishPrice = (d: Dish) => (d.c === "drinks" || d.noSale) ? d.p : Math.round
 const fmtPrice = (v: number) => v.toLocaleString("ru-RU").replace(/,/g, " ") + "₫";
 const clean = (s: unknown, max = 300) => String(s ?? "").trim().slice(0, max);
 
-/* Страна по IP (fail-open: при ошибке возвращаем null → заказ пропускаем) */
-async function ipCountry(ip: string): Promise<string | null> {
-  if (!ip || ip === "unknown") return null;
-  const norm = (c: unknown) => (typeof c === "string" && /^[A-Za-z]{2}$/.test(c) ? c.toUpperCase() : null);
-  try {
-    const r = await fetch(`https://api.country.is/${ip}`, { signal: AbortSignal.timeout(4000) });
-    if (r.ok) { const d = await r.json().catch(() => null); const c = norm(d?.country); if (c) return c; }
-  } catch { /* пробуем запасной */ }
-  try {
-    const r = await fetch(`https://ipwho.is/${ip}?fields=country_code,success`, { signal: AbortSignal.timeout(4000) });
-    if (r.ok) { const d = await r.json().catch(() => null); if (d?.success) return norm(d?.country_code); }
-  } catch { /* fail-open */ }
-  return null;
+const normCC = (c: unknown) => (typeof c === "string" && /^[A-Za-z]{2}$/.test(c) ? c.toUpperCase() : null);
+
+/* Страны по IP из двух источников (по одному коду на источник, null если не ответил). */
+async function ipCountries(ip: string): Promise<(string | null)[]> {
+  if (!ip || ip === "unknown") return [];
+  const a = (async () => {
+    try {
+      const r = await fetch(`https://api.country.is/${ip}`, { signal: AbortSignal.timeout(4000) });
+      if (r.ok) { const d = await r.json().catch(() => null); return normCC(d?.country); }
+    } catch { /* ignore */ }
+    return null;
+  })();
+  const b = (async () => {
+    try {
+      const r = await fetch(`https://ipwho.is/${ip}?fields=country_code,success`, { signal: AbortSignal.timeout(4000) });
+      if (r.ok) { const d = await r.json().catch(() => null); if (d?.success) return normCC(d?.country_code); }
+    } catch { /* ignore */ }
+    return null;
+  })();
+  return await Promise.all([a, b]);
 }
 
 /* ===== Надёжный rate-limit / дедуп через таблицу order_rate (общая для всех инстансов) =====
@@ -177,11 +184,14 @@ serve(async (req) => {
 
     // Гео-ограничение: заказы только из разрешённой страны (по умолчанию VN).
     // fail-open: если страну определить не удалось — заказ пропускаем.
+    // Блокируем заказ ТОЛЬКО при уверенности: оба источника ответили и оба «не VN».
+    // Если расходятся / один не ответил — пропускаем (fail-open), чтобы не терять
+    // реальных гостей из Вьетнама из-за неточной IP-геолокации.
     const ALLOWED_COUNTRY = (Deno.env.get("ALLOWED_COUNTRY") || "VN").toUpperCase();
     if (ALLOWED_COUNTRY) {
-      const country = await ipCountry(ip);
-      if (country && country !== ALLOWED_COUNTRY) {
-        return json({ ok: false, error: "region not allowed", country }, 403);
+      const known = (await ipCountries(ip)).filter((c): c is string => !!c);
+      if (known.length >= 2 && known.every((c) => c !== ALLOWED_COUNTRY)) {
+        return json({ ok: false, error: "region not allowed", country: known[0] }, 403);
       }
     }
 
