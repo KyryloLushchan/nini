@@ -31,13 +31,13 @@ const MENU = [
     }
   },
   {
-    id: 43, cat: "rolls", sub: "new", price: 118000, neu: true, noSale: true, img: "img/menu/43.jpg", // ФОТО: Yamamoto set
+    id: 43, cat: "rolls", sub: "new", price: 147500, neu: true, img: "img/menu/43.jpg", // ФОТО: Yamamoto set
     name: { ua: "Yamamoto set", ru: "Yamamoto set", en: "Yamamoto set", vn: "Yamamoto set" },
     desc: {
-      ua: "Лосось, тобіко, васабі, little bit spicy mayo",
-      ru: "Лосось, тобико, васаби, little bit spicy mayo",
+      ua: "Лосось, тобіко, васабі, little bit спайсі майонез",
+      ru: "Лосось, тобико, васаби, little bit спайси майонез",
       en: "Salmon, tobiko, wasabi, little bit spicy mayo",
-      vn: "Cá hồi, tobiko, wasabi, little bit spicy mayo"
+      vn: "Cá hồi, tobiko, wasabi, little bit sốt mayo cay"
     }
   },
 
