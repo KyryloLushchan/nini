@@ -223,7 +223,7 @@ serve(async (req) => {
       }
     }
 
-    // Текст заказа собирает СЕРВЕР (всегда на английском, независимо от языка клиента)
+    // Текст заказа собирает СЕРВЕР (всегда на английском)
     let msg = `🍣 NEW ORDER NiNi Sushi\n\n`;
     msg += `👤 ${name}\n📞 ${phone}\n`;
     if (telegram) msg += `✈️ ${telegram}\n`;
@@ -235,21 +235,13 @@ serve(async (req) => {
     for (const l of lines) msg += `• ${l.name} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
     msg += `— — —\n💰 TOTAL: ${fmtPrice(total)}`;
 
-    const tg = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text: msg }),
-    });
-    const data = await tg.json();
-
-    // Сохранение заказа в БД (через service-role, best-effort — не валим заказ при ошибке).
-    // Прямую запись анон-ключом мы запрещаем политиками, поэтому пишем только отсюда.
+    // 1) СНАЧАЛА сохраняем заказ и получаем id (нужен для кнопок).
+    const SB_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+    let orderId: number | null = null;
     try {
-      const SB_URL = Deno.env.get("SUPABASE_URL");
-      const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      const ANON = Deno.env.get("SUPABASE_ANON_KEY");
       if (SB_URL && SERVICE) {
-        // user_id берём ТОЛЬКО из проверенного JWT пользователя (клиенту не верим)
         let user_id: string | null = null;
         const userToken = clean(body.userToken, 4000);
         if (userToken) {
@@ -261,23 +253,46 @@ serve(async (req) => {
             if (u && typeof u.id === "string") user_id = u.id;
           }
         }
-        await fetch(`${SB_URL}/rest/v1/orders`, {
+        const ins = await fetch(`${SB_URL}/rest/v1/orders`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             apikey: SERVICE,
             Authorization: `Bearer ${SERVICE}`,
-            Prefer: "return=minimal",
+            Prefer: "return=representation",
           },
           body: JSON.stringify({
             customer_name: name, phone, address, comment,
             items: lines, total,
             lat: lat || null, lng: lng || null,
-            user_id,
+            user_id, status: "new",
           }),
         });
+        if (ins.ok) {
+          const rows = await ins.json().catch(() => null);
+          if (Array.isArray(rows) && rows[0] && typeof rows[0].id === "number") {
+            orderId = rows[0].id;
+          }
+        }
       }
-    } catch (_e) { /* запись в БД не критична для отправки заказа */ }
+    } catch (_e) { /* запись в БД не критична для отправки */ }
+
+    // 2) Отправляем в группу. Есть id — добавляем кнопки.
+    const sendBody: Record<string, unknown> = { chat_id: CHAT_ID, text: msg };
+    if (orderId !== null) {
+      sendBody.reply_markup = {
+        inline_keyboard: [[
+          { text: "✅ Одобрить", callback_data: `ok:${orderId}` },
+          { text: "❌ Отклонить", callback_data: `no:${orderId}` },
+        ]],
+      };
+    }
+    const tg = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sendBody),
+    });
+    const data = await tg.json();
 
     return json({ ok: data.ok === true }, data.ok ? 200 : 500);
   } catch (e) {
