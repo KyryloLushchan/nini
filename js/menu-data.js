@@ -325,7 +325,7 @@ const I18N = {
   ua: {
     nav_sushi: "Суші", nav_rolls: "Роли", nav_hot: "Гарячі роли", nav_drinks: "Напої",
     hero_tagline: "Свіжі суші з доставкою", hero_btn: "Переглянути меню",
-    hours_label: "Години роботи:", hours_time: "🕘 16:00 – 20:00",
+    hours_label: "Години роботи:", hours_time: "🕘 14:30 – 23:00",
     sub_new: "Новинки", badge_new: "Новинка",
     sub_philadelphia: "Філадельфія", sub_california: "Каліфорнія", sub_maki: "Макі",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Дракони", sub_baked: "Запечені", sub_felix: "Фелікс",
@@ -350,7 +350,7 @@ const I18N = {
   ru: {
     nav_sushi: "Суши", nav_rolls: "Роллы", nav_hot: "Горячие роллы", nav_drinks: "Напитки",
     hero_tagline: "Свежие суши с доставкой", hero_btn: "Смотреть меню",
-    hours_label: "Часы работы:", hours_time: "🕘 16:00 – 20:00",
+    hours_label: "Часы работы:", hours_time: "🕘 14:30 – 23:00",
     sub_new: "Новинки", badge_new: "Новинка",
     sub_philadelphia: "Филадельфия", sub_california: "Калифорния", sub_maki: "Маки",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Драконы", sub_baked: "Запечённые", sub_felix: "Феликс",
@@ -375,7 +375,7 @@ const I18N = {
   en: {
     nav_sushi: "Sushi", nav_rolls: "Rolls", nav_hot: "Hot Rolls", nav_drinks: "Drinks",
     hero_tagline: "Fresh sushi delivered", hero_btn: "View menu",
-    hours_label: "Working hours:", hours_time: "🕘 4:00 – 8:00 PM",
+    hours_label: "Working hours:", hours_time: "🕘 2:30 – 11:00 PM",
     sub_new: "New", badge_new: "New",
     sub_philadelphia: "Philadelphia", sub_california: "California", sub_maki: "Maki",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Dragons", sub_baked: "Baked", sub_felix: "Felix",
@@ -400,7 +400,7 @@ const I18N = {
   vn: {
     nav_sushi: "Sushi", nav_rolls: "Cuộn", nav_hot: "Cuộn nóng", nav_drinks: "Đồ uống",
     hero_tagline: "Sushi tươi giao tận nơi", hero_btn: "Xem thực đơn",
-    hours_label: "Giờ làm việc:", hours_time: "🕘 16h00 – 20h00",
+    hours_label: "Giờ làm việc:", hours_time: "🕘 14h30 – 23h00",
     sub_new: "Mới", badge_new: "Mới",
     sub_philadelphia: "Philadelphia", sub_california: "California", sub_maki: "Maki",
     sub_spicy: "Spicy Tuna roll", sub_dragon: "Rồng", sub_baked: "Nướng", sub_felix: "Felix",
