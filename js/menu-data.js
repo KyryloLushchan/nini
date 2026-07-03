@@ -122,10 +122,10 @@ const MENU = [
     id: 20, cat: "rolls", sub: "spicy", price: 199000, spicy: true, img: "img/menu/39.jpg", // ФОТО: Spicy Tuna roll
     name: { ua: "Spicy Tuna roll", ru: "Spicy Tuna roll", en: "Spicy Tuna roll", vn: "Spicy Tuna roll" },
     desc: {
-      ua: "Рис, Тунець, Крем-сир, Авокадо, Тобіко, Салат айсберг, Шірача + Майонез, Норі",
-      ru: "Рис, Тунец, Крем-сыр, Авокадо, Тобико, Салат айсберг, Ширача + Майонез, Нори",
-      en: "Rice, Tuna, Cream cheese, Avocado, Tobiko, Iceberg, Sriracha + Mayo, Nori",
-      vn: "Cơm, Cá ngừ, Phô mai kem, Bơ, Tobiko, Xà lách, Sriracha + Mayo, Rong biển"
+      ua: "Рис, Тунець, Крем-сир, Авокадо, Огірок, Тобіко, Салат айсберг, Шірача + Майонез, Норі",
+      ru: "Рис, Тунец, Крем-сыр, Авокадо, Огурец, Тобико, Салат айсберг, Ширача + Майонез, Нори",
+      en: "Rice, Tuna, Cream cheese, Avocado, Cucumber, Tobiko, Iceberg, Sriracha + Mayo, Nori",
+      vn: "Cơm, Cá ngừ, Phô mai kem, Bơ, Dưa leo, Tobiko, Xà lách, Sriracha + Mayo, Rong biển"
     }
   },
 
