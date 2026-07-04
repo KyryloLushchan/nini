@@ -154,10 +154,10 @@ const MENU = [
     id: 15, cat: "rolls", sub: "dragon", price: 175000,             // ФОТО: Зелений Дракон
     name: { ua: "Зелений Дракон", ru: "Зелёный Дракон", en: "Green Dragon", vn: "Rồng xanh" },
     desc: {
-      ua: "Рис, Креветка, Вугор, Крем-сир, Авокадо, Норі",
-      ru: "Рис, Креветка, Угорь, Крем-сыр, Авокадо, Нори",
-      en: "Rice, Shrimp, Eel, Cream cheese, Avocado, Nori",
-      vn: "Cơm, Tôm, Lươn, Phô mai kem, Bơ, Rong biển"
+      ua: "Рис, Креветка, Манго, Крем-сир, Авокадо, Норі",
+      ru: "Рис, Креветка, Манго, Крем-сыр, Авокадо, Нори",
+      en: "Rice, Shrimp, Mango, Cream cheese, Avocado, Nori",
+      vn: "Cơm, Tôm, Xoài, Phô mai kem, Bơ, Rong biển"
     }
   },
 
