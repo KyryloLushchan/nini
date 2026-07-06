@@ -179,7 +179,7 @@ async function handleCallback(cq: any) {
         const lines = items.map((it) => `• ${it.name} × ${it.qty}`).join("\n");
         await tg("sendMessage", {
           chat_id: KITCHEN_CHAT_ID,
-          text: `🍣 Заказ #${order.id}\n\n${lines}`,
+          text: `🍣 Order #${order.id}\n\n${lines}`,
         });
       } catch (e) {
         console.log("KITCHEN sendMessage failed:", e);
