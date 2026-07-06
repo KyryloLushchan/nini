@@ -757,12 +757,10 @@ function renderInvoice(items){
   const rows = items.map(it=>{
     const match = fuzzyIngredientId(it.name);
     return `
-      <tr class="inv-row">
+      <tr class="inv-row" data-ppu="${escapeHtml(it.price_per_unit ?? '')}" data-total="${escapeHtml(it.total ?? '')}">
         <td><input class="inv-name" value="${escapeHtml(it.name ?? '')}"></td>
         <td><input class="inv-qty inv-num" type="number" step="any" value="${escapeHtml(it.qty ?? '')}"></td>
         <td><input class="inv-unit" value="${escapeHtml(it.unit ?? '')}"></td>
-        <td><input class="inv-ppu inv-num" type="number" step="any" value="${escapeHtml(it.price_per_unit ?? '')}"></td>
-        <td><input class="inv-total inv-num" type="number" step="any" value="${escapeHtml(it.total ?? '')}"></td>
         <td><select class="inv-ing">${invIngredientOptions(match)}</select></td>
       </tr>`;
   }).join('');
@@ -770,7 +768,7 @@ function renderInvoice(items){
     <div class="inv-table-wrap">
       <table class="inv-table">
         <thead><tr>
-          <th>Название</th><th>Кол-во</th><th>Ед.</th><th>Цена/ед</th><th>Сумма</th><th>Ингредиент</th>
+          <th>Название</th><th>Кол-во</th><th>Ед.</th><th>Ингредиент</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -809,8 +807,8 @@ async function handleSubmitInvoice(){
     for(const row of rows){
       const name    = row.querySelector('.inv-name').value.trim();
       const rawUnit = row.querySelector('.inv-unit').value;
-      const ppu     = Number(row.querySelector('.inv-ppu').value);
-      const total   = Number(row.querySelector('.inv-total').value);
+      const ppu     = Number(row.dataset.ppu);      // цена/ед — из распознавания (скрыта в UI)
+      const total   = Number(row.dataset.total);    // сумма — из распознавания (скрыта в UI)
       const ingSel  = row.querySelector('.inv-ing').value;
 
       if(!name) throw new Error('пустое название в одной из строк');
