@@ -21,6 +21,7 @@ let ingredients = [];
 let dishes = [];
 let recipesByDish = {};
 let editingDishId = null;
+let invRows = [];   // локальные строки распознанной накладной (до «Внести всё»)
 
 /* ---------- Загрузка Supabase (тот же CDN + SRI, что и на сайте) ---------- */
 (function loadSupabase(){
@@ -86,6 +87,8 @@ function bindUI(){
   // Фото-приход накладной
   $('invRecognize').addEventListener('click', handleRecognizeInvoice);
   $('invResult').addEventListener('click', (e)=>{
+    const del = e.target.closest('.inv-del');
+    if(del){ deleteInvRow(Number(del.dataset.index)); return; }
     if(e.target.closest('#invSubmit')) handleSubmitInvoice();
     else if(e.target.closest('#invCancel')) cancelInvoice();
   });
@@ -697,7 +700,14 @@ async function handleRecognizeInvoice(){
       note.textContent = 'Позиции не найдены — проверьте фото';
       return;
     }
-    renderInvoice(items);
+    invRows = items.map(it=>{
+      const c = invAutoConvert(it);
+      return {
+        name: it.name ?? '', qty: c.qty, unit: c.unit,
+        priceBase: c.priceBase, total: it.total, ingId: fuzzyIngredientId(it.name)
+      };
+    });
+    renderInvoice();
     note.className = 'form__note';
     note.textContent = '';
   }catch(e){
@@ -712,6 +722,7 @@ async function handleRecognizeInvoice(){
 
 /* отменить результат распознавания — очистить блок */
 function cancelInvoice(){
+  invRows = [];
   $('invResult').innerHTML = '';
   $('invFile').value = '';
   $('invNote').className = 'form__note';
@@ -762,28 +773,26 @@ function invIngredientOptions(selected){
     ).join('');
 }
 
-function renderInvoice(items){
-  const rows = items.map(it=>{
-    const match = fuzzyIngredientId(it.name);
-    const c = invAutoConvert(it);   // { unit:'г'|'шт', qty, priceBase }
-    return `
-      <tr class="inv-row" data-pricebase="${escapeHtml(c.priceBase ?? '')}" data-total="${escapeHtml(it.total ?? '')}">
-        <td><input class="inv-name" value="${escapeHtml(it.name ?? '')}"></td>
-        <td><input class="inv-qty inv-num" type="number" step="any" value="${escapeHtml(c.qty ?? '')}"></td>
+function renderInvoice(){
+  if(!invRows.length){ $('invResult').innerHTML = ''; return; }
+  const rows = invRows.map((r, i)=> `
+      <tr class="inv-row" data-index="${i}">
+        <td><input class="inv-name" value="${escapeHtml(r.name ?? '')}"></td>
+        <td><input class="inv-qty inv-num" type="number" step="any" value="${escapeHtml(r.qty ?? '')}"></td>
         <td>
           <select class="inv-unit">
-            <option value="г"${c.unit === 'г' ? ' selected' : ''}>г</option>
-            <option value="шт"${c.unit === 'шт' ? ' selected' : ''}>шт</option>
+            <option value="г"${r.unit === 'г' ? ' selected' : ''}>г</option>
+            <option value="шт"${r.unit === 'шт' ? ' selected' : ''}>шт</option>
           </select>
         </td>
-        <td><select class="inv-ing">${invIngredientOptions(match)}</select></td>
-      </tr>`;
-  }).join('');
+        <td><select class="inv-ing">${invIngredientOptions(r.ingId)}</select></td>
+        <td><button class="inv-del" data-index="${i}" title="Удалить строку">×</button></td>
+      </tr>`).join('');
   $('invResult').innerHTML = `
     <div class="inv-table-wrap">
       <table class="inv-table">
         <thead><tr>
-          <th>Название</th><th>Кол-во</th><th>Единица</th><th>Ингредиент</th>
+          <th>Название</th><th>Кол-во</th><th>Единица</th><th>Ингредиент</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -795,6 +804,25 @@ function renderInvoice(items){
       </div>
       <p id="invSubmitNote" class="form__note"></p>
     </div>`;
+}
+
+/* синхронизировать правки из DOM обратно в invRows (перед удалением/вставкой) */
+function syncInvRowsFromDom(){
+  const rows = [...document.querySelectorAll('#invResult .inv-row')];
+  rows.forEach((row, i)=>{
+    if(!invRows[i]) return;
+    invRows[i].name  = row.querySelector('.inv-name').value;
+    invRows[i].qty   = row.querySelector('.inv-qty').value;
+    invRows[i].unit  = row.querySelector('.inv-unit').value;
+    invRows[i].ingId = row.querySelector('.inv-ing').value;
+  });
+}
+
+/* удалить строку локально и перерисовать (без запросов к БД) */
+function deleteInvRow(i){
+  syncInvRowsFromDom();
+  invRows.splice(i, 1);
+  renderInvoice();
 }
 
 /* авто-конвертация позиции накладной -> база ('г' | 'шт').
@@ -820,8 +848,8 @@ function invAutoConvert(it){
 async function handleSubmitInvoice(){
   const note = $('invSubmitNote');
   if(note) note.className = 'form__note';
-  const rows = [...document.querySelectorAll('#invResult .inv-row')];
-  if(!rows.length) return;
+  syncInvRowsFromDom();
+  if(!invRows.length) return;
 
   const btn = $('invSubmit');
   btn.disabled = true;
@@ -829,13 +857,13 @@ async function handleSubmitInvoice(){
   btn.innerHTML = '<span class="spinner spinner--btn"></span>';
   try{
     let done = 0;
-    for(const row of rows){
-      const name      = row.querySelector('.inv-name').value.trim();
-      const qty       = Number(row.querySelector('.inv-qty').value);   // итоговое кол-во (редактируемое)
-      const unit      = row.querySelector('.inv-unit').value;          // 'г' | 'шт' (из селекта)
-      const priceBase = Number(row.dataset.pricebase);                 // цена за 1 базовую ед. (из распознавания)
-      const total     = Number(row.dataset.total);                     // сумма (из распознавания, скрыта в UI)
-      const ingSel    = row.querySelector('.inv-ing').value;
+    for(const r of invRows){
+      const name      = String(r.name ?? '').trim();
+      const qty       = Number(r.qty);          // итоговое кол-во (редактируемое)
+      const unit      = r.unit;                 // 'г' | 'шт' (из селекта)
+      const priceBase = Number(r.priceBase);    // цена за 1 базовую ед. (из распознавания)
+      const total     = Number(r.total);        // сумма (из распознавания, скрыта в UI)
+      const ingSel    = r.ingId;
 
       if(!name) throw new Error('пустое название в одной из строк');
       if(!Number.isFinite(qty) || qty <= 0) throw new Error('некорректное количество: ' + name);
@@ -870,6 +898,7 @@ async function handleSubmitInvoice(){
       done++;
     }
     // очистить блок + обновить остатки/кассу
+    invRows = [];
     $('invResult').innerHTML = '';
     $('invFile').value = '';
     $('invNote').className = 'form__note is-ok';
