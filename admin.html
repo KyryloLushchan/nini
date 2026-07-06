@@ -52,6 +52,9 @@
     table.stock td.num, table.stock th.num{ text-align:right; }
     table.stock tr.is-low td{ background:#FFECEC; }
     table.stock tr.is-low .stock-val{ color:var(--coral); font-weight:800; }
+    .stock-edit{ width:96px; padding:7px 9px; border:1px solid var(--line); border-radius:9px; font-family:inherit; font-size:14px; background:var(--bg-soft); text-align:right; }
+    .stock-edit:focus{ outline:none; border-color:var(--coral); background:#fff; }
+    .stock-edit.low{ color:var(--coral); font-weight:800; }
     .stock-empty{ text-align:center; color:var(--muted); padding:24px 0; }
 
     .badge-low{ display:inline-block; margin-left:6px; font-size:11px; font-weight:800; color:#fff; background:var(--coral); padding:2px 7px; border-radius:999px; vertical-align:middle; }
@@ -184,6 +187,7 @@
         <div id="stockBody">
           <div class="center-load"><span class="spinner"></span> Загрузка…</div>
         </div>
+        <p id="stockNote" class="form__note"></p>
       </div>
 
       <!-- Приход -->

@@ -84,6 +84,12 @@ function bindUI(){
 
   $('incSubmit').addEventListener('click', handleIncome);
 
+  // Редактирование остатка (корректирующее движение adjust)
+  $('stockBody').addEventListener('change', (e)=>{
+    const inp = e.target.closest('.stock-edit');
+    if(inp) handleStockEdit(inp);
+  });
+
   // Фото-приход накладной
   $('invRecognize').addEventListener('click', handleRecognizeInvoice);
   $('invResult').addEventListener('click', (e)=>{
@@ -184,7 +190,9 @@ function renderStock(list){
     return `
       <tr class="${low ? 'is-low' : ''}">
         <td>${escapeHtml(it.name)}${low ? '<span class="badge-low">мало</span>' : ''}</td>
-        <td class="num"><span class="stock-val">${fmtNum(it.stock)}</span></td>
+        <td class="num"><input class="stock-edit${low ? ' low' : ''}" type="number" step="any"
+              value="${escapeHtml(it.stock)}" data-id="${it.id}" data-current="${escapeHtml(it.stock)}"
+              title="Изменить остаток"></td>
         <td>${escapeHtml(it.unit || '')}</td>
         <td class="num">${fmtNum(it.min_stock)}</td>
       </tr>`;
@@ -203,6 +211,33 @@ function renderStock(list){
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+}
+
+/* Изменение остатка вручную: пишем НЕ stock напрямую, а корректирующее
+   движение 'adjust' на разницу (новое − текущее). Триггер пересчитает stock. */
+async function handleStockEdit(input){
+  const note = $('stockNote');
+  if(note) note.className = 'form__note';
+  const id = input.dataset.id;
+  const current = Number(input.dataset.current);
+  const next = Number(input.value);
+
+  if(!Number.isFinite(next)){ if(note){ note.className='form__note is-error'; note.textContent='⚠️ Введите число'; } await loadStock(); return; }
+  const delta = next - current;
+  if(delta === 0) return;
+
+  input.disabled = true;
+  try{
+    const { error } = await supa.from('movements').insert({
+      ingredient_id: id, type: 'adjust', amount: delta, source: 'manual', note: 'коррекция остатка'
+    });
+    if(error) throw error;
+    if(note){ note.className = 'form__note is-ok'; note.textContent = '✅ Остаток обновлён'; }
+    await loadStock();
+  }catch(e){
+    if(note){ note.className = 'form__note is-error'; note.textContent = 'Ошибка: ' + e.message; }
+    await loadStock();
+  }
 }
 
 /* ---------- Приход ---------- */
