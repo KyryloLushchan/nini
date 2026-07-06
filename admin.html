@@ -23,6 +23,11 @@
   <style>
     /* ---- Админка склада: локальные стили поверх переменных сайта ---- */
     body{ background:var(--bg-soft); font-family:var(--font-body); color:var(--ink); }
+
+    /* убрать стрелки-степперы у числовых полей (только ручной ввод) */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
     .admin{ max-width:760px; margin:0 auto; padding:18px 16px 60px; }
 
     .admin__head{
