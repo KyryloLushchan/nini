@@ -29,7 +29,7 @@ Return ONLY valid JSON in this format:
 { items: [{ name: string, qty: number, unit: string, price_per_unit: number, total: number }] }
 Rules:
 - name: product name translated to English (short, e.g. "Salmon", "Cucumber", "Rice")
-- unit: exactly one of 'kg', 'g', 'túi', 'gói', 'chai', 'hộp', 'thùng'
+- unit: exactly one of 'kg', 'g', 'bag', 'pack', 'bottle', 'box', 'carton' (translate Vietnamese units: túi/gói->bag/pack, chai->bottle, hộp->box, thùng->carton)
 - qty, price_per_unit, total: numbers, no formatting
 - Skip the total row of the invoice.`;
 

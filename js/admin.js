@@ -85,7 +85,10 @@ function bindUI(){
 
   // Фото-приход накладной
   $('invRecognize').addEventListener('click', handleRecognizeInvoice);
-  $('invResult').addEventListener('click', (e)=>{ if(e.target.closest('#invSubmit')) handleSubmitInvoice(); });
+  $('invResult').addEventListener('click', (e)=>{
+    if(e.target.closest('#invSubmit')) handleSubmitInvoice();
+    else if(e.target.closest('#invCancel')) cancelInvoice();
+  });
 
   // Калькуляция
   $('addDishBtn').addEventListener('click', ()=> openDishForm(null));
@@ -707,6 +710,14 @@ async function handleRecognizeInvoice(){
   }
 }
 
+/* отменить результат распознавания — очистить блок */
+function cancelInvoice(){
+  $('invResult').innerHTML = '';
+  $('invFile').value = '';
+  $('invNote').className = 'form__note';
+  $('invNote').textContent = '';
+}
+
 /* нормализация для fuzzy-сопоставления */
 function invNormalize(s){
   return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -765,7 +776,10 @@ function renderInvoice(items){
       </table>
     </div>
     <div class="inv-submit-row">
-      <button id="invSubmit" class="btn btn--primary btn--full">Внести всё</button>
+      <div class="inv-actions">
+        <button id="invSubmit" class="btn btn--primary">Внести всё</button>
+        <button id="invCancel" class="btn btn--ghost">Отменить</button>
+      </div>
       <p id="invSubmitNote" class="form__note"></p>
     </div>`;
 }
@@ -776,7 +790,7 @@ function invConvertUnit(rawUnit, qty){
   const q = Number(qty);
   if(u === 'kg') return { qty: q * 1000, unit: 'г', isKg: true };
   if(u === 'g')  return { qty: q, unit: 'г', isKg: false };
-  // túi / gói / chai / hộp / thùng и прочее -> штуки
+  // bag / pack / bottle / box / carton и прочее -> штуки
   return { qty: q, unit: 'шт', isKg: false };
 }
 
