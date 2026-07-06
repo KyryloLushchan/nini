@@ -95,7 +95,7 @@ async function handleCallback(cq: any) {
   // action === "ok": атомарно «занимаем» заказ new -> approved (защита от двойного списания).
   // Списываем ТОЛЬКО если этот PATCH реально перевёл строку из status='new'.
   const claim = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items`,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items,total`,
     { method: "PATCH", headers: { ...sbHeaders, Prefer: "return=representation" }, body: JSON.stringify({ status: "approved" }) },
   );
   const claimed = await claim.json().catch(() => []);
@@ -159,6 +159,17 @@ async function handleCallback(cq: any) {
         return;
       }
     }
+
+    // Выручка в кассу — ровно ОДНА строка на заказ (привязано к атомарному claim выше).
+    // best-effort: заказ уже approved и склад списан, поэтому при сбое НЕ откатываем
+    // (иначе повторное одобрение задвоило бы списание ингредиентов).
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
+        method: "POST",
+        headers: { ...sbHeaders, Prefer: "return=minimal" },
+        body: JSON.stringify({ amount: order.total, source: "order", order_id: order.id, note: null }),
+      });
+    } catch (_e) { /* запись в кассу не критична для одобрения */ }
 
     await answer(cq.id, "Списано зі складу");
     await finalize(msg, "✅ Схвалено");
