@@ -218,6 +218,15 @@
           <div class="form">
             <label for="incIngredient">Ингредиент</label>
             <select id="incIngredient"></select>
+            <div id="incNewFields" class="hidden">
+              <label for="incNewName">Название нового ингредиента *</label>
+              <input id="incNewName" type="text" placeholder="напр. Васабі">
+              <label for="incNewUnit">Единица</label>
+              <select id="incNewUnit">
+                <option value="г">г</option>
+                <option value="шт">шт</option>
+              </select>
+            </div>
             <label for="incAmount">Количество</label>
             <input id="incAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
             <label for="incPrice">Цена закупки (₫) (необязательно)</label>

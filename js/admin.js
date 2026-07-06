@@ -83,6 +83,7 @@ function bindUI(){
   $('tabCash').addEventListener('click', ()=> switchTab('cash'));
 
   $('incSubmit').addEventListener('click', handleIncome);
+  $('incIngredient').addEventListener('change', toggleIncNewFields);
 
   // Редактирование остатка (корректирующее движение adjust)
   $('stockBody').addEventListener('change', (e)=>{
@@ -256,19 +257,30 @@ function fillIngredientSelect(list){
   const sel = $('incIngredient');
   sel.innerHTML = list.map(it=>
     `<option value="${it.id}">${escapeHtml(it.name)}${it.unit ? ' (' + escapeHtml(it.unit) + ')' : ''}</option>`
-  ).join('');
+  ).join('') + '<option value="new">➕ Новый ингредиент</option>';
+  toggleIncNewFields();
+}
+
+/* показать поля нового ингредиента, если выбрано «➕ Новый ингредиент» */
+function toggleIncNewFields(){
+  const isNew = $('incIngredient').value === 'new';
+  $('incNewFields').classList.toggle('hidden', !isNew);
 }
 
 async function handleIncome(){
   const note = $('incNoteMsg');
   note.className = 'form__note';
 
-  const ingredient_id = $('incIngredient').value;
+  const sel = $('incIngredient').value;
+  const isNew = sel === 'new';
+  const newName = $('incNewName').value.trim();
+  const newUnit = $('incNewUnit').value;
   const amount = Number($('incAmount').value);
   const noteText = $('incNote').value.trim();
   const priceRaw = $('incPrice').value.trim();
 
-  if(!ingredient_id){ note.textContent = '⚠️ Выберите ингредиент'; note.classList.add('is-error'); return; }
+  if(!sel){ note.textContent = '⚠️ Выберите ингредиент'; note.classList.add('is-error'); return; }
+  if(isNew && !newName){ note.textContent = '⚠️ Укажите название нового ингредиента'; note.classList.add('is-error'); return; }
   if(!Number.isFinite(amount) || amount <= 0){ note.textContent = '⚠️ Количество должно быть больше 0'; note.classList.add('is-error'); return; }
 
   // Цена закупки — необязательная, целое ≥ 0
@@ -283,6 +295,19 @@ async function handleIncome(){
   const html = btn.innerHTML;
   btn.innerHTML = '<span class="spinner spinner--btn"></span>';
   try{
+    // 0) Новый ингредиент — сначала создаём (stock:0), затем приход
+    let ingredient_id = sel;
+    let ingName = '';
+    if(isNew){
+      const { data, error } = await supa.from('ingredients')
+        .insert({ name: newName, unit: newUnit, stock: 0 }).select('id').single();
+      if(error) throw error;
+      ingredient_id = data.id;
+      ingName = newName;
+    } else {
+      ingName = ingredients.find(x=> String(x.id) === String(ingredient_id))?.name || '';
+    }
+
     // 1) Только INSERT в movements — stock пересчитает триггер БД
     const { error } = await supa.from('movements').insert({
       ingredient_id,
@@ -296,7 +321,6 @@ async function handleIncome(){
     // 2) Если цена > 0 — расход в кассу (best-effort, склад уже оприходован)
     let cashWarn = '';
     if(price > 0){
-      const ingName = ingredients.find(x=> String(x.id) === String(ingredient_id))?.name || '';
       const { error: cErr } = await supa.from('cash_movements').insert({
         amount: -price,
         source: 'purchase',
@@ -309,6 +333,7 @@ async function handleIncome(){
     $('incAmount').value = '';
     $('incPrice').value = '';
     $('incNote').value = '';
+    $('incNewName').value = '';
     note.textContent = '✅ Приход добавлен' + cashWarn;
     note.classList.add(cashWarn ? 'is-error' : 'is-ok');
     await loadStock();
