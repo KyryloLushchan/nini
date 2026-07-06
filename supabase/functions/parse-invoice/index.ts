@@ -28,7 +28,7 @@ const SYSTEM = `You extract line items from a Vietnamese supplier invoice.
 Return ONLY valid JSON in this format:
 { items: [{ name: string, qty: number, unit: string, price_per_unit: number, total: number }] }
 Rules:
-- name: original Vietnamese name as printed
+- name: product name translated to English (short, e.g. "Salmon", "Cucumber", "Rice")
 - unit: exactly one of 'kg', 'g', 'túi', 'gói', 'chai', 'hộp', 'thùng'
 - qty, price_per_unit, total: numbers, no formatting
 - Skip the total row of the invoice.`;
