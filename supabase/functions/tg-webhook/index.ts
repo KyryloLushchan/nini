@@ -19,6 +19,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET") || "";
+const KITCHEN_CHAT_ID = Deno.env.get("KITCHEN_CHAT_ID") || "";
 const SITE = "https://ninisushi.com";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -170,6 +171,20 @@ async function handleCallback(cq: any) {
         body: JSON.stringify({ amount: order.total, source: "order", order_id: order.id, note: null }),
       });
     } catch (_e) { /* запись в кассу не критична для одобрения */ }
+
+    // Дублируем заказ на кухню (best-effort): только название + количество.
+    // Если sendMessage упал — ничего не откатываем, заказ уже одобрен и списан.
+    if (KITCHEN_CHAT_ID) {
+      try {
+        const lines = items.map((it) => `• ${it.name} × ${it.qty}`).join("\n");
+        await tg("sendMessage", {
+          chat_id: KITCHEN_CHAT_ID,
+          text: `🍣 Заказ #${order.id}\n\n${lines}`,
+        });
+      } catch (e) {
+        console.log("KITCHEN sendMessage failed:", e);
+      }
+    }
 
     await answer(cq.id, "Списано зі складу");
     await finalize(msg, "✅ Схвалено");
