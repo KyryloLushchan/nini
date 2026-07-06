@@ -756,11 +756,17 @@ function invIngredientOptions(selected){
 function renderInvoice(items){
   const rows = items.map(it=>{
     const match = fuzzyIngredientId(it.name);
+    const c = invAutoConvert(it);   // { unit:'г'|'шт', qty, priceBase }
     return `
-      <tr class="inv-row" data-ppu="${escapeHtml(it.price_per_unit ?? '')}" data-total="${escapeHtml(it.total ?? '')}">
+      <tr class="inv-row" data-pricebase="${escapeHtml(c.priceBase ?? '')}" data-total="${escapeHtml(it.total ?? '')}">
         <td><input class="inv-name" value="${escapeHtml(it.name ?? '')}"></td>
-        <td><input class="inv-qty inv-num" type="number" step="any" value="${escapeHtml(it.qty ?? '')}"></td>
-        <td><input class="inv-unit" value="${escapeHtml(it.unit ?? '')}"></td>
+        <td><input class="inv-qty inv-num" type="number" step="any" value="${escapeHtml(c.qty ?? '')}"></td>
+        <td>
+          <select class="inv-unit">
+            <option value="г"${c.unit === 'г' ? ' selected' : ''}>г</option>
+            <option value="шт"${c.unit === 'шт' ? ' selected' : ''}>шт</option>
+          </select>
+        </td>
         <td><select class="inv-ing">${invIngredientOptions(match)}</select></td>
       </tr>`;
   }).join('');
@@ -768,7 +774,7 @@ function renderInvoice(items){
     <div class="inv-table-wrap">
       <table class="inv-table">
         <thead><tr>
-          <th>Название</th><th>Кол-во</th><th>Ед.</th><th>Ингредиент</th>
+          <th>Название</th><th>Кол-во</th><th>Единица</th><th>Ингредиент</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -782,14 +788,24 @@ function renderInvoice(items){
     </div>`;
 }
 
-/* конвертация единиц накладной -> база ('г' | 'шт') */
-function invConvertUnit(rawUnit, qty){
-  const u = String(rawUnit ?? '').trim().toLowerCase();
-  const q = Number(qty);
-  if(u === 'kg') return { qty: q * 1000, unit: 'г', isKg: true };
-  if(u === 'g')  return { qty: q, unit: 'г', isKg: false };
-  // bag / pack / bottle / box / carton и прочее -> штуки
-  return { qty: q, unit: 'шт', isKg: false };
+/* авто-конвертация позиции накладной -> база ('г' | 'шт').
+   Возвращает { unit, qty (итоговое кол-во), priceBase (цена за 1 базовую ед.) }.
+   Правила:
+   - unit из GPT = 'kg'      -> 'г', qty × 1000
+   - unit из GPT = 'g'       -> 'г'
+   - weight_grams не null    -> 'г', qty × weight_grams
+   - иначе                   -> 'шт' */
+function invAutoConvert(it){
+  const gpt = String(it.unit ?? '').trim().toLowerCase();
+  const qty = Number(it.qty) || 0;
+  const ppu = Number(it.price_per_unit);
+  const wg  = (it.weight_grams == null || it.weight_grams === '') ? null : Number(it.weight_grams);
+  const p = (div) => Number.isFinite(ppu) ? ppu / div : null;
+
+  if(gpt === 'kg')            return { unit: 'г', qty: qty * 1000, priceBase: p(1000) };
+  if(gpt === 'g')             return { unit: 'г', qty: qty,        priceBase: p(1) };
+  if(wg != null && wg > 0)    return { unit: 'г', qty: qty * wg,   priceBase: p(wg) };
+  return { unit: 'шт', qty: qty, priceBase: p(1) };
 }
 
 async function handleSubmitInvoice(){
@@ -805,34 +821,33 @@ async function handleSubmitInvoice(){
   try{
     let done = 0;
     for(const row of rows){
-      const name    = row.querySelector('.inv-name').value.trim();
-      const rawUnit = row.querySelector('.inv-unit').value;
-      const ppu     = Number(row.dataset.ppu);      // цена/ед — из распознавания (скрыта в UI)
-      const total   = Number(row.dataset.total);    // сумма — из распознавания (скрыта в UI)
-      const ingSel  = row.querySelector('.inv-ing').value;
+      const name      = row.querySelector('.inv-name').value.trim();
+      const qty       = Number(row.querySelector('.inv-qty').value);   // итоговое кол-во (редактируемое)
+      const unit      = row.querySelector('.inv-unit').value;          // 'г' | 'шт' (из селекта)
+      const priceBase = Number(row.dataset.pricebase);                 // цена за 1 базовую ед. (из распознавания)
+      const total     = Number(row.dataset.total);                     // сумма (из распознавания, скрыта в UI)
+      const ingSel    = row.querySelector('.inv-ing').value;
 
       if(!name) throw new Error('пустое название в одной из строк');
-      const conv = invConvertUnit(rawUnit, row.querySelector('.inv-qty').value);
-      if(!Number.isFinite(conv.qty) || conv.qty <= 0) throw new Error('некорректное количество: ' + name);
+      if(!Number.isFinite(qty) || qty <= 0) throw new Error('некорректное количество: ' + name);
 
-      // а) ингредиент (или создаём новый)
+      // а) ингредиент (или создаём новый) — единица из селекта
       let ingredientId = ingSel;
       if(ingSel === 'new'){
         const { data, error } = await supa.from('ingredients')
-          .insert({ name, unit: conv.unit, stock: 0 }).select('id').single();
+          .insert({ name, unit, stock: 0 }).select('id').single();
         if(error) throw error;
         ingredientId = data.id;
       }
       // б) приход — stock пересчитает триггер
       {
         const { error } = await supa.from('movements').insert({
-          ingredient_id: ingredientId, type: 'in', amount: conv.qty, source: 'invoice', note: name
+          ingredient_id: ingredientId, type: 'in', amount: qty, source: 'invoice', note: name
         });
         if(error) throw error;
       }
-      // в) цена за базовую единицу ('г' или 'шт'); kg -> делим на 1000
-      if(Number.isFinite(ppu) && ppu > 0){
-        const priceBase = conv.isKg ? ppu / 1000 : ppu;
+      // в) цена за базовую единицу
+      if(Number.isFinite(priceBase) && priceBase > 0){
         const { error } = await supa.from('ingredients').update({ price: priceBase }).eq('id', ingredientId);
         if(error) throw error;
       }

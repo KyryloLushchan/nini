@@ -26,11 +26,12 @@ const json = (body: unknown, status = 200) =>
 
 const SYSTEM = `You extract line items from a Vietnamese supplier invoice.
 Return ONLY valid JSON in this format:
-{ items: [{ name: string, qty: number, unit: string, price_per_unit: number, total: number }] }
+{ items: [{ name: string, qty: number, unit: string, price_per_unit: number, total: number, weight_grams: number | null }] }
 Rules:
 - name: product name translated to English (short, e.g. "Salmon", "Cucumber", "Rice")
 - unit: exactly one of 'kg', 'g', 'bag', 'pack', 'bottle', 'box', 'carton' (translate Vietnamese units: túi/gói->bag/pack, chai->bottle, hộp->box, thùng->carton)
 - qty, price_per_unit, total: numbers, no formatting
+- weight_grams: if the product is prepackaged with a weight (e.g. "Mayonnaise 500g", "Rice 1kg"), the weight of ONE package in grams; if sold by piece (eggs, bottles) -> null
 - Skip the total row of the invoice.`;
 
 serve(async (req) => {
