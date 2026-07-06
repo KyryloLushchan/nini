@@ -91,6 +91,26 @@
     .recipe-add__amt{ width:96px; flex:none; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:var(--bg-soft); text-align:right; }
     .recipe-add .btn{ margin-top:0; padding:9px 16px; font-size:14px; }
 
+    /* ---- Фото-приход накладной ---- */
+    .invoice-box{ margin-bottom:16px; }
+    .invoice-head{ font-family:var(--font-disp); font-weight:800; font-size:16px; margin-bottom:12px; }
+    .invoice-upload{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .invoice-upload input[type=file]{ flex:1; min-width:170px; font-size:14px; }
+    .invoice-upload .btn{ margin-top:0; padding:10px 18px; font-size:14px; }
+
+    .inv-table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:14px; }
+    table.inv-table{ width:100%; border-collapse:collapse; font-size:14px; }
+    table.inv-table th, table.inv-table td{ padding:6px 6px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+    table.inv-table th{ font-family:var(--font-disp); font-weight:700; font-size:12px; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
+    table.inv-table input, table.inv-table select{ width:100%; padding:7px 8px; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:14px; background:var(--bg-soft); }
+    table.inv-table input:focus, table.inv-table select:focus{ outline:none; border-color:var(--coral); background:#fff; }
+    .inv-name{ min-width:140px; }
+    .inv-num{ width:82px; text-align:right; }
+    .inv-unit{ width:66px; }
+    .inv-ing{ min-width:150px; }
+    .inv-submit-row{ margin-top:14px; }
+    .inv-submit-row .btn{ margin-top:0; }
+
     /* ---- Касса ---- */
     .cash-balance-box{ text-align:center; margin-bottom:14px; }
     .cash-balance__label{ font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; font-weight:700; }
@@ -163,18 +183,33 @@
       </div>
 
       <!-- Приход -->
-      <div id="panelIncome" class="card-box hidden">
-        <div class="form">
-          <label for="incIngredient">Ингредиент</label>
-          <select id="incIngredient"></select>
-          <label for="incAmount">Количество</label>
-          <input id="incAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
-          <label for="incPrice">Цена закупки (₫) (необязательно)</label>
-          <input id="incPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
-          <label for="incNote">Примечание (необязательно)</label>
-          <input id="incNote" type="text" placeholder="напр. поставка от …">
-          <button id="incSubmit" class="btn btn--primary btn--full">Добавить приход</button>
-          <p id="incNoteMsg" class="form__note"></p>
+      <div id="panelIncome" class="hidden">
+
+        <!-- Фото-приход накладной -->
+        <div class="card-box invoice-box">
+          <div class="invoice-head">📷 Загрузить накладную</div>
+          <div class="invoice-upload">
+            <input id="invFile" type="file" accept="image/*">
+            <button id="invRecognize" class="btn btn--primary">Распознать</button>
+          </div>
+          <p id="invNote" class="form__note"></p>
+          <div id="invResult"></div>
+        </div>
+
+        <!-- Ручной приход -->
+        <div class="card-box">
+          <div class="form">
+            <label for="incIngredient">Ингредиент</label>
+            <select id="incIngredient"></select>
+            <label for="incAmount">Количество</label>
+            <input id="incAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+            <label for="incPrice">Цена закупки (₫) (необязательно)</label>
+            <input id="incPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+            <label for="incNote">Примечание (необязательно)</label>
+            <input id="incNote" type="text" placeholder="напр. поставка от …">
+            <button id="incSubmit" class="btn btn--primary btn--full">Добавить приход</button>
+            <p id="incNoteMsg" class="form__note"></p>
+          </div>
         </div>
       </div>
 

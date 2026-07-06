@@ -83,6 +83,10 @@ function bindUI(){
 
   $('incSubmit').addEventListener('click', handleIncome);
 
+  // Фото-приход накладной
+  $('invRecognize').addEventListener('click', handleRecognizeInvoice);
+  $('invResult').addEventListener('click', (e)=>{ if(e.target.closest('#invSubmit')) handleSubmitInvoice(); });
+
   // Калькуляция
   $('addDishBtn').addEventListener('click', ()=> openDishForm(null));
   $('dishSave').addEventListener('click', handleDishSave);
@@ -642,6 +646,205 @@ function setCashNote(msg, ok){
   const note = $('cashNote');
   note.className = 'form__note ' + (ok ? 'is-ok' : 'is-error');
   note.textContent = msg;
+}
+
+/* ============================================================
+   ФОТО-ПРИХОД НАКЛАДНОЙ (parse-invoice)
+   ============================================================ */
+
+function fileToDataUrl(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(new Error('не удалось прочитать файл'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function handleRecognizeInvoice(){
+  const note = $('invNote');
+  note.className = 'form__note';
+  const file = $('invFile').files && $('invFile').files[0];
+  if(!file){ note.textContent = '⚠️ Выберите фото накладной'; note.classList.add('is-error'); return; }
+
+  const btn = $('invRecognize');
+  btn.disabled = true;
+  const html = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner spinner--btn"></span>';
+  note.innerHTML = '<span class="note-loading"><span class="spinner"></span> Распознаём…</span>';
+  try{
+    const image_base64 = await fileToDataUrl(file);
+    const res = await fetch(CONFIG.SUPABASE_URL + '/functions/v1/parse-invoice', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: CONFIG.SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + CONFIG.SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ image_base64 })
+    });
+    const data = await res.json().catch(()=> null);
+    if(!res.ok || !data || !data.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+
+    const items = Array.isArray(data.items) ? data.items : [];
+    await ensureIngredients();
+    if(!items.length){
+      $('invResult').innerHTML = '';
+      note.className = 'form__note';
+      note.textContent = 'Позиции не найдены — проверьте фото';
+      return;
+    }
+    renderInvoice(items);
+    note.className = 'form__note';
+    note.textContent = '';
+  }catch(e){
+    $('invResult').innerHTML = '';
+    note.className = 'form__note is-error';
+    note.textContent = 'Ошибка распознавания: ' + e.message;
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = html;
+  }
+}
+
+/* нормализация для fuzzy-сопоставления */
+function invNormalize(s){
+  return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^0-9a-zа-я ]/gi, ' ').replace(/\s+/g, ' ').trim();
+}
+/* подобрать ingredient.id по имени; 'new' если ничего не подошло */
+function fuzzyIngredientId(name){
+  const n = invNormalize(name);
+  if(!n) return 'new';
+  let bestId = 'new', best = 0;
+  for(const it of ingredients){
+    const m = invNormalize(it.name);
+    if(!m) continue;
+    let score = 0;
+    if(m === n) score = 1;
+    else if(n.includes(m) || m.includes(n)) score = 0.8;
+    else {
+      const a = new Set(n.split(' ').filter(t=> t.length > 2));
+      const common = m.split(' ').filter(t=> t.length > 2 && a.has(t)).length;
+      if(common > 0) score = 0.5;
+    }
+    if(score > best){ best = score; bestId = it.id; }
+  }
+  return best >= 0.5 ? bestId : 'new';
+}
+
+function invIngredientOptions(selected){
+  const isNew = selected === 'new';
+  return `<option value="new"${isNew ? ' selected' : ''}>➕ Создать новый</option>` +
+    ingredients.map(it=>
+      `<option value="${it.id}"${String(it.id) === String(selected) ? ' selected' : ''}>` +
+      `${escapeHtml(it.name)}${it.unit ? ' (' + escapeHtml(it.unit) + ')' : ''}</option>`
+    ).join('');
+}
+
+function renderInvoice(items){
+  const rows = items.map(it=>{
+    const match = fuzzyIngredientId(it.name);
+    return `
+      <tr class="inv-row">
+        <td><input class="inv-name" value="${escapeHtml(it.name ?? '')}"></td>
+        <td><input class="inv-qty inv-num" type="number" step="any" value="${escapeHtml(it.qty ?? '')}"></td>
+        <td><input class="inv-unit" value="${escapeHtml(it.unit ?? '')}"></td>
+        <td><input class="inv-ppu inv-num" type="number" step="any" value="${escapeHtml(it.price_per_unit ?? '')}"></td>
+        <td><input class="inv-total inv-num" type="number" step="any" value="${escapeHtml(it.total ?? '')}"></td>
+        <td><select class="inv-ing">${invIngredientOptions(match)}</select></td>
+      </tr>`;
+  }).join('');
+  $('invResult').innerHTML = `
+    <div class="inv-table-wrap">
+      <table class="inv-table">
+        <thead><tr>
+          <th>Название</th><th>Кол-во</th><th>Ед.</th><th>Цена/ед</th><th>Сумма</th><th>Ингредиент</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="inv-submit-row">
+      <button id="invSubmit" class="btn btn--primary btn--full">Внести всё</button>
+      <p id="invSubmitNote" class="form__note"></p>
+    </div>`;
+}
+
+/* конвертация единиц накладной -> база ('г' | 'шт') */
+function invConvertUnit(rawUnit, qty){
+  const u = String(rawUnit ?? '').trim().toLowerCase();
+  const q = Number(qty);
+  if(u === 'kg') return { qty: q * 1000, unit: 'г', isKg: true };
+  if(u === 'g')  return { qty: q, unit: 'г', isKg: false };
+  // túi / gói / chai / hộp / thùng и прочее -> штуки
+  return { qty: q, unit: 'шт', isKg: false };
+}
+
+async function handleSubmitInvoice(){
+  const note = $('invSubmitNote');
+  if(note) note.className = 'form__note';
+  const rows = [...document.querySelectorAll('#invResult .inv-row')];
+  if(!rows.length) return;
+
+  const btn = $('invSubmit');
+  btn.disabled = true;
+  const html = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner spinner--btn"></span>';
+  try{
+    let done = 0;
+    for(const row of rows){
+      const name    = row.querySelector('.inv-name').value.trim();
+      const rawUnit = row.querySelector('.inv-unit').value;
+      const ppu     = Number(row.querySelector('.inv-ppu').value);
+      const total   = Number(row.querySelector('.inv-total').value);
+      const ingSel  = row.querySelector('.inv-ing').value;
+
+      if(!name) throw new Error('пустое название в одной из строк');
+      const conv = invConvertUnit(rawUnit, row.querySelector('.inv-qty').value);
+      if(!Number.isFinite(conv.qty) || conv.qty <= 0) throw new Error('некорректное количество: ' + name);
+
+      // а) ингредиент (или создаём новый)
+      let ingredientId = ingSel;
+      if(ingSel === 'new'){
+        const { data, error } = await supa.from('ingredients')
+          .insert({ name, unit: conv.unit, stock: 0 }).select('id').single();
+        if(error) throw error;
+        ingredientId = data.id;
+      }
+      // б) приход — stock пересчитает триггер
+      {
+        const { error } = await supa.from('movements').insert({
+          ingredient_id: ingredientId, type: 'in', amount: conv.qty, source: 'invoice', note: name
+        });
+        if(error) throw error;
+      }
+      // в) цена за базовую единицу ('г' или 'шт'); kg -> делим на 1000
+      if(Number.isFinite(ppu) && ppu > 0){
+        const priceBase = conv.isKg ? ppu / 1000 : ppu;
+        const { error } = await supa.from('ingredients').update({ price: priceBase }).eq('id', ingredientId);
+        if(error) throw error;
+      }
+      // г) расход в кассу
+      if(Number.isFinite(total) && total > 0){
+        const { error } = await supa.from('cash_movements').insert({
+          amount: -total, source: 'purchase', note: 'Накладная: ' + name
+        });
+        if(error) throw error;
+      }
+      done++;
+    }
+    // очистить блок + обновить остатки/кассу
+    $('invResult').innerHTML = '';
+    $('invFile').value = '';
+    $('invNote').className = 'form__note is-ok';
+    $('invNote').textContent = `✅ Внесено позиций: ${done}`;
+    await loadStock();
+    if(!$('panelCash').classList.contains('hidden')) loadCash();
+  }catch(e){
+    if($('invSubmitNote')){ $('invSubmitNote').className = 'form__note is-error'; $('invSubmitNote').textContent = 'Ошибка: ' + e.message; }
+  }finally{
+    if($('invSubmit')){ btn.disabled = false; btn.innerHTML = html; }
+  }
 }
 
 /* ---------- Безопасный вывод текста ---------- */
