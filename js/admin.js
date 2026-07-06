@@ -112,6 +112,17 @@ function bindUI(){
   $('cashCancel').addEventListener('click', closeCashForm);
   $('cashSave').addEventListener('click', handleCashSave);
   $('cashRefreshBtn').addEventListener('click', loadCash);
+  // Редактирование/удаление движений кассы (прямой UPDATE/DELETE)
+  $('cashBody').addEventListener('change', (e)=>{
+    const amt = e.target.closest('.cash-amt-edit');
+    if(amt){ handleCashAmountEdit(amt); return; }
+    const nt = e.target.closest('.cash-note-edit');
+    if(nt) handleCashNoteEdit(nt);
+  });
+  $('cashBody').addEventListener('click', (e)=>{
+    const del = e.target.closest('.cash-del');
+    if(del) handleCashDelete(del.closest('.cash-row').dataset.id);
+  });
 }
 
 /* ---------- Вход / выход ---------- */
@@ -615,23 +626,24 @@ function renderCash(rows){
   body.innerHTML = '<ul class="cash-list">' + rows.map(r=>{
     const n = Number(r.amount || 0);
     const pos = n >= 0;
-    const sum = (pos ? '+' : '−') + cashAbs(n);
     const src = CASH_SOURCE[r.source] || escapeHtml(r.source || '');
     const ordRef = (r.source === 'order' && r.order_id != null) ? `<span class="cash-row__ord">Заказ #${escapeHtml(r.order_id)}</span>` : '';
     const date = r.created_at
       ? new Date(r.created_at).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
       : '';
     return `
-      <li class="cash-row">
+      <li class="cash-row" data-id="${r.id}">
         <div class="cash-row__main">
           <div class="cash-row__top">
             <span class="cash-row__src">${src}</span>
             ${ordRef}
+            <span class="cash-row__date">${date}</span>
           </div>
-          ${r.note ? `<div class="cash-row__note">${escapeHtml(r.note)}</div>` : ''}
-          <div class="cash-row__date">${date}</div>
+          <input class="cash-note-edit" value="${escapeHtml(r.note ?? '')}" placeholder="примечание">
         </div>
-        <div class="cash-row__sum ${pos ? 'pos' : 'neg'}">${sum}</div>
+        <input class="cash-amt-edit ${pos ? 'pos' : 'neg'}" type="number" step="1" inputmode="numeric"
+               value="${escapeHtml(n)}" data-current="${escapeHtml(n)}" title="Сумма (со знаком)">
+        <button class="cash-del" title="Удалить операцию">×</button>
       </li>`;
   }).join('') + '</ul>';
 }
@@ -687,6 +699,52 @@ function setCashNote(msg, ok){
   const note = $('cashNote');
   note.className = 'form__note ' + (ok ? 'is-ok' : 'is-error');
   note.textContent = msg;
+}
+
+/* Изменить сумму движения (прямой UPDATE — cash_movements это источник правды) */
+async function handleCashAmountEdit(input){
+  const id = input.closest('.cash-row').dataset.id;
+  const cur = Number(input.dataset.current);
+  const next = Number(input.value);
+  if(!Number.isInteger(next)){ setCashNote('⚠️ Сумма — целое число (со знаком)', false); await loadCash(); return; }
+  if(next === cur) return;
+  try{
+    const { error } = await supa.from('cash_movements').update({ amount: next }).eq('id', id);
+    if(error) throw error;
+    setCashNote('✅ Сумма обновлена', true);
+    await loadCash();
+  }catch(e){
+    setCashNote('Ошибка: ' + e.message, false);
+    await loadCash();
+  }
+}
+
+/* Изменить примечание движения */
+async function handleCashNoteEdit(input){
+  const id = input.closest('.cash-row').dataset.id;
+  const val = input.value.trim();
+  try{
+    const { error } = await supa.from('cash_movements').update({ note: val || null }).eq('id', id);
+    if(error) throw error;
+    setCashNote('✅ Примечание обновлено', true);
+    await loadCash();
+  }catch(e){
+    setCashNote('Ошибка: ' + e.message, false);
+    await loadCash();
+  }
+}
+
+/* Удалить движение кассы */
+async function handleCashDelete(id){
+  if(!confirm('Удалить эту операцию из кассы?')) return;
+  try{
+    const { error } = await supa.from('cash_movements').delete().eq('id', id);
+    if(error) throw error;
+    setCashNote('🗑 Операция удалена', true);
+    await loadCash();
+  }catch(e){
+    setCashNote('Ошибка: ' + e.message, false);
+  }
 }
 
 /* ============================================================
