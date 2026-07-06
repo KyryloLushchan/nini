@@ -718,30 +718,39 @@ function cancelInvoice(){
   $('invNote').textContent = '';
 }
 
-/* нормализация для fuzzy-сопоставления */
-function invNormalize(s){
-  return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^0-9a-zа-я ]/gi, ' ').replace(/\s+/g, ' ').trim();
-}
-/* подобрать ingredient.id по имени; 'new' если ничего не подошло */
-function fuzzyIngredientId(name){
-  const n = invNormalize(name);
-  if(!n) return 'new';
-  let bestId = 'new', best = 0;
-  for(const it of ingredients){
-    const m = invNormalize(it.name);
-    if(!m) continue;
-    let score = 0;
-    if(m === n) score = 1;
-    else if(n.includes(m) || m.includes(n)) score = 0.8;
-    else {
-      const a = new Set(n.split(' ').filter(t=> t.length > 2));
-      const common = m.split(' ').filter(t=> t.length > 2 && a.has(t)).length;
-      if(common > 0) score = 0.5;
+/* расстояние Левенштейна */
+function invLevenshtein(a, b){
+  const m = a.length, n = b.length;
+  if(!m) return n;
+  if(!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i)=> i);
+  for(let i = 1; i <= m; i++){
+    const cur = [i];
+    for(let j = 1; j <= n; j++){
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
     }
-    if(score > best){ best = score; bestId = it.id; }
+    prev = cur;
   }
-  return best >= 0.5 ? bestId : 'new';
+  return prev[n];
+}
+/* подобрать ingredient.id по имени (регистр/пробелы игнорируем).
+   Совпадение: Levenshtein <= 2 ИЛИ одна строка содержит другую.
+   Из совпадений — лучшее (минимальная дистанция); иначе 'new'. */
+function fuzzyIngredientId(name){
+  const n = String(name ?? '').trim().toLowerCase();
+  if(!n) return 'new';
+  let bestId = 'new', bestDist = Infinity;
+  for(const it of ingredients){
+    const m = String(it.name ?? '').trim().toLowerCase();
+    if(!m) continue;
+    const contains = n.includes(m) || m.includes(n);
+    const dist = invLevenshtein(n, m);
+    if(dist <= 2 || contains){
+      if(dist < bestDist){ bestDist = dist; bestId = it.id; }
+    }
+  }
+  return bestId;
 }
 
 function invIngredientOptions(selected){
