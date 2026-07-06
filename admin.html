@@ -91,7 +91,31 @@
     .recipe-add__amt{ width:96px; flex:none; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:var(--bg-soft); text-align:right; }
     .recipe-add .btn{ margin-top:0; padding:9px 16px; font-size:14px; }
 
+    /* ---- Касса ---- */
+    .cash-balance-box{ text-align:center; margin-bottom:14px; }
+    .cash-balance__label{ font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; font-weight:700; }
+    .cash-balance__val{ font-family:var(--font-disp); font-weight:800; font-size:32px; margin-top:6px; }
+    .cash-balance__val.is-neg{ color:var(--coral); }
+    .cash-top{ display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-bottom:10px; }
+    .cash-top .btn{ padding:9px 16px; font-size:14px; }
+    .cash-form{ margin-bottom:16px; }
+
+    .cash-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+    .cash-row{ display:flex; align-items:baseline; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); }
+    .cash-row:last-child{ border-bottom:none; }
+    .cash-row__main{ flex:1; min-width:0; }
+    .cash-row__top{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+    .cash-row__src{ font-weight:700; font-size:14px; }
+    .cash-row__ord{ font-size:12px; color:var(--muted); }
+    .cash-row__note{ font-size:13px; color:var(--muted); margin-top:2px; word-break:break-word; }
+    .cash-row__date{ font-size:12px; color:var(--muted); margin-top:2px; }
+    .cash-row__sum{ flex:none; font-family:var(--font-disp); font-weight:800; font-size:16px; white-space:nowrap; }
+    .cash-row__sum.pos{ color:#3DBB6B; }
+    .cash-row__sum.neg{ color:var(--coral); }
+    .cash-empty{ text-align:center; color:var(--muted); padding:24px 0; }
+
     @media (max-width:480px){
+      .cash-balance__val{ font-size:27px; }
       .admin__title{ font-size:19px; }
       table.stock th, table.stock td{ padding:10px 8px; font-size:14px; }
     }
@@ -128,6 +152,7 @@
         <button id="tabStock"  class="tabs__btn is-active" data-tab="stock">Остатки</button>
         <button id="tabIncome" class="tabs__btn"           data-tab="income">Приход</button>
         <button id="tabCalc"   class="tabs__btn"           data-tab="calc">Калькуляция</button>
+        <button id="tabCash"   class="tabs__btn"           data-tab="cash">Касса</button>
       </div>
 
       <!-- Остатки -->
@@ -144,6 +169,8 @@
           <select id="incIngredient"></select>
           <label for="incAmount">Количество</label>
           <input id="incAmount" type="number" min="0" step="any" inputmode="decimal" placeholder="0">
+          <label for="incPrice">Цена закупки (₫) (необязательно)</label>
+          <input id="incPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
           <label for="incNote">Примечание (необязательно)</label>
           <input id="incNote" type="text" placeholder="напр. поставка от …">
           <button id="incSubmit" class="btn btn--primary btn--full">Добавить приход</button>
@@ -179,6 +206,39 @@
         </div>
 
         <div id="calcBody">
+          <div class="center-load"><span class="spinner"></span> Загрузка…</div>
+        </div>
+      </div>
+
+      <!-- Касса -->
+      <div id="panelCash" class="hidden">
+        <div class="card-box cash-balance-box">
+          <div class="cash-balance__label">Баланс кассы</div>
+          <div id="cashBalance" class="cash-balance__val">…</div>
+        </div>
+
+        <div class="cash-top">
+          <button id="cashAddBtn" class="btn btn--ghost">＋ Операция вручную</button>
+          <button id="cashRefreshBtn" class="btn btn--ghost">Обновить</button>
+        </div>
+        <p id="cashNote" class="form__note"></p>
+
+        <!-- форма ручной операции -->
+        <div id="cashForm" class="card-box cash-form hidden">
+          <div class="form">
+            <label for="cashAmount">Сумма (₫) — «+» приход, «−» расход</label>
+            <input id="cashAmount" type="number" step="1" inputmode="numeric" placeholder="напр. -50000">
+            <label for="cashOpNote">Примечание</label>
+            <input id="cashOpNote" type="text" placeholder="за что операция">
+            <div class="dish-form__actions">
+              <button id="cashSave" class="btn btn--primary">Сохранить</button>
+              <button id="cashCancel" class="btn btn--ghost">Отмена</button>
+            </div>
+            <p id="cashFormNote" class="form__note"></p>
+          </div>
+        </div>
+
+        <div id="cashBody">
           <div class="center-load"><span class="spinner"></span> Загрузка…</div>
         </div>
       </div>

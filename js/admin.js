@@ -79,6 +79,7 @@ function bindUI(){
   $('tabStock').addEventListener('click', ()=> switchTab('stock'));
   $('tabIncome').addEventListener('click', ()=> switchTab('income'));
   $('tabCalc').addEventListener('click', ()=> switchTab('calc'));
+  $('tabCash').addEventListener('click', ()=> switchTab('cash'));
 
   $('incSubmit').addEventListener('click', handleIncome);
 
@@ -89,6 +90,12 @@ function bindUI(){
   $('dishDelete').addEventListener('click', handleDishDelete);
   $('calcBody').addEventListener('click', onCalcClick);
   $('calcBody').addEventListener('change', onCalcChange);
+
+  // Касса
+  $('cashAddBtn').addEventListener('click', openCashForm);
+  $('cashCancel').addEventListener('click', closeCashForm);
+  $('cashSave').addEventListener('click', handleCashSave);
+  $('cashRefreshBtn').addEventListener('click', loadCash);
 }
 
 /* ---------- Вход / выход ---------- */
@@ -127,13 +134,15 @@ function switchTab(tab){
   const map = {
     stock:  { btn: 'tabStock',  panel: 'panelStock'  },
     income: { btn: 'tabIncome', panel: 'panelIncome' },
-    calc:   { btn: 'tabCalc',   panel: 'panelCalc'   }
+    calc:   { btn: 'tabCalc',   panel: 'panelCalc'   },
+    cash:   { btn: 'tabCash',   panel: 'panelCash'   }
   };
   Object.keys(map).forEach(k=>{
     $(map[k].btn).classList.toggle('is-active', k === tab);
     $(map[k].panel).classList.toggle('hidden', k !== tab);
   });
   if(tab === 'calc') loadCalc();
+  if(tab === 'cash') loadCash();
 }
 
 /* ---------- Остатки ---------- */
@@ -201,16 +210,24 @@ async function handleIncome(){
   const ingredient_id = $('incIngredient').value;
   const amount = Number($('incAmount').value);
   const noteText = $('incNote').value.trim();
+  const priceRaw = $('incPrice').value.trim();
 
   if(!ingredient_id){ note.textContent = '⚠️ Выберите ингредиент'; note.classList.add('is-error'); return; }
   if(!Number.isFinite(amount) || amount <= 0){ note.textContent = '⚠️ Количество должно быть больше 0'; note.classList.add('is-error'); return; }
+
+  // Цена закупки — необязательная, целое ≥ 0
+  let price = 0;
+  if(priceRaw !== ''){
+    price = Number(priceRaw);
+    if(!Number.isInteger(price) || price < 0){ note.textContent = '⚠️ Цена закупки — целое число ≥ 0'; note.classList.add('is-error'); return; }
+  }
 
   const btn = $('incSubmit');
   btn.disabled = true;
   const html = btn.innerHTML;
   btn.innerHTML = '<span class="spinner spinner--btn"></span>';
   try{
-    // Только INSERT в movements — stock пересчитает триггер БД
+    // 1) Только INSERT в movements — stock пересчитает триггер БД
     const { error } = await supa.from('movements').insert({
       ingredient_id,
       type: 'in',
@@ -220,12 +237,26 @@ async function handleIncome(){
     });
     if(error) throw error;
 
-    // очистить форму + подтверждение + обновить остатки
+    // 2) Если цена > 0 — расход в кассу (best-effort, склад уже оприходован)
+    let cashWarn = '';
+    if(price > 0){
+      const ingName = ingredients.find(x=> String(x.id) === String(ingredient_id))?.name || '';
+      const { error: cErr } = await supa.from('cash_movements').insert({
+        amount: -price,
+        source: 'purchase',
+        note: 'Закупка: ' + ingName
+      });
+      if(cErr) cashWarn = ' (касса не записана: ' + cErr.message + ')';
+    }
+
+    // очистить форму + подтверждение + обновить остатки (и кассу, если открыта)
     $('incAmount').value = '';
+    $('incPrice').value = '';
     $('incNote').value = '';
-    note.textContent = '✅ Приход добавлен';
-    note.classList.add('is-ok');
+    note.textContent = '✅ Приход добавлен' + cashWarn;
+    note.classList.add(cashWarn ? 'is-error' : 'is-ok');
     await loadStock();
+    if(!$('panelCash').classList.contains('hidden')) loadCash();
   }catch(e){
     note.textContent = 'Ошибка: ' + e.message;
     note.classList.add('is-error');
@@ -489,6 +520,126 @@ async function delRecipe(recipeId){
 
 function setCalcNote(msg, ok){
   const note = $('calcNote');
+  note.className = 'form__note ' + (ok ? 'is-ok' : 'is-error');
+  note.textContent = msg;
+}
+
+/* ============================================================
+   КАССА — движения денег (cash_movements)
+   ============================================================ */
+
+/* "1 234 567 ₫" — разделитель пробел */
+function cashAbs(n){
+  const s = String(Math.abs(Math.round(Number(n) || 0)));
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₫';
+}
+const CASH_SOURCE = { order: 'Заказ', purchase: 'Закупка', manual: 'Вручную' };
+
+async function loadCash(){
+  const body = $('cashBody');
+  const balEl = $('cashBalance');
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
+  try{
+    const [balRes, histRes] = await Promise.all([
+      supa.from('cash_movements').select('amount'),                       // баланс — сумма ВСЕХ
+      supa.from('cash_movements')
+        .select('id, amount, source, order_id, note, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50)
+    ]);
+    if(balRes.error) throw balRes.error;
+    if(histRes.error) throw histRes.error;
+
+    const balance = (balRes.data || []).reduce((s, r)=> s + Number(r.amount || 0), 0);
+    balEl.textContent = (balance < 0 ? '−' : '') + cashAbs(balance);
+    balEl.classList.toggle('is-neg', balance < 0);
+
+    renderCash(histRes.data || []);
+  }catch(e){
+    balEl.textContent = '—';
+    body.innerHTML = '<p class="cash-empty">Не удалось загрузить кассу: ' + escapeHtml(e.message) + '</p>';
+  }
+}
+
+function renderCash(rows){
+  const body = $('cashBody');
+  if(!rows.length){
+    body.innerHTML = '<p class="cash-empty">Движений пока нет</p>';
+    return;
+  }
+  body.innerHTML = '<ul class="cash-list">' + rows.map(r=>{
+    const n = Number(r.amount || 0);
+    const pos = n >= 0;
+    const sum = (pos ? '+' : '−') + cashAbs(n);
+    const src = CASH_SOURCE[r.source] || escapeHtml(r.source || '');
+    const ordRef = (r.source === 'order' && r.order_id != null) ? `<span class="cash-row__ord">Заказ #${escapeHtml(r.order_id)}</span>` : '';
+    const date = r.created_at
+      ? new Date(r.created_at).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '';
+    return `
+      <li class="cash-row">
+        <div class="cash-row__main">
+          <div class="cash-row__top">
+            <span class="cash-row__src">${src}</span>
+            ${ordRef}
+          </div>
+          ${r.note ? `<div class="cash-row__note">${escapeHtml(r.note)}</div>` : ''}
+          <div class="cash-row__date">${date}</div>
+        </div>
+        <div class="cash-row__sum ${pos ? 'pos' : 'neg'}">${sum}</div>
+      </li>`;
+  }).join('') + '</ul>';
+}
+
+/* ---------- Ручная операция ---------- */
+function openCashForm(){
+  $('cashAmount').value = '';
+  $('cashOpNote').value = '';
+  $('cashFormNote').className = 'form__note';
+  $('cashFormNote').textContent = '';
+  show($('cashForm'));
+  $('cashForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $('cashAmount').focus();
+}
+
+function closeCashForm(){ hide($('cashForm')); }
+
+async function handleCashSave(){
+  const note = $('cashFormNote');
+  note.className = 'form__note';
+
+  const amount = Number($('cashAmount').value);
+  const noteText = $('cashOpNote').value.trim();
+
+  if(!Number.isInteger(amount) || amount === 0){
+    note.textContent = '⚠️ Сумма — целое число, не 0 (со знаком)';
+    note.classList.add('is-error');
+    return;
+  }
+
+  const btn = $('cashSave');
+  btn.disabled = true;
+  const html = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner spinner--btn"></span>';
+  try{
+    const { error } = await supa.from('cash_movements').insert({
+      amount, source: 'manual', note: noteText || null
+    });
+    if(error) throw error;
+    closeCashForm();
+    setCashNote('✅ Операция добавлена', true);
+    await loadCash();
+  }catch(e){
+    note.textContent = 'Ошибка: ' + e.message;
+    note.classList.add('is-error');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = html;
+  }
+}
+
+function setCashNote(msg, ok){
+  const note = $('cashNote');
   note.className = 'form__note ' + (ok ? 'is-ok' : 'is-error');
   note.textContent = msg;
 }
