@@ -923,6 +923,7 @@ function renderInvoice(){
             <option value="pcs"${r.unit === 'pcs' ? ' selected' : ''}>pcs</option>
           </select>
         </td>
+        <td><input class="inv-total inv-num" type="number" step="any" value="${escapeHtml(r.total ?? '')}"></td>
         <td><select class="inv-ing">${invIngredientOptions(r.ingId)}</select></td>
         <td><button class="inv-del" data-index="${i}" title="Delete row">×</button></td>
       </tr>`).join('');
@@ -930,7 +931,7 @@ function renderInvoice(){
     <div class="inv-table-wrap">
       <table class="inv-table">
         <thead><tr>
-          <th>Name</th><th>Qty</th><th>Unit</th><th>Ingredient</th><th></th>
+          <th>Name</th><th>Qty</th><th>Unit</th><th>Total</th><th>Ingredient</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -952,6 +953,7 @@ function syncInvRowsFromDom(){
     invRows[i].name  = row.querySelector('.inv-name').value;
     invRows[i].qty   = row.querySelector('.inv-qty').value;
     invRows[i].unit  = row.querySelector('.inv-unit').value;
+    invRows[i].total = row.querySelector('.inv-total').value;
     invRows[i].ingId = row.querySelector('.inv-ing').value;
   });
 }
