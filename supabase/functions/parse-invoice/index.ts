@@ -28,7 +28,7 @@ const SYSTEM = `You extract line items from a Vietnamese supplier invoice.
 Return ONLY valid JSON in this format:
 { items: [{ name: string, qty: number, unit: string, price_per_unit: number, total: number, weight_grams: number | null }] }
 Rules:
-- name: single common Russian name for the ingredient (translate the name field to Russian). Examples: 'Lươn' -> 'Угорь', 'Cá ngừ' -> 'Тунец', 'Mayonnaise' -> 'Майонез', 'Gừng hồng' -> 'Имбирь'.
+- name: single common English name for the ingredient (translate the name field to English). Examples: 'Lươn' -> 'Eel', 'Cá ngừ' -> 'Tuna', 'Mayonnaise' -> 'Mayonnaise', 'Gừng hồng' -> 'Ginger'.
 - unit: exactly one of 'kg', 'g', 'bag', 'pack', 'bottle', 'box', 'carton' (translate Vietnamese units: túi/gói->bag/pack, chai->bottle, hộp->box, thùng->carton)
 - qty, price_per_unit, total: numbers, no formatting
 - weight_grams: if the product is prepackaged with a weight (e.g. "Mayonnaise 500g", "Rice 1kg"), the weight of ONE package in grams; if sold by piece (eggs, bottles) -> null

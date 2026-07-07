@@ -30,7 +30,7 @@ let invRows = [];   // локальные строки распознанной 
   s.integrity = "sha384-nD3dwv4+ZqdYnmZKe/249ImlV04om7xTCcsoSeQYI+RO+XlKPoqAWaJR1M5SJH9p";
   s.crossOrigin = "anonymous";
   s.onload = init;
-  s.onerror = ()=>{ document.body.innerHTML = '<p style="padding:40px;text-align:center">Не удалось загрузить Supabase</p>'; };
+  s.onerror = ()=>{ document.body.innerHTML = '<p style="padding:40px;text-align:center">Failed to load Supabase</p>'; };
   document.head.appendChild(s);
 })();
 
@@ -133,7 +133,7 @@ async function handleLogin(){
   const pass  = $('password').value;
   note.className = 'form__note';
 
-  if(!email || !pass){ note.textContent = '⚠️ Введите email и пароль'; note.classList.add('is-error'); return; }
+  if(!email || !pass){ note.textContent = '⚠️ Enter email and password'; note.classList.add('is-error'); return; }
 
   const btn = $('loginBtn');
   btn.disabled = true;
@@ -145,7 +145,7 @@ async function handleLogin(){
     // applySession сработает через onAuthStateChange
     $('password').value = '';
   }catch(e){
-    note.textContent = 'Ошибка: ' + e.message; note.classList.add('is-error');
+    note.textContent = 'Error: ' + e.message; note.classList.add('is-error');
   }finally{
     btn.disabled = false;
     btn.innerHTML = html;
@@ -176,7 +176,7 @@ function switchTab(tab){
 /* ---------- Остатки ---------- */
 async function loadStock(){
   const body = $('stockBody');
-  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Loading…</div>';
   try{
     const { data, error } = await supa
       .from('ingredients')
@@ -187,24 +187,24 @@ async function loadStock(){
     renderStock(ingredients);
     fillIngredientSelect(ingredients);
   }catch(e){
-    body.innerHTML = '<p class="stock-empty">Не удалось загрузить остатки: ' + e.message + '</p>';
+    body.innerHTML = '<p class="stock-empty">Failed to load stock: ' + e.message + '</p>';
   }
 }
 
 function renderStock(list){
   const body = $('stockBody');
   if(!list.length){
-    body.innerHTML = '<p class="stock-empty">Ингредиентов пока нет</p>';
+    body.innerHTML = '<p class="stock-empty">No ingredients yet</p>';
     return;
   }
   const rows = list.map(it=>{
     const low = Number(it.stock) <= Number(it.min_stock);
     return `
       <tr class="${low ? 'is-low' : ''}">
-        <td>${escapeHtml(it.name)}${low ? '<span class="badge-low">мало</span>' : ''}</td>
+        <td>${escapeHtml(it.name)}${low ? '<span class="badge-low">low</span>' : ''}</td>
         <td class="num"><input class="stock-edit${low ? ' low' : ''}" type="number" step="any"
               value="${escapeHtml(it.stock)}" data-id="${it.id}" data-current="${escapeHtml(it.stock)}"
-              title="Изменить остаток"></td>
+              title="Edit stock"></td>
         <td>${escapeHtml(it.unit || '')}</td>
         <td class="num">${fmtNum(it.min_stock)}</td>
       </tr>`;
@@ -214,10 +214,10 @@ function renderStock(list){
       <table class="stock">
         <thead>
           <tr>
-            <th>Название</th>
-            <th class="num">Остаток</th>
-            <th>Ед.</th>
-            <th class="num">Мин.</th>
+            <th>Name</th>
+            <th class="num">Stock</th>
+            <th>Unit</th>
+            <th class="num">Min</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -234,20 +234,20 @@ async function handleStockEdit(input){
   const current = Number(input.dataset.current);
   const next = Number(input.value);
 
-  if(!Number.isFinite(next)){ if(note){ note.className='form__note is-error'; note.textContent='⚠️ Введите число'; } await loadStock(); return; }
+  if(!Number.isFinite(next)){ if(note){ note.className='form__note is-error'; note.textContent='⚠️ Enter a number'; } await loadStock(); return; }
   const delta = next - current;
   if(delta === 0) return;
 
   input.disabled = true;
   try{
     const { error } = await supa.from('movements').insert({
-      ingredient_id: id, type: 'adjust', amount: delta, source: 'manual', note: 'коррекция остатка'
+      ingredient_id: id, type: 'adjust', amount: delta, source: 'manual', note: 'stock correction'
     });
     if(error) throw error;
-    if(note){ note.className = 'form__note is-ok'; note.textContent = '✅ Остаток обновлён'; }
+    if(note){ note.className = 'form__note is-ok'; note.textContent = '✅ Stock updated'; }
     await loadStock();
   }catch(e){
-    if(note){ note.className = 'form__note is-error'; note.textContent = 'Ошибка: ' + e.message; }
+    if(note){ note.className = 'form__note is-error'; note.textContent = 'Error: ' + e.message; }
     await loadStock();
   }
 }
@@ -257,11 +257,11 @@ function fillIngredientSelect(list){
   const sel = $('incIngredient');
   sel.innerHTML = list.map(it=>
     `<option value="${it.id}">${escapeHtml(it.name)}${it.unit ? ' (' + escapeHtml(it.unit) + ')' : ''}</option>`
-  ).join('') + '<option value="new">➕ Новый ингредиент</option>';
+  ).join('') + '<option value="new">➕ New ingredient</option>';
   toggleIncNewFields();
 }
 
-/* показать поля нового ингредиента, если выбрано «➕ Новый ингредиент» */
+/* показать поля нового ингредиента, если выбрано «➕ New ingredient» */
 function toggleIncNewFields(){
   const isNew = $('incIngredient').value === 'new';
   $('incNewFields').classList.toggle('hidden', !isNew);
@@ -279,15 +279,15 @@ async function handleIncome(){
   const noteText = $('incNote').value.trim();
   const priceRaw = $('incPrice').value.trim();
 
-  if(!sel){ note.textContent = '⚠️ Выберите ингредиент'; note.classList.add('is-error'); return; }
-  if(isNew && !newName){ note.textContent = '⚠️ Укажите название нового ингредиента'; note.classList.add('is-error'); return; }
-  if(!Number.isFinite(amount) || amount <= 0){ note.textContent = '⚠️ Количество должно быть больше 0'; note.classList.add('is-error'); return; }
+  if(!sel){ note.textContent = '⚠️ Select an ingredient'; note.classList.add('is-error'); return; }
+  if(isNew && !newName){ note.textContent = '⚠️ Enter the new ingredient name'; note.classList.add('is-error'); return; }
+  if(!Number.isFinite(amount) || amount <= 0){ note.textContent = '⚠️ Quantity must be greater than 0'; note.classList.add('is-error'); return; }
 
   // Цена закупки — необязательная, целое ≥ 0
   let price = 0;
   if(priceRaw !== ''){
     price = Number(priceRaw);
-    if(!Number.isInteger(price) || price < 0){ note.textContent = '⚠️ Цена закупки — целое число ≥ 0'; note.classList.add('is-error'); return; }
+    if(!Number.isInteger(price) || price < 0){ note.textContent = '⚠️ Purchase price must be an integer ≥ 0'; note.classList.add('is-error'); return; }
   }
 
   const btn = $('incSubmit');
@@ -328,9 +328,9 @@ async function handleIncome(){
       const { error: cErr } = await supa.from('cash_movements').insert({
         amount: -price,
         source: 'purchase',
-        note: 'Закупка: ' + ingName + ' ' + amount + (ingUnit ? ' ' + ingUnit : '')
+        note: 'Purchase: ' + ingName + ' ' + amount + (ingUnit ? ' ' + ingUnit : '')
       });
-      if(cErr) cashWarn = ' (касса не записана: ' + cErr.message + ')';
+      if(cErr) cashWarn = ' (cash not recorded: ' + cErr.message + ')';
     }
 
     // очистить форму + подтверждение + обновить остатки (и кассу, если открыта)
@@ -338,12 +338,12 @@ async function handleIncome(){
     $('incPrice').value = '';
     $('incNote').value = '';
     $('incNewName').value = '';
-    note.textContent = '✅ Приход добавлен' + cashWarn;
+    note.textContent = '✅ Income added' + cashWarn;
     note.classList.add(cashWarn ? 'is-error' : 'is-ok');
     await loadStock();
     if(!$('panelCash').classList.contains('hidden')) loadCash();
   }catch(e){
-    note.textContent = 'Ошибка: ' + e.message;
+    note.textContent = 'Error: ' + e.message;
     note.classList.add('is-error');
   }finally{
     btn.disabled = false;
@@ -368,7 +368,7 @@ async function ensureIngredients(){
 
 async function loadCalc(){
   const body = $('calcBody');
-  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Loading…</div>';
   try{
     await ensureIngredients();
     const [dRes, rRes] = await Promise.all([
@@ -389,7 +389,7 @@ async function loadCalc(){
     );
     renderCalc();
   }catch(e){
-    body.innerHTML = '<p class="stock-empty">Не удалось загрузить блюда: ' + escapeHtml(e.message) + '</p>';
+    body.innerHTML = '<p class="stock-empty">Failed to load dishes: ' + escapeHtml(e.message) + '</p>';
   }
 }
 
@@ -404,7 +404,7 @@ function ingredientOptions(selectedId){
 function renderCalc(){
   const body = $('calcBody');
   if(!dishes.length){
-    body.innerHTML = '<p class="stock-empty">Блюд пока нет. Нажмите «＋ Блюдо».</p>';
+    body.innerHTML = '<p class="stock-empty">No dishes yet. Click "＋ Dish".</p>';
     return;
   }
   body.innerHTML = dishes.map(d=>{
@@ -419,17 +419,17 @@ function renderCalc(){
               <input class="recipe-row__amount" type="number" min="0" step="any" inputmode="decimal"
                      value="${escapeHtml(r.amount)}" data-action="edit-amount" data-recipe-id="${r.id}">
               <span class="recipe-row__unit">${escapeHtml(unit)}</span>
-              <button class="recipe-row__del" data-action="del-recipe" data-recipe-id="${r.id}" title="Удалить">✕</button>
+              <button class="recipe-row__del" data-action="del-recipe" data-recipe-id="${r.id}" title="Delete">✕</button>
             </li>`;
         }).join('')}</ul>`
-      : '<p class="recipe-empty">Ингредиентов пока нет</p>';
+      : '<p class="recipe-empty">No ingredients yet</p>';
 
     const priceTxt = (d.price != null && d.price !== '') ? fmtNum(d.price) : '—';
     const meta = [
       d.category ? escapeHtml(d.category) : null,
-      d.code ? 'код ' + escapeHtml(d.code) : null,
+      d.code ? 'code ' + escapeHtml(d.code) : null,
       priceTxt,
-      d.active === false ? '<span class="off">не активно</span>' : null
+      d.active === false ? '<span class="off">inactive</span>' : null
     ].filter(Boolean).join(' · ');
 
     return `
@@ -439,13 +439,13 @@ function renderCalc(){
             <div class="dish-card__name">${escapeHtml(d.name)}</div>
             <div class="dish-card__meta">${meta}</div>
           </div>
-          <button class="btn btn--ghost dish-card__edit" data-action="edit-dish" data-id="${d.id}">Изменить</button>
+          <button class="btn btn--ghost dish-card__edit" data-action="edit-dish" data-id="${d.id}">Edit</button>
         </div>
         ${recipeHtml}
         <div class="recipe-add">
           <select class="recipe-add__sel">${ingredientOptions()}</select>
-          <input class="recipe-add__amt" type="number" min="0" step="any" inputmode="decimal" placeholder="кол-во">
-          <button class="btn btn--ghost" data-action="add-recipe" data-dish-id="${d.id}">＋ Ингредиент</button>
+          <input class="recipe-add__amt" type="number" min="0" step="any" inputmode="decimal" placeholder="qty">
+          <button class="btn btn--ghost" data-action="add-recipe" data-dish-id="${d.id}">＋ Ingredient</button>
         </div>
       </div>`;
   }).join('');
@@ -480,11 +480,11 @@ async function handleDishSave(){
   const category = $('dishCategory').value.trim();
   const priceRaw = $('dishPrice').value.trim();
 
-  if(!name){ note.textContent = '⚠️ Укажите название'; note.classList.add('is-error'); return; }
+  if(!name){ note.textContent = '⚠️ Enter a name'; note.classList.add('is-error'); return; }
   let price = null;
   if(priceRaw !== ''){
     price = Number(priceRaw);
-    if(!Number.isFinite(price) || price < 0){ note.textContent = '⚠️ Некорректная цена'; note.classList.add('is-error'); return; }
+    if(!Number.isFinite(price) || price < 0){ note.textContent = '⚠️ Invalid price'; note.classList.add('is-error'); return; }
   }
 
   const payload = { code: code || null, name, category: category || null, price };
@@ -501,10 +501,10 @@ async function handleDishSave(){
     }
     if(error) throw error;
     closeDishForm();
-    setCalcNote('✅ Блюдо сохранено', true);
+    setCalcNote('✅ Dish saved', true);
     await loadCalc();
   }catch(e){
-    note.textContent = 'Ошибка: ' + e.message;
+    note.textContent = 'Error: ' + e.message;
     note.classList.add('is-error');
   }finally{
     btn.disabled = false;
@@ -515,17 +515,17 @@ async function handleDishSave(){
 async function handleDishDelete(){
   if(!editingDishId) return;
   const dish = dishes.find(d=> String(d.id) === String(editingDishId));
-  if(!confirm(`Удалить блюдо «${dish?.name || ''}»? Рецепт удалится вместе с ним.`)) return;
+  if(!confirm(`Delete dish "${dish?.name || ''}"? Its recipe will be deleted too.`)) return;
   try{
     const { error } = await supa.from('dishes').delete().eq('id', editingDishId);
     if(error) throw error;
     closeDishForm();
-    setCalcNote('🗑 Блюдо удалено', true);
+    setCalcNote('🗑 Dish deleted', true);
     await loadCalc();
   }catch(e){
     const note = $('dishNote');
     note.className = 'form__note is-error';
-    note.textContent = 'Ошибка: ' + e.message;
+    note.textContent = 'Error: ' + e.message;
   }
 }
 
@@ -557,8 +557,8 @@ async function addRecipe(btn){
   const ingredient_id = sel.value;
   const amount = Number(amtEl.value);
 
-  if(!ingredient_id){ setCalcNote('⚠️ Выберите ингредиент', false); return; }
-  if(!Number.isFinite(amount) || amount <= 0){ setCalcNote('⚠️ Количество должно быть больше 0', false); return; }
+  if(!ingredient_id){ setCalcNote('⚠️ Select an ingredient', false); return; }
+  if(!Number.isFinite(amount) || amount <= 0){ setCalcNote('⚠️ Quantity must be greater than 0', false); return; }
 
   try{
     // upsert по уникальному (dish_id, ingredient_id): если есть — обновит amount
@@ -567,27 +567,27 @@ async function addRecipe(btn){
       { onConflict: 'dish_id,ingredient_id' }
     );
     if(error) throw error;
-    setCalcNote('✅ Сохранено', true);
+    setCalcNote('✅ Saved', true);
     await loadCalc();
   }catch(e){
-    setCalcNote('Ошибка: ' + e.message, false);
+    setCalcNote('Error: ' + e.message, false);
   }
 }
 
 async function editAmount(inp){
   const amount = Number(inp.value);
   if(!Number.isFinite(amount) || amount <= 0){
-    setCalcNote('⚠️ Количество должно быть больше 0', false);
+    setCalcNote('⚠️ Quantity must be greater than 0', false);
     await loadCalc(); // вернуть прежнее значение
     return;
   }
   try{
     const { error } = await supa.from('recipe').update({ amount }).eq('id', inp.dataset.recipeId);
     if(error) throw error;
-    setCalcNote('✅ Сохранено', true);
+    setCalcNote('✅ Saved', true);
     await loadCalc();
   }catch(e){
-    setCalcNote('Ошибка: ' + e.message, false);
+    setCalcNote('Error: ' + e.message, false);
     await loadCalc();
   }
 }
@@ -596,10 +596,10 @@ async function delRecipe(recipeId){
   try{
     const { error } = await supa.from('recipe').delete().eq('id', recipeId);
     if(error) throw error;
-    setCalcNote('🗑 Ингредиент убран', true);
+    setCalcNote('🗑 Ingredient removed', true);
     await loadCalc();
   }catch(e){
-    setCalcNote('Ошибка: ' + e.message, false);
+    setCalcNote('Error: ' + e.message, false);
   }
 }
 
@@ -618,12 +618,12 @@ function cashAbs(n){
   const s = String(Math.abs(Math.round(Number(n) || 0)));
   return s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₫';
 }
-const CASH_SOURCE = { order: 'Заказ', purchase: 'Закупка', manual: 'Вручную' };
+const CASH_SOURCE = { order: 'Order', purchase: 'Purchase', manual: 'Manual' };
 
 async function loadCash(){
   const body = $('cashBody');
   const balEl = $('cashBalance');
-  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Loading…</div>';
   try{
     const [balRes, histRes] = await Promise.all([
       supa.from('cash_movements').select('amount'),                       // баланс — сумма ВСЕХ
@@ -642,21 +642,21 @@ async function loadCash(){
     renderCash(histRes.data || []);
   }catch(e){
     balEl.textContent = '—';
-    body.innerHTML = '<p class="cash-empty">Не удалось загрузить кассу: ' + escapeHtml(e.message) + '</p>';
+    body.innerHTML = '<p class="cash-empty">Failed to load cash: ' + escapeHtml(e.message) + '</p>';
   }
 }
 
 function renderCash(rows){
   const body = $('cashBody');
   if(!rows.length){
-    body.innerHTML = '<p class="cash-empty">Движений пока нет</p>';
+    body.innerHTML = '<p class="cash-empty">No entries yet</p>';
     return;
   }
   body.innerHTML = '<ul class="cash-list">' + rows.map(r=>{
     const n = Number(r.amount || 0);
     const pos = n >= 0;
     const src = CASH_SOURCE[r.source] || escapeHtml(r.source || '');
-    const ordRef = (r.source === 'order' && r.order_id != null) ? `<span class="cash-row__ord">Заказ #${escapeHtml(r.order_id)}</span>` : '';
+    const ordRef = (r.source === 'order' && r.order_id != null) ? `<span class="cash-row__ord">Order #${escapeHtml(r.order_id)}</span>` : '';
     const date = r.created_at
       ? new Date(r.created_at).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
       : '';
@@ -668,11 +668,11 @@ function renderCash(rows){
             ${ordRef}
             <span class="cash-row__date">${date}</span>
           </div>
-          <input class="cash-note-edit" value="${escapeHtml(r.note ?? '')}" placeholder="примечание">
+          <input class="cash-note-edit" value="${escapeHtml(r.note ?? '')}" placeholder="note">
         </div>
         <input class="cash-amt-edit ${pos ? 'pos' : 'neg'}" type="number" step="1" inputmode="numeric"
-               value="${escapeHtml(n)}" data-current="${escapeHtml(n)}" title="Сумма (со знаком)">
-        <button class="cash-del" title="Удалить операцию">×</button>
+               value="${escapeHtml(n)}" data-current="${escapeHtml(n)}" title="Amount (signed)">
+        <button class="cash-del" title="Delete entry">×</button>
       </li>`;
   }).join('') + '</ul>';
 }
@@ -698,7 +698,7 @@ async function handleCashSave(){
   const noteText = $('cashOpNote').value.trim();
 
   if(!Number.isInteger(amount) || amount === 0){
-    note.textContent = '⚠️ Сумма — целое число, не 0 (со знаком)';
+    note.textContent = '⚠️ Amount must be a non-zero integer (signed)';
     note.classList.add('is-error');
     return;
   }
@@ -713,10 +713,10 @@ async function handleCashSave(){
     });
     if(error) throw error;
     closeCashForm();
-    setCashNote('✅ Операция добавлена', true);
+    setCashNote('✅ Entry added', true);
     await loadCash();
   }catch(e){
-    note.textContent = 'Ошибка: ' + e.message;
+    note.textContent = 'Error: ' + e.message;
     note.classList.add('is-error');
   }finally{
     btn.disabled = false;
@@ -735,15 +735,15 @@ async function handleCashAmountEdit(input){
   const id = input.closest('.cash-row').dataset.id;
   const cur = Number(input.dataset.current);
   const next = Number(input.value);
-  if(!Number.isInteger(next)){ setCashNote('⚠️ Сумма — целое число (со знаком)', false); await loadCash(); return; }
+  if(!Number.isInteger(next)){ setCashNote('⚠️ Amount must be an integer (signed)', false); await loadCash(); return; }
   if(next === cur) return;
   try{
     const { error } = await supa.from('cash_movements').update({ amount: next }).eq('id', id);
     if(error) throw error;
-    setCashNote('✅ Сумма обновлена', true);
+    setCashNote('✅ Amount updated', true);
     await loadCash();
   }catch(e){
-    setCashNote('Ошибка: ' + e.message, false);
+    setCashNote('Error: ' + e.message, false);
     await loadCash();
   }
 }
@@ -755,24 +755,24 @@ async function handleCashNoteEdit(input){
   try{
     const { error } = await supa.from('cash_movements').update({ note: val || null }).eq('id', id);
     if(error) throw error;
-    setCashNote('✅ Примечание обновлено', true);
+    setCashNote('✅ Note updated', true);
     await loadCash();
   }catch(e){
-    setCashNote('Ошибка: ' + e.message, false);
+    setCashNote('Error: ' + e.message, false);
     await loadCash();
   }
 }
 
 /* Удалить движение кассы */
 async function handleCashDelete(id){
-  if(!confirm('Удалить эту операцию из кассы?')) return;
+  if(!confirm('Delete this cash entry?')) return;
   try{
     const { error } = await supa.from('cash_movements').delete().eq('id', id);
     if(error) throw error;
-    setCashNote('🗑 Операция удалена', true);
+    setCashNote('🗑 Entry deleted', true);
     await loadCash();
   }catch(e){
-    setCashNote('Ошибка: ' + e.message, false);
+    setCashNote('Error: ' + e.message, false);
   }
 }
 
@@ -801,7 +801,7 @@ function fileToJpegDataUrl(file, maxDim = 1600, quality = 0.85){
     };
     img.onerror = ()=>{
       URL.revokeObjectURL(url);
-      reject(new Error('не удалось открыть изображение (возможно, HEIC не поддерживается этим браузером — попробуйте JPG/PNG)'));
+      reject(new Error('could not open image (this browser may not support HEIC — try JPG/PNG)'));
     };
     img.src = url;
   });
@@ -811,13 +811,13 @@ async function handleRecognizeInvoice(){
   const note = $('invNote');
   note.className = 'form__note';
   const file = $('invFile').files && $('invFile').files[0];
-  if(!file){ note.textContent = '⚠️ Выберите фото накладной'; note.classList.add('is-error'); return; }
+  if(!file){ note.textContent = '⚠️ Select an invoice photo'; note.classList.add('is-error'); return; }
 
   const btn = $('invRecognize');
   btn.disabled = true;
   const html = btn.innerHTML;
   btn.innerHTML = '<span class="spinner spinner--btn"></span>';
-  note.innerHTML = '<span class="note-loading"><span class="spinner"></span> Распознаём…</span>';
+  note.innerHTML = '<span class="note-loading"><span class="spinner"></span> Recognizing…</span>';
   try{
     const image_base64 = await fileToJpegDataUrl(file);
     const res = await fetch(CONFIG.SUPABASE_URL + '/functions/v1/parse-invoice', {
@@ -837,7 +837,7 @@ async function handleRecognizeInvoice(){
     if(!items.length){
       $('invResult').innerHTML = '';
       note.className = 'form__note';
-      note.textContent = 'Позиции не найдены — проверьте фото';
+      note.textContent = 'No items found — check the photo';
       return;
     }
     invRows = items.map(it=>{
@@ -853,7 +853,7 @@ async function handleRecognizeInvoice(){
   }catch(e){
     $('invResult').innerHTML = '';
     note.className = 'form__note is-error';
-    note.textContent = 'Ошибка распознавания: ' + e.message;
+    note.textContent = 'Recognition error: ' + e.message;
   }finally{
     btn.disabled = false;
     btn.innerHTML = html;
@@ -906,7 +906,7 @@ function fuzzyIngredientId(name){
 
 function invIngredientOptions(selected){
   const isNew = selected === 'new';
-  return `<option value="new"${isNew ? ' selected' : ''}>➕ Создать новый</option>` +
+  return `<option value="new"${isNew ? ' selected' : ''}>➕ Create new</option>` +
     ingredients.map(it=>
       `<option value="${it.id}"${String(it.id) === String(selected) ? ' selected' : ''}>` +
       `${escapeHtml(it.name)}${it.unit ? ' (' + escapeHtml(it.unit) + ')' : ''}</option>`
@@ -921,26 +921,26 @@ function renderInvoice(){
         <td><input class="inv-qty inv-num" type="number" step="any" value="${escapeHtml(r.qty ?? '')}"></td>
         <td>
           <select class="inv-unit">
-            <option value="г"${r.unit === 'г' ? ' selected' : ''}>г</option>
-            <option value="шт"${r.unit === 'шт' ? ' selected' : ''}>шт</option>
+            <option value="g"${r.unit === 'g' ? ' selected' : ''}>g</option>
+            <option value="pcs"${r.unit === 'pcs' ? ' selected' : ''}>pcs</option>
           </select>
         </td>
         <td><select class="inv-ing">${invIngredientOptions(r.ingId)}</select></td>
-        <td><button class="inv-del" data-index="${i}" title="Удалить строку">×</button></td>
+        <td><button class="inv-del" data-index="${i}" title="Delete row">×</button></td>
       </tr>`).join('');
   $('invResult').innerHTML = `
     <div class="inv-table-wrap">
       <table class="inv-table">
         <thead><tr>
-          <th>Название</th><th>Кол-во</th><th>Единица</th><th>Ингредиент</th><th></th>
+          <th>Name</th><th>Qty</th><th>Unit</th><th>Ingredient</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
     <div class="inv-submit-row">
       <div class="inv-actions">
-        <button id="invSubmit" class="btn btn--primary">Внести всё</button>
-        <button id="invCancel" class="btn btn--ghost">Отменить</button>
+        <button id="invSubmit" class="btn btn--primary">Add all</button>
+        <button id="invCancel" class="btn btn--ghost">Cancel</button>
       </div>
       <p id="invSubmitNote" class="form__note"></p>
     </div>`;
@@ -979,10 +979,10 @@ function invAutoConvert(it){
   const wg  = (it.weight_grams == null || it.weight_grams === '') ? null : Number(it.weight_grams);
   const p = (div) => Number.isFinite(ppu) ? ppu / div : null;
 
-  if(gpt === 'kg')            return { unit: 'г', qty: qty * 1000, priceBase: p(1000) };
-  if(gpt === 'g')             return { unit: 'г', qty: qty,        priceBase: p(1) };
-  if(wg != null && wg > 0)    return { unit: 'г', qty: qty * wg,   priceBase: p(wg) };
-  return { unit: 'шт', qty: qty, priceBase: p(1) };
+  if(gpt === 'kg')            return { unit: 'g', qty: qty * 1000, priceBase: p(1000) };
+  if(gpt === 'g')             return { unit: 'g', qty: qty,        priceBase: p(1) };
+  if(wg != null && wg > 0)    return { unit: 'g', qty: qty * wg,   priceBase: p(wg) };
+  return { unit: 'pcs', qty: qty, priceBase: p(1) };
 }
 
 async function handleSubmitInvoice(){
@@ -1005,8 +1005,8 @@ async function handleSubmitInvoice(){
       const total     = Number(r.total);        // сумма (из распознавания, скрыта в UI)
       const ingSel    = r.ingId;
 
-      if(!name) throw new Error('пустое название в одной из строк');
-      if(!Number.isFinite(qty) || qty <= 0) throw new Error('некорректное количество: ' + name);
+      if(!name) throw new Error('empty name in one of the rows');
+      if(!Number.isFinite(qty) || qty <= 0) throw new Error('invalid quantity: ' + name);
 
       // а) ингредиент (или создаём новый) — единица из селекта
       let ingredientId = ingSel;
@@ -1031,7 +1031,7 @@ async function handleSubmitInvoice(){
       // г) расход в кассу
       if(Number.isFinite(total) && total > 0){
         const { error } = await supa.from('cash_movements').insert({
-          amount: -total, source: 'purchase', note: 'Накладная: ' + name + ' ' + qty + ' ' + unit
+          amount: -total, source: 'purchase', note: 'Invoice: ' + name + ' ' + qty + ' ' + unit
         });
         if(error) throw error;
       }
@@ -1042,11 +1042,11 @@ async function handleSubmitInvoice(){
     $('invResult').innerHTML = '';
     $('invFile').value = '';
     $('invNote').className = 'form__note is-ok';
-    $('invNote').textContent = `✅ Внесено позиций: ${done}`;
+    $('invNote').textContent = `✅ Items added: ${done}`;
     await loadStock();
     if(!$('panelCash').classList.contains('hidden')) loadCash();
   }catch(e){
-    if($('invSubmitNote')){ $('invSubmitNote').className = 'form__note is-error'; $('invSubmitNote').textContent = 'Ошибка: ' + e.message; }
+    if($('invSubmitNote')){ $('invSubmitNote').className = 'form__note is-error'; $('invSubmitNote').textContent = 'Error: ' + e.message; }
   }finally{
     if($('invSubmit')){ btn.disabled = false; btn.innerHTML = html; }
   }
