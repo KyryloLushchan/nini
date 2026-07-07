@@ -5,6 +5,12 @@
 
 const Cart = {
   items: {},   // { id: qty }
+  discountPercent: 0,   // персональная скидка залогиненного клиента (только отображение)
+
+  // сумма скидки (та же формула, что на сервере)
+  discountAmount(){
+    return this.discountPercent > 0 ? Math.round(this.total() * this.discountPercent / 100) : 0;
+  },
 
   add(id){
     this.items[id] = (this.items[id] || 0) + 1;
@@ -79,14 +85,47 @@ const Cart = {
       }).join('');
     }
 
-    // сумма
-    document.getElementById('cartTotal').textContent = fmtPrice(this.total());
+    // сумма (с учётом персональной скидки, если есть)
+    const raw = this.total();
+    const disc = this.discountAmount();
+    document.getElementById('cartTotal').textContent = fmtPrice(raw - disc);
+
+    // строка скидки
+    const row = document.getElementById('cartDiscountRow');
+    if(row){
+      if(this.discountPercent > 0 && raw > 0){
+        row.classList.remove('hidden');
+        const label = DISC_LABEL[lang] || DISC_LABEL.en;
+        document.getElementById('cartDiscountText').textContent = `${label}: −${this.discountPercent}%`;
+      } else {
+        row.classList.add('hidden');
+      }
+    }
 
     // обновить контролы карточек и мобильную плашку
     if(typeof syncMenuControls === 'function') syncMenuControls();
     if(typeof updateOrderBar === 'function') updateOrderBar();
   }
 };
+
+/* подпись строки скидки по языкам */
+const DISC_LABEL = { ua: 'Твоя знижка', ru: 'Твоя скидка', en: 'Your discount', vn: 'Ưu đãi của bạn' };
+
+/* Подтянуть персональную скидку залогиненного клиента (RLS: видна только своя строка).
+   Это только отображение — реальный расчёт всё равно на сервере (send-order). */
+async function loadMyDiscount(){
+  try{
+    if(typeof supa === 'undefined' || !supa){ Cart.discountPercent = 0; Cart.render(); return; }
+    const { data: sess } = await supa.auth.getSession();
+    if(!sess || !sess.session){ Cart.discountPercent = 0; Cart.render(); return; }
+    const { data, error } = await supa.from('discounts').select('percent').maybeSingle();
+    const p = (!error && data) ? Number(data.percent) : 0;
+    Cart.discountPercent = (Number.isFinite(p) && p >= 1 && p <= 100) ? p : 0;
+  }catch(_e){
+    Cart.discountPercent = 0;
+  }
+  Cart.render();
+}
 
 /* Формат цены в донгах: 189000 -> "189 000₫" */
 function fmtPrice(v){

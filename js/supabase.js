@@ -42,6 +42,8 @@ async function refreshUser(){
   const { data } = await supa.auth.getUser();
   currentUser = data?.user || null;
   updateAuthLabels();
+  // подтянуть персональную скидку в корзину (только отображение)
+  if(typeof loadMyDiscount === 'function') loadMyDiscount();
 }
 
 function updateAuthLabels(){
@@ -169,6 +171,7 @@ async function handleLogout(){
   if(supa) await supa.auth.signOut();
   currentUser = null;
   updateAuthLabels();
+  if(typeof Cart !== 'undefined'){ Cart.discountPercent = 0; Cart.render(); }
   closeModal('accountModal');
 }
 

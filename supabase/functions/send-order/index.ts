@@ -223,6 +223,41 @@ serve(async (req) => {
       }
     }
 
+    // Проверенный user_id из JWT (клиенту не верим) + персональная скидка.
+    // Всё считается ТОЛЬКО на сервере.
+    const SB_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+    let user_id: string | null = null;
+    const userToken = clean(body.userToken, 4000);
+    if (userToken && SB_URL) {
+      const ur = await fetch(`${SB_URL}/auth/v1/user`, {
+        headers: { Authorization: `Bearer ${userToken}`, apikey: ANON ?? SERVICE ?? "" },
+      });
+      if (ur.ok) {
+        const u = await ur.json().catch(() => null);
+        if (u && typeof u.id === "string") user_id = u.id;
+      }
+    }
+
+    // Персональная скидка: читаем через service-role (RLS обходится)
+    let discountPercent = 0;
+    if (user_id && SB_URL && SERVICE) {
+      try {
+        const dr = await fetch(
+          `${SB_URL}/rest/v1/discounts?user_id=eq.${user_id}&select=percent`,
+          { headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` } },
+        );
+        if (dr.ok) {
+          const rows = await dr.json().catch(() => []);
+          const p = Array.isArray(rows) && rows[0] ? Number(rows[0].percent) : 0;
+          if (Number.isFinite(p) && p >= 1 && p <= 100) discountPercent = p;
+        }
+      } catch { /* скидку не удалось получить — считаем без неё */ }
+    }
+    const discountAmount = discountPercent > 0 ? Math.round(total * discountPercent / 100) : 0;
+    const totalFinal = total - discountAmount;
+
     // Текст заказа собирает СЕРВЕР (всегда на английском)
     let msg = `🍣 NEW ORDER NiNi Sushi\n\n`;
     msg += `👤 ${name}\n📞 ${phone}\n`;
@@ -233,26 +268,17 @@ serve(async (req) => {
     if (comment) msg += `📝 ${comment}\n`;
     msg += `\n— — —\n`;
     for (const l of lines) msg += `• ${l.name} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
-    msg += `— — —\n💰 TOTAL: ${fmtPrice(total)}`;
+    msg += `— — —\n`;
+    if (discountPercent > 0) {
+      msg += `💰 Subtotal: ${fmtPrice(total)}\n`;
+      msg += `🏷 Discount: -${discountPercent}% (-${fmtPrice(discountAmount)})\n`;
+    }
+    msg += `💰 TOTAL: ${fmtPrice(totalFinal)}`;
 
-    // 1) СНАЧАЛА сохраняем заказ и получаем id (нужен для кнопок).
-    const SB_URL = Deno.env.get("SUPABASE_URL");
-    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+    // 1) СНАЧАЛА сохраняем заказ и получаем id (нужен для кнопок). total = итог со скидкой.
     let orderId: number | null = null;
     try {
       if (SB_URL && SERVICE) {
-        let user_id: string | null = null;
-        const userToken = clean(body.userToken, 4000);
-        if (userToken) {
-          const ur = await fetch(`${SB_URL}/auth/v1/user`, {
-            headers: { Authorization: `Bearer ${userToken}`, apikey: ANON ?? SERVICE },
-          });
-          if (ur.ok) {
-            const u = await ur.json().catch(() => null);
-            if (u && typeof u.id === "string") user_id = u.id;
-          }
-        }
         const ins = await fetch(`${SB_URL}/rest/v1/orders`, {
           method: "POST",
           headers: {
@@ -263,7 +289,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             customer_name: name, phone, address, comment,
-            items: lines, total,
+            items: lines, total: totalFinal,
             lat: lat || null, lng: lng || null,
             user_id, status: "new",
           }),
