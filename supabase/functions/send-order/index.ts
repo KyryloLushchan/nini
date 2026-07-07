@@ -277,8 +277,9 @@ serve(async (req) => {
       }
     } catch (_e) { /* запись в БД не критична для отправки */ }
 
-    // 2) Отправляем в группу. Есть id — добавляем кнопки.
-    const sendBody: Record<string, unknown> = { chat_id: CHAT_ID, text: msg };
+    // 2) Отправляем в группу. Есть id — номер заказа в самый верх + кнопки.
+    const text = orderId !== null ? `🧾 Order #${orderId}\n\n${msg}` : msg;
+    const sendBody: Record<string, unknown> = { chat_id: CHAT_ID, text };
     if (orderId !== null) {
       sendBody.reply_markup = {
         inline_keyboard: [[
