@@ -206,7 +206,6 @@ function renderStock(list){
               value="${escapeHtml(it.stock)}" data-id="${it.id}" data-current="${escapeHtml(it.stock)}"
               title="Edit stock"></td>
         <td>${escapeHtml(it.unit || '')}</td>
-        <td class="num">${fmtNum(it.min_stock)}</td>
       </tr>`;
   }).join('');
   body.innerHTML = `
@@ -217,7 +216,6 @@ function renderStock(list){
             <th>Name</th>
             <th class="num">Stock</th>
             <th>Unit</th>
-            <th class="num">Min</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
