@@ -298,14 +298,18 @@ async function handleIncome(){
     // 0) Новый ингредиент — сначала создаём (stock:0), затем приход
     let ingredient_id = sel;
     let ingName = '';
+    let ingUnit = '';
     if(isNew){
       const { data, error } = await supa.from('ingredients')
         .insert({ name: newName, unit: newUnit, stock: 0 }).select('id').single();
       if(error) throw error;
       ingredient_id = data.id;
       ingName = newName;
+      ingUnit = newUnit;
     } else {
-      ingName = ingredients.find(x=> String(x.id) === String(ingredient_id))?.name || '';
+      const found = ingredients.find(x=> String(x.id) === String(ingredient_id));
+      ingName = found?.name || '';
+      ingUnit = found?.unit || '';
     }
 
     // 1) Только INSERT в movements — stock пересчитает триггер БД
@@ -324,7 +328,7 @@ async function handleIncome(){
       const { error: cErr } = await supa.from('cash_movements').insert({
         amount: -price,
         source: 'purchase',
-        note: 'Закупка: ' + ingName
+        note: 'Закупка: ' + ingName + ' ' + amount + (ingUnit ? ' ' + ingUnit : '')
       });
       if(cErr) cashWarn = ' (касса не записана: ' + cErr.message + ')';
     }
@@ -1027,7 +1031,7 @@ async function handleSubmitInvoice(){
       // г) расход в кассу
       if(Number.isFinite(total) && total > 0){
         const { error } = await supa.from('cash_movements').insert({
-          amount: -total, source: 'purchase', note: 'Накладная: ' + name
+          amount: -total, source: 'purchase', note: 'Накладная: ' + name + ' ' + qty + ' ' + unit
         });
         if(error) throw error;
       }
