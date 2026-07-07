@@ -8,7 +8,7 @@
     script-src 'self' https://cdn.jsdelivr.net;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
-    img-src 'self' data:;
+    img-src 'self' data: blob:;
     connect-src 'self' https://rdxlvebvwjzfmzvguqaf.supabase.co;
     base-uri 'self';
     form-action 'self';
@@ -238,7 +238,7 @@
         <div class="card-box invoice-box">
           <div class="invoice-head">📷 Загрузить накладную</div>
           <div class="invoice-upload">
-            <input id="invFile" type="file" accept="image/*">
+            <input id="invFile" type="file" accept="image/*,.heic,.heif">
             <button id="invRecognize" class="btn btn--primary">Распознать</button>
           </div>
           <p id="invNote" class="form__note"></p>

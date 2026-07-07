@@ -776,12 +776,30 @@ async function handleCashDelete(id){
    ФОТО-ПРИХОД НАКЛАДНОЙ (parse-invoice)
    ============================================================ */
 
-function fileToDataUrl(file){
+/* Читаем фото и всегда отдаём JPEG data-URI.
+   Это конвертирует HEIC (фото iPhone; Safari умеет его декодировать в canvas),
+   который OpenAI Vision не принимает, и заодно ужимает большие снимки. */
+function fileToJpegDataUrl(file, maxDim = 1600, quality = 0.85){
   return new Promise((resolve, reject)=>{
-    const r = new FileReader();
-    r.onload = ()=> resolve(r.result);
-    r.onerror = ()=> reject(new Error('не удалось прочитать файл'));
-    r.readAsDataURL(file);
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height) || 1);
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      }catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = ()=>{
+      URL.revokeObjectURL(url);
+      reject(new Error('не удалось открыть изображение (возможно, HEIC не поддерживается этим браузером — попробуйте JPG/PNG)'));
+    };
+    img.src = url;
   });
 }
 
@@ -797,7 +815,7 @@ async function handleRecognizeInvoice(){
   btn.innerHTML = '<span class="spinner spinner--btn"></span>';
   note.innerHTML = '<span class="note-loading"><span class="spinner"></span> Распознаём…</span>';
   try{
-    const image_base64 = await fileToDataUrl(file);
+    const image_base64 = await fileToJpegDataUrl(file);
     const res = await fetch(CONFIG.SUPABASE_URL + '/functions/v1/parse-invoice', {
       method: 'POST',
       headers: {
