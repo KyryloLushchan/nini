@@ -307,8 +307,28 @@ const MENU = [
     id: 34, cat: "drinks", sub: "drinks", price: 20000, img: "img/menu/Pepsi Zero lime.jpeg", // ФОТО: Pepsi Zero Lime
     name: { ua: "Pepsi Zero Lime", ru: "Pepsi Zero Lime", en: "Pepsi Zero Lime", vn: "Pepsi Zero Lime" },
     desc: { ua: "", ru: "", en: "", vn: "" }
+  },
+
+  /* ---------- ДОПЫ (платные, к заказу; не показываются в меню-сетке) ---------- */
+  {
+    id: 200, cat: "addon", hidden: true, noSale: true, price: 20000,
+    name: { ua: "Додатковий імбир", ru: "Дополнительный имбирь", en: "Extra ginger", vn: "Gừng thêm" },
+    desc: { ua: "", ru: "", en: "", vn: "" }
+  },
+  {
+    id: 201, cat: "addon", hidden: true, noSale: true, price: 20000,
+    name: { ua: "Додатковий васабі", ru: "Дополнительный васаби", en: "Extra wasabi", vn: "Wasabi thêm" },
+    desc: { ua: "", ru: "", en: "", vn: "" }
+  },
+  {
+    id: 202, cat: "addon", hidden: true, noSale: true, price: 20000,
+    name: { ua: "Соєвий соус", ru: "Соевый соус", en: "Soy sauce", vn: "Nước tương" },
+    desc: { ua: "", ru: "", en: "", vn: "" }
   }
 ];
+
+/* id платных допов (для блока в корзине) */
+const ADDON_IDS = [200, 201, 202];
 
 /* ===== СКИДКА −20% на всё, кроме напитков (drinks) ===== */
 const SALE = 0.20;

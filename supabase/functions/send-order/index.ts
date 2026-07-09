@@ -62,6 +62,9 @@ const MENU: Record<string, Dish> = {
   "43":{"p":147500,"c":"rolls","n":{"ua":"Yamamoto set","ru":"Yamamoto set","en":"Yamamoto set","vn":"Yamamoto set"}},
   "90":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія з лососем (Light)","ru":"Филадельфия с лососем (Light)","en":"Philadelphia with Salmon (Light)","vn":"Philadelphia cá hồi (Light)"}},
   "91":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія Гриль (Light)","ru":"Филадельфия Гриль (Light)","en":"Philadelphia Grill (Light)","vn":"Philadelphia nướng (Light)"}},
+  "200":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Додатковий імбир","ru":"Дополнительный имбирь","en":"Extra ginger","vn":"Gừng thêm"}},
+  "201":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Додатковий васабі","ru":"Дополнительный васаби","en":"Extra wasabi","vn":"Wasabi thêm"}},
+  "202":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Соєвий соус","ru":"Соевый соус","en":"Soy sauce","vn":"Nước tương"}},
 };
 const SALE = 0.20;
 const dishPrice = (d: Dish) => (d.c === "drinks" || d.noSale) ? d.p : Math.round(d.p * (1 - SALE));

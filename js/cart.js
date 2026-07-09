@@ -12,6 +12,31 @@ const Cart = {
     return this.discountPercent > 0 ? Math.round(this.total() * this.discountPercent / 100) : 0;
   },
 
+  // блок платных допов (показываем только когда в корзине есть блюда)
+  renderAddons(lang, realCount){
+    const box = document.getElementById('cartAddons');
+    if(!box) return;
+    if(!realCount){ box.classList.add('hidden'); box.innerHTML = ''; return; }
+    box.classList.remove('hidden');
+    const title = (typeof ADDON_TITLE !== 'undefined') ? (ADDON_TITLE[lang] || ADDON_TITLE.en) : 'Add extras';
+    const rows = ADDON_IDS.map(id=>{
+      const d = MENU.find(x => x.id == id);
+      if(!d) return '';
+      const qty = this.items[id] || 0;
+      return `
+        <div class="addon-row">
+          <span class="addon-row__name">${d.name[lang]}</span>
+          <span class="addon-row__price">${fmtPrice(dishPrice(d))}</span>
+          <span class="addon-row__ctrl">
+            <button class="qty-btn" onclick="Cart.setQty(${id}, ${qty - 1})"${qty <= 0 ? ' disabled' : ''}>−</button>
+            <span class="qty-val">${qty}</span>
+            <button class="qty-btn" onclick="Cart.setQty(${id}, ${qty + 1})">+</button>
+          </span>
+        </div>`;
+    }).join('');
+    box.innerHTML = `<div class="addon-title">${title}</div>${rows}`;
+  },
+
   add(id){
     this.items[id] = (this.items[id] || 0) + 1;
     this.render();
@@ -55,9 +80,12 @@ const Cart = {
     // счётчик в шапке
     document.getElementById('cartCount').textContent = this.count();
 
-    // тело корзины
+    // тело корзины (допы показываем отдельным блоком, не в общем списке)
     const box = document.getElementById('cartItems');
-    const entries = Object.entries(this.items);
+    const entries = Object.entries(this.items).filter(([id])=>{
+      const d = MENU.find(x => x.id == id);
+      return !d || d.cat !== 'addon';
+    });
     if(entries.length === 0){
       box.innerHTML = `<div class="cart-empty">${t.cart_empty}</div>`;
     } else {
@@ -85,6 +113,9 @@ const Cart = {
       }).join('');
     }
 
+    // блок платных допов
+    this.renderAddons(lang, entries.length);
+
     // сумма (с учётом персональной скидки, если есть)
     const raw = this.total();
     const disc = this.discountAmount();
@@ -110,6 +141,9 @@ const Cart = {
 
 /* подпись строки скидки по языкам */
 const DISC_LABEL = { ua: 'Твоя знижка', ru: 'Твоя скидка', en: 'Your discount', vn: 'Ưu đãi của bạn' };
+
+/* заголовок блока допов по языкам */
+const ADDON_TITLE = { ua: 'Додатки до замовлення', ru: 'Дополнения к заказу', en: 'Add extras', vn: 'Thêm phần' };
 
 /* Подтянуть персональную скидку залогиненного клиента (RLS: видна только своя строка).
    Это только отображение — реальный расчёт всё равно на сервере (send-order). */
