@@ -21,6 +21,16 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
+    id: 44, cat: "rolls", sub: "new", price: 159000, neu: true, veg: true, img: "img/menu/44.jpg", // ФОТО: Teriyaki Eggplant roll VEGAN
+    name: { ua: "Teriyaki Eggplant roll VEGAN", ru: "Teriyaki Eggplant roll VEGAN", en: "Teriyaki Eggplant roll VEGAN", vn: "Teriyaki Eggplant roll VEGAN" },
+    desc: {
+      ua: "Кеш'ю крем-сир, авокадо, огірок, баклажан, теріякі",
+      ru: "Кешью крем-сыр, авокадо, огурец, баклажан, терияки",
+      en: "Cashew cream cheese, avocado, cucumber, eggplant, teriyaki",
+      vn: "Phô mai kem hạt điều, bơ, dưa leo, cà tím, teriyaki"
+    }
+  },
+  {
     id: 43, cat: "rolls", sub: "new", price: 147500, neu: true, img: "img/menu/43.jpg", // ФОТО: Yamamoto set
     name: { ua: "Yamamoto set", ru: "Yamamoto set", en: "Yamamoto set", vn: "Yamamoto set" },
     desc: {
