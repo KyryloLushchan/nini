@@ -241,10 +241,11 @@ async function handleInvSelect(cq: any, ingredientId: string) {
   const userId = cq.from?.id;
   if (userId == null) { await answer(cq.id); return; }
 
-  const rows = await sbGet(`ingredients?id=eq.${ingredientId}&select=id,name,name_vn`);
+  const rows = await sbGet(`ingredients?id=eq.${ingredientId}&select=id,name,name_vn,unit`);
   const ing = rows[0];
   if (!ing) { await answer(cq.id, "?"); return; }
   const nameVn = ing.name_vn || ing.name;
+  const unit = ing.unit || "g";
 
   // upsert состояния диалога: шаг 1 — ждём вес (сбрасывает таймер)
   await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state`, {
@@ -261,7 +262,7 @@ async function handleInvSelect(cq: any, ingredientId: string) {
   });
 
   await answer(cq.id);
-  await tgInv(`${nameVn}: nhập số lượng (g).\nVí dụ: 2000`);
+  await tgInv(`${nameVn}: nhập số lượng (${unit}).\nVí dụ: ${unit === "pcs" ? "10" : "2000"}`);
 }
 
 /* Сообщение в группе Кухня: /nhap или ввод "кол-во цена" при активном состоянии */
@@ -314,25 +315,25 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
     return; // состояние НЕ удаляем — можно повторить
   }
   const num = Number(numM[1].replace(",", "."));
+  const ing = (await sbGet(`ingredients?id=eq.${st.ingredient_id}&select=id,name,name_vn,unit`))[0];
+  const nameVn = ing?.name_vn || ing?.name || `#${st.ingredient_id}`;
+  const nameRu = ing?.name || `#${st.ingredient_id}`;
+  const unit = ing?.unit || "g";
 
-  // Шаг 1: принят вес -> просим цену
+  // Шаг 1: принят вес/кол-во -> просим цену
   if (st.step !== "price") {
     await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`, {
       method: "PATCH",
       headers: { ...sbHeaders, Prefer: "return=minimal" },
       body: JSON.stringify({ step: "price", amount: num, created_at: new Date().toISOString() }),
     });
-    await tgInv(`✅ ${num} g. Nhập giá (₫):\nVí dụ: 500000`);
+    await tgInv(`✅ ${num} ${unit}. Nhập giá (₫):\nVí dụ: 500000`);
     return;
   }
 
   // Шаг 2: принята цена -> оприходовать
   const amount = Number(st.amount);
   const price = Math.round(num);
-
-  const ing = (await sbGet(`ingredients?id=eq.${st.ingredient_id}&select=id,name,name_vn`))[0];
-  const nameVn = ing?.name_vn || ing?.name || `#${st.ingredient_id}`;
-  const nameRu = ing?.name || `#${st.ingredient_id}`;
 
   // приход на склад — stock пересчитает триггер
   await fetch(`${SUPABASE_URL}/rest/v1/movements`, {
@@ -349,7 +350,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   // состояние отработано — удаляем
   await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
 
-  await tgInv(`✅ Đã nhập: ${nameVn} +${amount} g (${price}₫)`);
+  await tgInv(`✅ Đã nhập: ${nameVn} +${amount} ${unit} (${price}₫)`);
 }
 
 serve(async (req) => {
