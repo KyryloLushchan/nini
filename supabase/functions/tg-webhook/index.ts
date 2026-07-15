@@ -265,8 +265,28 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   const userId = msg?.from?.id;
   if (userId == null) return;
 
-  const cmd = text.trim().split(/\s+/)[0].split("@")[0];
-  if (cmd === "/nhap") { await sendIngredientKeyboard(chatId); return; }
+  const trimmed = text.trim();
+  const cmd = trimmed.split(/\s+/)[0].split("@")[0];
+
+  // постоянная reply-клавиатура с кнопкой «Приход» по /start или /menu
+  if (cmd === "/start" || cmd === "/menu") {
+    await tg("sendMessage", {
+      chat_id: chatId,
+      text: "Menu:",
+      reply_markup: {
+        keyboard: [[{ text: "📦 Nhập hàng" }]],
+        resize_keyboard: true,
+        is_persistent: true,
+      },
+    });
+    return;
+  }
+
+  // /nhap или нажатие постоянной кнопки «📦 Nhập hàng» -> выбор ингредиента
+  if (cmd === "/nhap" || trimmed === "📦 Nhập hàng") {
+    await sendIngredientKeyboard(chatId);
+    return;
+  }
 
   // есть ли активное состояние ввода у этого пользователя в этом чате?
   const st = (await sbGet(
