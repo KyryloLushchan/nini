@@ -20,6 +20,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
 const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET") || "";
 const KITCHEN_CHAT_ID = Deno.env.get("KITCHEN_CHAT_ID") || "";
+const KITCHEN_TOPIC_ORDERS = Deno.env.get("KITCHEN_TOPIC_ORDERS") || "";
+const KITCHEN_TOPIC_INVENTORY = Deno.env.get("KITCHEN_TOPIC_INVENTORY") || "";
 const SITE = "https://ninisushi.com";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -42,6 +44,14 @@ async function tg(method: string, body: unknown) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+/* Отправить сообщение в тему «Nhập hàng» группы Кухня */
+async function tgInv(text: string, reply_markup?: unknown) {
+  const body: Record<string, unknown> = { chat_id: KITCHEN_CHAT_ID, text };
+  if (KITCHEN_TOPIC_INVENTORY) body.message_thread_id = Number(KITCHEN_TOPIC_INVENTORY);
+  if (reply_markup) body.reply_markup = reply_markup;
+  await tg("sendMessage", body);
 }
 
 /* PostgREST helpers (service-role) */
@@ -186,10 +196,12 @@ async function handleCallback(cq: any) {
     if (KITCHEN_CHAT_ID) {
       try {
         const lines = items.map((it) => `• ${it.name} × ${it.qty}`).join("\n");
-        await tg("sendMessage", {
+        const kBody: Record<string, unknown> = {
           chat_id: KITCHEN_CHAT_ID,
           text: `🍣 Order #${order.id}\n\n${lines}`,
-        });
+        };
+        if (KITCHEN_TOPIC_ORDERS) kBody.message_thread_id = Number(KITCHEN_TOPIC_ORDERS);
+        await tg("sendMessage", kBody);
       } catch (e) {
         console.log("KITCHEN sendMessage failed:", e);
       }
@@ -212,21 +224,14 @@ async function handleCallback(cq: any) {
    ============================================================ */
 const INPUT_TTL_MS = 10 * 60 * 1000; // состояние живёт 10 минут
 
-/* /nhap -> клавиатура всех ингредиентов (name_vn), по 2 в ряд */
-async function sendIngredientKeyboard(chatId: number) {
+/* /nhap -> клавиатура всех ингредиентов (name_vn), по 2 в ряд, в тему «Nhập hàng» */
+async function sendIngredientKeyboard() {
   const rows = await sbGet("ingredients?select=id,name,name_vn&order=name_vn.asc");
-  if (!rows.length) {
-    await tg("sendMessage", { chat_id: chatId, text: "Không có nguyên liệu" });
-    return;
-  }
+  if (!rows.length) { await tgInv("Không có nguyên liệu"); return; }
   const btns = rows.map((r) => ({ text: r.name_vn || r.name, callback_data: `inv:${r.id}` }));
   const keyboard: unknown[] = [];
   for (let i = 0; i < btns.length; i += 2) keyboard.push(btns.slice(i, i + 2));
-  await tg("sendMessage", {
-    chat_id: chatId,
-    text: "Chọn nguyên liệu:",
-    reply_markup: { inline_keyboard: keyboard },
-  });
+  await tgInv("Chọn nguyên liệu:", { inline_keyboard: keyboard });
 }
 
 /* Нажата кнопка inv:<id> -> сохраняем состояние и просим ввести кол-во и цену */
@@ -254,10 +259,7 @@ async function handleInvSelect(cq: any, ingredientId: string) {
   });
 
   await answer(cq.id);
-  await tg("sendMessage", {
-    chat_id: chatId,
-    text: `${nameVn}: nhập số lượng và giá.\nVí dụ: 2000 500000`,
-  });
+  await tgInv(`${nameVn}: nhập số lượng và giá.\nVí dụ: 2000 500000`);
 }
 
 /* Сообщение в группе Кухня: /nhap или ввод "кол-во цена" при активном состоянии */
@@ -265,28 +267,31 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   const userId = msg?.from?.id;
   if (userId == null) return;
 
+  // приход работает ТОЛЬКО в теме «Nhập hàng»
+  const inInventory = !!KITCHEN_TOPIC_INVENTORY &&
+    String(msg?.message_thread_id) === KITCHEN_TOPIC_INVENTORY;
+
   const trimmed = text.trim();
   const cmd = trimmed.split(/\s+/)[0].split("@")[0];
 
-  // постоянная reply-клавиатура с кнопкой «Приход» по /start или /menu
+  // постоянная reply-клавиатура с кнопкой «Приход» по /start или /menu (в теме прихода)
   if (cmd === "/start" || cmd === "/menu") {
-    await tg("sendMessage", {
-      chat_id: chatId,
-      text: "Menu:",
-      reply_markup: {
-        keyboard: [[{ text: "📦 Nhập hàng" }]],
-        resize_keyboard: true,
-        is_persistent: true,
-      },
+    await tgInv("Menu:", {
+      keyboard: [[{ text: "📦 Nhập hàng" }]],
+      resize_keyboard: true,
+      is_persistent: true,
     });
     return;
   }
 
-  // /nhap или нажатие постоянной кнопки «📦 Nhập hàng» -> выбор ингредиента
+  // /nhap или кнопка «📦 Nhập hàng» -> выбор ингредиента (только в теме «Nhập hàng»)
   if (cmd === "/nhap" || trimmed === "📦 Nhập hàng") {
-    await sendIngredientKeyboard(chatId);
+    if (inInventory) await sendIngredientKeyboard();
     return;
   }
+
+  // ввод «кол-во цена» обрабатываем только в теме «Nhập hàng»
+  if (!inInventory) return;
 
   // есть ли активное состояние ввода у этого пользователя в этом чате?
   const st = (await sbGet(
@@ -303,7 +308,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   // ждём "ЧИСЛО ЧИСЛО" (кол-во, цена)
   const m = text.trim().match(/^(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)$/);
   if (!m) {
-    await tg("sendMessage", { chat_id: chatId, text: "❌ Sai định dạng. Ví dụ: 2000 500000" });
+    await tgInv("❌ Sai định dạng. Ví dụ: 2000 500000");
     return; // состояние НЕ удаляем — можно повторить
   }
   const amount = Number(m[1].replace(",", "."));
@@ -328,7 +333,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   // состояние отработано — удаляем
   await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
 
-  await tg("sendMessage", { chat_id: chatId, text: `✅ Đã nhập: ${nameVn} +${amount} (${price}₫)` });
+  await tgInv(`✅ Đã nhập: ${nameVn} +${amount} (${price}₫)`);
 }
 
 serve(async (req) => {
