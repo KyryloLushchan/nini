@@ -50,6 +50,12 @@ async function sbGet(path: string): Promise<any[]> {
   if (!r.ok) return [];
   return await r.json().catch(() => []);
 }
+async function sbDelete(path: string) {
+  await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: "DELETE",
+    headers: { ...sbHeaders, Prefer: "return=minimal" },
+  });
+}
 
 async function answer(id: string, text = "") {
   await tg("answerCallbackQuery", { callback_query_id: id, text });
@@ -74,6 +80,9 @@ function inList(values: (string | number)[]): string {
 
 async function handleCallback(cq: any) {
   const data: string = cq?.data ?? "";
+  // Приход через Telegram: выбор ингредиента (только в группе Кухня)
+  const mi = data.match(/^inv:(\d+)$/);
+  if (mi) { await handleInvSelect(cq, mi[1]); return; }
   const m = data.match(/^(ok|no):(.+)$/);
   if (!m) { await answer(cq.id); return; }
   const action = m[1];
@@ -197,6 +206,111 @@ async function handleCallback(cq: any) {
   }
 }
 
+/* ============================================================
+   ПРИХОД ТОВАРА ЧЕРЕЗ TELEGRAM (только в группе «Кухня»)
+   /nhap -> клавиатура ингредиентов -> ввод "кол-во цена"
+   ============================================================ */
+const INPUT_TTL_MS = 10 * 60 * 1000; // состояние живёт 10 минут
+
+/* /nhap -> клавиатура всех ингредиентов (name_vn), по 2 в ряд */
+async function sendIngredientKeyboard(chatId: number) {
+  const rows = await sbGet("ingredients?select=id,name,name_vn&order=name_vn.asc");
+  if (!rows.length) {
+    await tg("sendMessage", { chat_id: chatId, text: "Không có nguyên liệu" });
+    return;
+  }
+  const btns = rows.map((r) => ({ text: r.name_vn || r.name, callback_data: `inv:${r.id}` }));
+  const keyboard: unknown[] = [];
+  for (let i = 0; i < btns.length; i += 2) keyboard.push(btns.slice(i, i + 2));
+  await tg("sendMessage", {
+    chat_id: chatId,
+    text: "Chọn nguyên liệu:",
+    reply_markup: { inline_keyboard: keyboard },
+  });
+}
+
+/* Нажата кнопка inv:<id> -> сохраняем состояние и просим ввести кол-во и цену */
+async function handleInvSelect(cq: any, ingredientId: string) {
+  const chatId = cq.message?.chat?.id;
+  if (String(chatId) !== KITCHEN_CHAT_ID) { await answer(cq.id); return; }
+  const userId = cq.from?.id;
+  if (userId == null) { await answer(cq.id); return; }
+
+  const rows = await sbGet(`ingredients?id=eq.${ingredientId}&select=id,name,name_vn`);
+  const ing = rows[0];
+  if (!ing) { await answer(cq.id, "?"); return; }
+  const nameVn = ing.name_vn || ing.name;
+
+  // upsert состояния диалога (сбрасывает таймер)
+  await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state`, {
+    method: "POST",
+    headers: { ...sbHeaders, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      user_id: userId,
+      ingredient_id: Number(ingredientId),
+      created_at: new Date().toISOString(),
+    }),
+  });
+
+  await answer(cq.id);
+  await tg("sendMessage", {
+    chat_id: chatId,
+    text: `${nameVn}: nhập số lượng và giá.\nVí dụ: 2000 500000`,
+  });
+}
+
+/* Сообщение в группе Кухня: /nhap или ввод "кол-во цена" при активном состоянии */
+async function handleKitchenMessage(msg: any, text: string, chatId: number) {
+  const userId = msg?.from?.id;
+  if (userId == null) return;
+
+  const cmd = text.trim().split(/\s+/)[0].split("@")[0];
+  if (cmd === "/nhap") { await sendIngredientKeyboard(chatId); return; }
+
+  // есть ли активное состояние ввода у этого пользователя в этом чате?
+  const st = (await sbGet(
+    `tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}&select=ingredient_id,created_at&limit=1`,
+  ))[0];
+  if (!st) return; // обычное сообщение — игнорируем
+
+  // протухло (>10 мин) — удаляем и игнорируем
+  if (Date.now() - new Date(st.created_at).getTime() > INPUT_TTL_MS) {
+    await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
+    return;
+  }
+
+  // ждём "ЧИСЛО ЧИСЛО" (кол-во, цена)
+  const m = text.trim().match(/^(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)$/);
+  if (!m) {
+    await tg("sendMessage", { chat_id: chatId, text: "❌ Sai định dạng. Ví dụ: 2000 500000" });
+    return; // состояние НЕ удаляем — можно повторить
+  }
+  const amount = Number(m[1].replace(",", "."));
+  const price = Math.round(Number(m[2].replace(",", ".")));
+
+  const ing = (await sbGet(`ingredients?id=eq.${st.ingredient_id}&select=id,name,name_vn`))[0];
+  const nameVn = ing?.name_vn || ing?.name || `#${st.ingredient_id}`;
+  const nameRu = ing?.name || `#${st.ingredient_id}`;
+
+  // приход на склад — stock пересчитает триггер
+  await fetch(`${SUPABASE_URL}/rest/v1/movements`, {
+    method: "POST",
+    headers: { ...sbHeaders, Prefer: "return=minimal" },
+    body: JSON.stringify({ ingredient_id: st.ingredient_id, type: "in", amount, source: "tg", note: "TG приход" }),
+  });
+  // расход в кассу
+  await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
+    method: "POST",
+    headers: { ...sbHeaders, Prefer: "return=minimal" },
+    body: JSON.stringify({ amount: -price, source: "purchase", note: `TG: ${nameRu}` }),
+  });
+  // состояние отработано — удаляем
+  await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
+
+  await tg("sendMessage", { chat_id: chatId, text: `✅ Đã nhập: ${nameVn} +${amount} (${price}₫)` });
+}
+
 serve(async (req) => {
   // Проверка секрета от Telegram
   if (WEBHOOK_SECRET) {
@@ -216,6 +330,12 @@ serve(async (req) => {
     const msg = update.message ?? update.edited_message;
     const text: string = msg?.text ?? "";
     const chatId = msg?.chat?.id;
+
+    // Приход товара через Telegram — ТОЛЬКО в группе «Кухня»
+    if (msg && chatId != null && String(chatId) === KITCHEN_CHAT_ID) {
+      await handleKitchenMessage(msg, text, chatId);
+      return new Response("ok");
+    }
 
     if (chatId && text.startsWith("/start")) {
       await tg("sendMessage", {
