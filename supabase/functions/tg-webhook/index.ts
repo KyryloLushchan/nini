@@ -246,7 +246,7 @@ async function handleInvSelect(cq: any, ingredientId: string) {
   if (!ing) { await answer(cq.id, "?"); return; }
   const nameVn = ing.name_vn || ing.name;
 
-  // upsert состояния диалога (сбрасывает таймер)
+  // upsert состояния диалога: шаг 1 — ждём вес (сбрасывает таймер)
   await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state`, {
     method: "POST",
     headers: { ...sbHeaders, Prefer: "resolution=merge-duplicates,return=minimal" },
@@ -254,12 +254,14 @@ async function handleInvSelect(cq: any, ingredientId: string) {
       chat_id: chatId,
       user_id: userId,
       ingredient_id: Number(ingredientId),
+      step: "amount",
+      amount: null,
       created_at: new Date().toISOString(),
     }),
   });
 
   await answer(cq.id);
-  await tgInv(`${nameVn}: nhập số lượng và giá.\nVí dụ: 2000 500000`);
+  await tgInv(`${nameVn}: nhập số lượng (g).\nVí dụ: 2000`);
 }
 
 /* Сообщение в группе Кухня: /nhap или ввод "кол-во цена" при активном состоянии */
@@ -295,7 +297,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
 
   // есть ли активное состояние ввода у этого пользователя в этом чате?
   const st = (await sbGet(
-    `tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}&select=ingredient_id,created_at&limit=1`,
+    `tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}&select=ingredient_id,step,amount,created_at&limit=1`,
   ))[0];
   if (!st) return; // обычное сообщение — игнорируем
 
@@ -305,14 +307,28 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
     return;
   }
 
-  // ждём "ЧИСЛО ЧИСЛО" (кол-во, цена)
-  const m = text.trim().match(/^(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)$/);
-  if (!m) {
-    await tgInv("❌ Sai định dạng. Ví dụ: 2000 500000");
+  // ждём ОДНО число (текущий шаг: вес или цена)
+  const numM = trimmed.match(/^(\d+(?:[.,]\d+)?)$/);
+  if (!numM) {
+    await tgInv(st.step === "price" ? "❌ Sai định dạng. Nhập giá. Ví dụ: 500000" : "❌ Sai định dạng. Nhập số lượng. Ví dụ: 2000");
     return; // состояние НЕ удаляем — можно повторить
   }
-  const amount = Number(m[1].replace(",", "."));
-  const price = Math.round(Number(m[2].replace(",", ".")));
+  const num = Number(numM[1].replace(",", "."));
+
+  // Шаг 1: принят вес -> просим цену
+  if (st.step !== "price") {
+    await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`, {
+      method: "PATCH",
+      headers: { ...sbHeaders, Prefer: "return=minimal" },
+      body: JSON.stringify({ step: "price", amount: num, created_at: new Date().toISOString() }),
+    });
+    await tgInv(`✅ ${num} g. Nhập giá (₫):\nVí dụ: 500000`);
+    return;
+  }
+
+  // Шаг 2: принята цена -> оприходовать
+  const amount = Number(st.amount);
+  const price = Math.round(num);
 
   const ing = (await sbGet(`ingredients?id=eq.${st.ingredient_id}&select=id,name,name_vn`))[0];
   const nameVn = ing?.name_vn || ing?.name || `#${st.ingredient_id}`;
@@ -333,7 +349,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   // состояние отработано — удаляем
   await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
 
-  await tgInv(`✅ Đã nhập: ${nameVn} +${amount} (${price}₫)`);
+  await tgInv(`✅ Đã nhập: ${nameVn} +${amount} g (${price}₫)`);
 }
 
 serve(async (req) => {
