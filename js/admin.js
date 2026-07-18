@@ -229,19 +229,25 @@ async function handleStockEdit(input){
   const note = $('stockNote');
   if(note) note.className = 'form__note';
   const id = input.dataset.id;
-  const current = Number(input.dataset.current);
   const next = Number(input.value);
 
   if(!Number.isFinite(next)){ if(note){ note.className='form__note is-error'; note.textContent='⚠️ Enter a number'; } await loadStock(); return; }
-  const delta = next - current;
-  if(delta === 0) return;
 
   input.disabled = true;
   try{
-    const { error } = await supa.from('movements').insert({
-      ingredient_id: id, type: 'adjust', amount: delta, source: 'manual', note: 'stock correction'
-    });
-    if(error) throw error;
+    // Читаем АКТУАЛЬНЫЙ остаток из БД (а не устаревшее значение на экране) и
+    // считаем корректировку от него — тогда «вписал X → стало ровно X»
+    // независимо от заказов/приходов, случившихся после загрузки страницы.
+    const { data: cur, error: e1 } = await supa.from('ingredients').select('stock').eq('id', id).single();
+    if(e1) throw e1;
+    const live = Number(cur?.stock) || 0;
+    const delta = next - live;
+    if(delta !== 0){
+      const { error } = await supa.from('movements').insert({
+        ingredient_id: id, type: 'adjust', amount: delta, source: 'manual', note: 'stock correction'
+      });
+      if(error) throw error;
+    }
     if(note){ note.className = 'form__note is-ok'; note.textContent = '✅ Stock updated'; }
     await loadStock();
   }catch(e){
