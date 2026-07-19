@@ -1069,13 +1069,13 @@ async function handleSubmitInvoice(){
 /* ============================================================
    ДВИЖЕНИЯ — история склада (movements)
    ============================================================ */
-const MV_TYPE = { in: 'Приход', out: 'Расход', adjust: 'Коррекция' };
-const MV_SOURCE = { manual: 'Вручную', invoice: 'Накладная', tg: 'TG кухня', order: 'Заказ', inventory: 'Инвентаризация' };
+const MV_TYPE = { in: 'Income', out: 'Expense', adjust: 'Adjustment' };
+const MV_SOURCE = { manual: 'Manual', invoice: 'Invoice', tg: 'TG kitchen', order: 'Order', inventory: 'Inventory' };
 
 function fillMovesIng(){
   const sel = $('movesIng');
   const prev = sel.value;
-  sel.innerHTML = '<option value="">Все ингредиенты</option>' +
+  sel.innerHTML = '<option value="">All ingredients</option>' +
     ingredients.map(it=> `<option value="${it.id}">${escapeHtml(it.name)}</option>`).join('');
   sel.value = prev;
 }
@@ -1098,13 +1098,13 @@ async function loadMoves(){
     if(error) throw error;
     renderMoves(data || []);
   }catch(e){
-    body.innerHTML = '<p class="moves-empty">Не удалось загрузить движения: ' + escapeHtml(e.message) + '</p>';
+    body.innerHTML = '<p class="moves-empty">Failed to load movements: ' + escapeHtml(e.message) + '</p>';
   }
 }
 
 function renderMoves(rows){
   const body = $('movesBody');
-  if(!rows.length){ body.innerHTML = '<p class="moves-empty">Движений нет</p>'; return; }
+  if(!rows.length){ body.innerHTML = '<p class="moves-empty">No movements</p>'; return; }
   const ingMap = {};
   ingredients.forEach(i=> ingMap[i.id] = i);
 
@@ -1117,7 +1117,7 @@ function renderMoves(rows){
       : '';
     const typeLabel = MV_TYPE[r.type] || escapeHtml(r.type || '');
     let src = MV_SOURCE[r.source] || escapeHtml(r.source || '');
-    if(r.source === 'order' && r.order_id != null) src = `Заказ #${escapeHtml(r.order_id)}`;
+    if(r.source === 'order' && r.order_id != null) src = `Order #${escapeHtml(r.order_id)}`;
     return `
       <tr>
         <td>${date}</td>
@@ -1133,7 +1133,7 @@ function renderMoves(rows){
     <div class="table-wrap">
       <table class="moves">
         <thead><tr>
-          <th>Дата</th><th>Ингредиент</th><th>Тип</th><th class="num">Кол-во</th><th>Источник</th><th>Примечание</th>
+          <th>Date</th><th>Ingredient</th><th>Type</th><th class="num">Qty</th><th>Source</th><th>Note</th>
         </tr></thead>
         <tbody>${trs}</tbody>
       </table>
