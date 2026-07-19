@@ -81,6 +81,12 @@ function bindUI(){
   $('tabIncome').addEventListener('click', ()=> switchTab('income'));
   $('tabCalc').addEventListener('click', ()=> switchTab('calc'));
   $('tabCash').addEventListener('click', ()=> switchTab('cash'));
+  $('tabMoves').addEventListener('click', ()=> switchTab('moves'));
+
+  // Движения
+  $('movesType').addEventListener('change', loadMoves);
+  $('movesIng').addEventListener('change', loadMoves);
+  $('movesRefresh').addEventListener('click', loadMoves);
 
   $('incSubmit').addEventListener('click', handleIncome);
   $('incIngredient').addEventListener('change', toggleIncNewFields);
@@ -163,7 +169,8 @@ function switchTab(tab){
     stock:  { btn: 'tabStock',  panel: 'panelStock'  },
     income: { btn: 'tabIncome', panel: 'panelIncome' },
     calc:   { btn: 'tabCalc',   panel: 'panelCalc'   },
-    cash:   { btn: 'tabCash',   panel: 'panelCash'   }
+    cash:   { btn: 'tabCash',   panel: 'panelCash'   },
+    moves:  { btn: 'tabMoves',  panel: 'panelMoves'  }
   };
   Object.keys(map).forEach(k=>{
     $(map[k].btn).classList.toggle('is-active', k === tab);
@@ -171,6 +178,7 @@ function switchTab(tab){
   });
   if(tab === 'calc') loadCalc();
   if(tab === 'cash') loadCash();
+  if(tab === 'moves') loadMoves();
 }
 
 /* ---------- Остатки ---------- */
@@ -1056,6 +1064,80 @@ async function handleSubmitInvoice(){
   }finally{
     if($('invSubmit')){ btn.disabled = false; btn.innerHTML = html; }
   }
+}
+
+/* ============================================================
+   ДВИЖЕНИЯ — история склада (movements)
+   ============================================================ */
+const MV_TYPE = { in: 'Приход', out: 'Расход', adjust: 'Коррекция' };
+const MV_SOURCE = { manual: 'Вручную', invoice: 'Накладная', tg: 'TG кухня', order: 'Заказ', inventory: 'Инвентаризация' };
+
+function fillMovesIng(){
+  const sel = $('movesIng');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Все ингредиенты</option>' +
+    ingredients.map(it=> `<option value="${it.id}">${escapeHtml(it.name)}</option>`).join('');
+  sel.value = prev;
+}
+
+async function loadMoves(){
+  const body = $('movesBody');
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
+  try{
+    await ensureIngredients();
+    fillMovesIng();
+    let query = supa.from('movements')
+      .select('id, ingredient_id, type, amount, source, order_id, note, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    const tf = $('movesType').value;
+    const inf = $('movesIng').value;
+    if(tf) query = query.eq('type', tf);
+    if(inf) query = query.eq('ingredient_id', inf);
+    const { data, error } = await query;
+    if(error) throw error;
+    renderMoves(data || []);
+  }catch(e){
+    body.innerHTML = '<p class="moves-empty">Не удалось загрузить движения: ' + escapeHtml(e.message) + '</p>';
+  }
+}
+
+function renderMoves(rows){
+  const body = $('movesBody');
+  if(!rows.length){ body.innerHTML = '<p class="moves-empty">Движений нет</p>'; return; }
+  const ingMap = {};
+  ingredients.forEach(i=> ingMap[i.id] = i);
+
+  const trs = rows.map(r=>{
+    const ing = ingMap[r.ingredient_id];
+    const ingName = ing ? ing.name : ('#' + r.ingredient_id);
+    const unit = ing && ing.unit ? ing.unit : '';
+    const date = r.created_at
+      ? new Date(r.created_at).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '';
+    const typeLabel = MV_TYPE[r.type] || escapeHtml(r.type || '');
+    let src = MV_SOURCE[r.source] || escapeHtml(r.source || '');
+    if(r.source === 'order' && r.order_id != null) src = `Заказ #${escapeHtml(r.order_id)}`;
+    return `
+      <tr>
+        <td>${date}</td>
+        <td>${escapeHtml(ingName)}</td>
+        <td><span class="mv-type ${r.type}">${typeLabel}</span></td>
+        <td class="num">${fmtNum(r.amount)}${unit ? ' ' + escapeHtml(unit) : ''}</td>
+        <td>${src}</td>
+        <td class="mv-note">${escapeHtml(r.note || '')}</td>
+      </tr>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="table-wrap">
+      <table class="moves">
+        <thead><tr>
+          <th>Дата</th><th>Ингредиент</th><th>Тип</th><th class="num">Кол-во</th><th>Источник</th><th>Примечание</th>
+        </tr></thead>
+        <tbody>${trs}</tbody>
+      </table>
+    </div>`;
 }
 
 /* ---------- Безопасный вывод текста ---------- */
