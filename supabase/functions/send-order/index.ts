@@ -71,6 +71,8 @@ const SALE = 0.20;
 const dishPrice = (d: Dish) => (d.c === "drinks" || d.noSale) ? d.p : Math.round(d.p * (1 - SALE));
 const fmtPrice = (v: number) => v.toLocaleString("ru-RU").replace(/,/g, " ") + "₫";
 const clean = (s: unknown, max = 300) => String(s ?? "").trim().slice(0, max);
+/* экранирование для parse_mode: HTML (& < > обязательно) */
+const escHtml = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const normCC = (c: unknown) => (typeof c === "string" && /^[A-Za-z]{2}$/.test(c) ? c.toUpperCase() : null);
 
@@ -262,16 +264,21 @@ serve(async (req) => {
     const discountAmount = discountPercent > 0 ? Math.round(total * discountPercent / 100) : 0;
     const totalFinal = total - discountAmount;
 
-    // Текст заказа собирает СЕРВЕР (всегда на английском)
+    // Текст заказа собирает СЕРВЕР (всегда на английском). parse_mode: HTML —
+    // все пользовательские поля ОБЯЗАТЕЛЬНО через escHtml.
     let msg = `🍣 NEW ORDER NiNi Sushi\n\n`;
-    msg += `👤 ${name}\n📞 ${phone}\n`;
-    if (telegram) msg += `✈️ ${telegram}\n`;
-    msg += `📍 ${address}\n`;
+    msg += `👤 ${escHtml(name)}\n📞 ${escHtml(phone)}\n`;
+    if (telegram) msg += `✈️ ${escHtml(telegram)}\n`;
+    // Адрес: в <code> (тап = копирование) + отдельной строкой ссылка на карту.
+    msg += `📍 <code>${escHtml(address)}</code>\n`;
+    const mapQuery = (lat && lng)
+      ? encodeURIComponent(`${lat},${lng}`)   // координаты точнее адреса
+      : encodeURIComponent(address);
+    msg += `<a href="https://maps.google.com/?q=${mapQuery}">🗺 Открыть на карте</a>\n`;
     if (people) msg += `👥 People: ${people}\n`;
-    if (lat && lng) msg += `📍 Coordinates: ${lat},${lng}\n🗺 https://maps.google.com/?q=${lat},${lng}\n`;
-    if (comment) msg += `📝 ${comment}\n`;
+    if (comment) msg += `📝 ${escHtml(comment)}\n`;
     msg += `\n— — —\n`;
-    for (const l of lines) msg += `• ${l.name} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
+    for (const l of lines) msg += `• ${escHtml(l.name)} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
     msg += `— — —\n`;
     if (discountPercent > 0) {
       msg += `💰 Subtotal: ${fmtPrice(total)}\n`;
@@ -309,7 +316,12 @@ serve(async (req) => {
 
     // 2) Отправляем в группу. Есть id — номер заказа в самый верх + кнопки.
     const text = orderId !== null ? `🧾 Order #${orderId}\n\n${msg}` : msg;
-    const sendBody: Record<string, unknown> = { chat_id: CHAT_ID, text };
+    const sendBody: Record<string, unknown> = {
+      chat_id: CHAT_ID,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    };
     if (orderId !== null) {
       sendBody.reply_markup = {
         inline_keyboard: [[
