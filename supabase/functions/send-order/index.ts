@@ -272,6 +272,10 @@ serve(async (req) => {
     // Адрес: в <code> — тап по нему в Telegram = копирование одним касанием.
     msg += `📍 <code>${escHtml(address)}</code>\n`;
     if (people) msg += `👥 People: ${people}\n`;
+    if (lat && lng) {
+      msg += `📍 Coordinates: ${escHtml(lat)},${escHtml(lng)}\n`;
+      msg += `🗺 https://maps.google.com/?q=${escHtml(lat)},${escHtml(lng)}\n`;
+    }
     if (comment) msg += `📝 ${escHtml(comment)}\n`;
     msg += `\n— — —\n`;
     for (const l of lines) msg += `• ${escHtml(l.name)} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
