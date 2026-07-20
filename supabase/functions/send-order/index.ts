@@ -269,12 +269,8 @@ serve(async (req) => {
     let msg = `🍣 NEW ORDER NiNi Sushi\n\n`;
     msg += `👤 ${escHtml(name)}\n📞 ${escHtml(phone)}\n`;
     if (telegram) msg += `✈️ ${escHtml(telegram)}\n`;
-    // Адрес: в <code> (тап = копирование) + отдельной строкой ссылка на карту.
+    // Адрес: в <code> — тап по нему в Telegram = копирование одним касанием.
     msg += `📍 <code>${escHtml(address)}</code>\n`;
-    const mapQuery = (lat && lng)
-      ? encodeURIComponent(`${lat},${lng}`)   // координаты точнее адреса
-      : encodeURIComponent(address);
-    msg += `<a href="https://maps.google.com/?q=${mapQuery}">🗺 Открыть на карте</a>\n`;
     if (people) msg += `👥 People: ${people}\n`;
     if (comment) msg += `📝 ${escHtml(comment)}\n`;
     msg += `\n— — —\n`;
