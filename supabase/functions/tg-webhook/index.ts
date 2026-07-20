@@ -72,14 +72,19 @@ async function answer(id: string, text = "") {
 }
 
 /* Дописать к тексту сообщения суффикс и убрать inline-кнопки.
-   editMessageText без reply_markup удаляет клавиатуру. */
+   editMessageText без reply_markup удаляет клавиатуру.
+   Передаём исходные entities, чтобы сохранить форматирование (<code> с
+   адресом остаётся копируемым по тапу); суффикс дописываем в КОНЕЦ, поэтому
+   смещения существующих entities не меняются. */
 async function finalize(msg: any, suffix: string) {
   const base: string = msg?.text ?? "";
-  await tg("editMessageText", {
+  const body: Record<string, unknown> = {
     chat_id: msg.chat.id,
     message_id: msg.message_id,
     text: base ? `${base}\n\n${suffix}` : suffix,
-  });
+  };
+  if (Array.isArray(msg?.entities) && msg.entities.length) body.entities = msg.entities;
+  await tg("editMessageText", body);
 }
 
 /* in.(...) список для PostgREST: значения в кавычках, всё урл-кодируем */
