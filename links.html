@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NiNi Sushi — Посилання</title>
+  <meta name="description" content="NiNi Sushi — меню, Telegram-бот та відгуки.">
+  <link rel="icon" href="img/logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --coral:      #FB4B23;
+      --coral-dark: #E03A14;
+      --coral-soft: #FFE9E2;
+      --ink:        #1F1B18;
+      --muted:      #8A817C;
+      --bg:         #FBF7F4;
+      --white:      #FFFFFF;
+      --line:       #EFE9E5;
+      --font-disp:  'Baloo 2', system-ui, sans-serif;
+      --font-body:  'Nunito Sans', system-ui, sans-serif;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family:var(--font-body);
+      color:var(--ink);
+      background:
+        radial-gradient(120% 60% at 50% -10%, var(--coral-soft), transparent 60%),
+        var(--bg);
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:32px 18px;
+    }
+    .card{
+      width:100%; max-width:440px;
+      text-align:center;
+      display:flex; flex-direction:column; align-items:center;
+    }
+
+    .logo{
+      width:112px; height:112px; border-radius:50%;
+      object-fit:cover;
+      border:4px solid var(--white);
+      box-shadow:0 12px 34px rgba(251,75,35,.20);
+    }
+    .brand{
+      font-family:var(--font-disp); font-weight:800;
+      font-size:30px; letter-spacing:.3px;
+      margin:16px 0 4px;
+    }
+    .brand span{ color:var(--coral); }
+    .tagline{ color:var(--muted); font-size:15px; margin-bottom:28px; }
+
+    .links{ width:100%; display:flex; flex-direction:column; gap:14px; }
+    .link{
+      display:flex; align-items:center; gap:14px;
+      width:100%;
+      padding:18px 22px;
+      background:var(--white);
+      border:1.5px solid var(--line);
+      border-radius:18px;
+      color:var(--ink);
+      text-decoration:none;
+      font-family:var(--font-disp); font-weight:700; font-size:17px;
+      box-shadow:0 6px 20px rgba(31,27,24,.06);
+      transition:transform .16s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .link__icon{
+      flex:none;
+      width:44px; height:44px; border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px;
+      background:var(--coral-soft);
+    }
+    .link__text{ flex:1; text-align:left; }
+    .link__arrow{ color:var(--muted); font-size:20px; transition:transform .16s ease, color .2s ease; }
+    .link:hover{
+      transform:translateY(-3px);
+      border-color:var(--coral);
+      box-shadow:0 14px 32px rgba(251,75,35,.18);
+    }
+    .link:hover .link__arrow{ transform:translateX(4px); color:var(--coral); }
+    .link:active{ transform:translateY(0); }
+
+    .footer{ margin-top:30px; color:var(--muted); font-size:13px; }
+
+    @media (max-width:420px){
+      .logo{ width:96px; height:96px; }
+      .brand{ font-size:26px; }
+      .link{ padding:16px 18px; font-size:16px; }
+      .link__icon{ width:40px; height:40px; font-size:20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img class="logo" src="img/logo.jpg" alt="NiNi Sushi">
+    <h1 class="brand">NiNi <span>Sushi</span></h1>
+    <p class="tagline">Свіжі суші та роли 🥢</p>
+
+    <nav class="links">
+      <a class="link" href="https://ninisushi.com/" target="_blank" rel="noopener">
+        <span class="link__icon">🍣</span>
+        <span class="link__text">Меню та замовлення</span>
+        <span class="link__arrow">›</span>
+      </a>
+      <a class="link" href="https://t.me/nini_sushi_bot" target="_blank" rel="noopener">
+        <span class="link__icon">✈️</span>
+        <span class="link__text">Telegram-бот</span>
+        <span class="link__arrow">›</span>
+      </a>
+      <a class="link" href="https://t.me/+v9B9CkNfEYxhMjg1" target="_blank" rel="noopener">
+        <span class="link__icon">⭐</span>
+        <span class="link__text">Відгуки</span>
+        <span class="link__arrow">›</span>
+      </a>
+    </nav>
+
+    <footer class="footer">© NiNi Sushi</footer>
+  </main>
+</body>
+</html>
