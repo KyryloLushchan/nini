@@ -424,27 +424,31 @@ async function handleWoInput(msg: any, trimmed: string, chatId: number, userId: 
   const nameVn = ing?.name_vn || ing?.name || `#${st.ingredient_id}`;
   const unit = ing?.unit || "g";
 
-  // Шаг 1: ждём количество
-  if (st.step !== "confirm") {
+  // Шаг 1: ждём количество -> просим ОБЯЗАТЕЛЬНОЕ фото
+  if (st.step !== "photo") {
     const numM = trimmed.match(/^(\d+(?:[.,]\d+)?)$/);
     if (!numM) { await tgWo("❌ Sai định dạng. Nhập số lượng. Ví dụ: 500"); return; }
     const qty = Number(numM[1].replace(",", "."));
     await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`, {
       method: "PATCH",
       headers: { ...sbHeaders, Prefer: "return=minimal" },
-      body: JSON.stringify({ step: "confirm", pending_amount: qty, created_at: new Date().toISOString() }),
+      body: JSON.stringify({ step: "photo", pending_amount: qty, created_at: new Date().toISOString() }),
     });
-    await tgWo(`Gửi ảnh (nếu có) hoặc gõ "ok" để xong. Có thể thêm ghi chú.`);
+    await tgWo(`📷 Gửi ảnh sản phẩm cần hủy (bắt buộc).`);   // пришлите фото товара (обязательно)
     return;
   }
 
-  // Шаг 2 (confirm): фото и/или примечание, либо "ok" -> списание
-  const amount = Number(st.pending_amount);
+  // Шаг 2: фото ОБЯЗАТЕЛЬНО — без него не завершаем
   const photoFileId = (Array.isArray(msg.photo) && msg.photo.length)
     ? msg.photo[msg.photo.length - 1].file_id   // самый крупный размер
     : null;
-  const capText = String(msg.caption ?? msg.text ?? "").trim();
-  const note = (capText && capText.toLowerCase() !== "ok") ? capText : "Hủy hàng";
+  if (!photoFileId) {
+    await tgWo("❌ Cần ảnh. Gửi ảnh sản phẩm cần hủy.");   // нужно фото
+    return; // состояние не сбрасываем — ждём фото
+  }
+
+  const amount = Number(st.pending_amount);
+  const note = String(msg.caption ?? "").trim() || "Hủy hàng";   // подпись к фото → примечание
 
   await fetch(`${SUPABASE_URL}/rest/v1/movements`, {
     method: "POST",
@@ -455,7 +459,7 @@ async function handleWoInput(msg: any, trimmed: string, chatId: number, userId: 
     }),
   });
   await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
-  await tgWo(`✅ Đã hủy: ${nameVn} -${amount} ${unit}`);
+  await tgWo(`✅ Đã hủy hàng: ${nameVn} -${amount} ${unit}`);   // товар списан
 }
 
 serve(async (req) => {
