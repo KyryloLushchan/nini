@@ -22,6 +22,7 @@ const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET") || "";
 const KITCHEN_CHAT_ID = Deno.env.get("KITCHEN_CHAT_ID") || "";
 const KITCHEN_TOPIC_ORDERS = Deno.env.get("KITCHEN_TOPIC_ORDERS") || "";
 const KITCHEN_TOPIC_INVENTORY = Deno.env.get("KITCHEN_TOPIC_INVENTORY") || "";
+const KITCHEN_TOPIC_WRITEOFF = Deno.env.get("KITCHEN_TOPIC_WRITEOFF") || "";
 const SITE = "https://ninisushi.com";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -50,6 +51,14 @@ async function tg(method: string, body: unknown) {
 async function tgInv(text: string, reply_markup?: unknown) {
   const body: Record<string, unknown> = { chat_id: KITCHEN_CHAT_ID, text };
   if (KITCHEN_TOPIC_INVENTORY) body.message_thread_id = Number(KITCHEN_TOPIC_INVENTORY);
+  if (reply_markup) body.reply_markup = reply_markup;
+  await tg("sendMessage", body);
+}
+
+/* Отправить сообщение в тему «Списание» (Hủy hàng) группы Кухня */
+async function tgWo(text: string, reply_markup?: unknown) {
+  const body: Record<string, unknown> = { chat_id: KITCHEN_CHAT_ID, text };
+  if (KITCHEN_TOPIC_WRITEOFF) body.message_thread_id = Number(KITCHEN_TOPIC_WRITEOFF);
   if (reply_markup) body.reply_markup = reply_markup;
   await tg("sendMessage", body);
 }
@@ -98,6 +107,9 @@ async function handleCallback(cq: any) {
   // Приход через Telegram: выбор ингредиента (только в группе Кухня)
   const mi = data.match(/^inv:(\d+)$/);
   if (mi) { await handleInvSelect(cq, mi[1]); return; }
+  // Списание: выбор ингредиента
+  const mw = data.match(/^wo:(\d+)$/);
+  if (mw) { await handleWoSelect(cq, mw[1]); return; }
   const m = data.match(/^(ok|no):(.+)$/);
   if (!m) { await answer(cq.id); return; }
   const action = m[1];
@@ -260,8 +272,10 @@ async function handleInvSelect(cq: any, ingredientId: string) {
       chat_id: chatId,
       user_id: userId,
       ingredient_id: Number(ingredientId),
+      mode: "in",
       step: "amount",
       amount: null,
+      pending_amount: null,
       created_at: new Date().toISOString(),
     }),
   });
@@ -270,54 +284,96 @@ async function handleInvSelect(cq: any, ingredientId: string) {
   await tgInv(`${nameVn}: nhập số lượng (${unit}).\nVí dụ: ${unit === "pcs" ? "10" : "2000"}`);
 }
 
-/* Сообщение в группе Кухня: /nhap или ввод "кол-во цена" при активном состоянии */
+/* Списание: /huy -> клавиатура ингредиентов (name_vn), callback wo:<id> */
+async function sendWriteoffKeyboard() {
+  const rows = await sbGet("ingredients?select=id,name,name_vn&order=name_vn.asc");
+  if (!rows.length) { await tgWo("Không có nguyên liệu"); return; }
+  const btns = rows.map((r) => ({ text: r.name_vn || r.name, callback_data: `wo:${r.id}` }));
+  const keyboard: unknown[] = [];
+  for (let i = 0; i < btns.length; i += 2) keyboard.push(btns.slice(i, i + 2));
+  await tgWo("Chọn nguyên liệu cần hủy:", { inline_keyboard: keyboard });
+}
+
+/* Нажата кнопка wo:<id> -> состояние mode='out', просим количество */
+async function handleWoSelect(cq: any, ingredientId: string) {
+  const chatId = cq.message?.chat?.id;
+  if (String(chatId) !== KITCHEN_CHAT_ID) { await answer(cq.id); return; }
+  const userId = cq.from?.id;
+  if (userId == null) { await answer(cq.id); return; }
+
+  const ing = (await sbGet(`ingredients?id=eq.${ingredientId}&select=id,name,name_vn,unit`))[0];
+  if (!ing) { await answer(cq.id, "?"); return; }
+  const nameVn = ing.name_vn || ing.name;
+  const unit = ing.unit || "g";
+
+  await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state`, {
+    method: "POST",
+    headers: { ...sbHeaders, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      user_id: userId,
+      ingredient_id: Number(ingredientId),
+      mode: "out",
+      step: "amount",
+      amount: null,
+      pending_amount: null,
+      created_at: new Date().toISOString(),
+    }),
+  });
+
+  await answer(cq.id);
+  await tgWo(`${nameVn}: nhập số lượng (${unit}).\nVí dụ: 500`);
+}
+
+/* Роутер сообщений группы Кухня: приход (тема Nhập hàng) и списание (тема Списание). */
 async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   const userId = msg?.from?.id;
   if (userId == null) return;
 
-  // приход работает ТОЛЬКО в теме «Nhập hàng»
-  const inInventory = !!KITCHEN_TOPIC_INVENTORY &&
-    String(msg?.message_thread_id) === KITCHEN_TOPIC_INVENTORY;
+  const threadId = String(msg?.message_thread_id ?? "");
+  const inInventory = !!KITCHEN_TOPIC_INVENTORY && threadId === KITCHEN_TOPIC_INVENTORY;
+  const inWriteoff = !!KITCHEN_TOPIC_WRITEOFF && threadId === KITCHEN_TOPIC_WRITEOFF;
+  if (!inInventory && !inWriteoff) return; // прочие темы игнорируем
 
   const trimmed = text.trim();
   const cmd = trimmed.split(/\s+/)[0].split("@")[0];
 
-  // постоянная reply-клавиатура с кнопкой «Приход» по /start или /menu (в теме прихода)
+  // постоянная reply-клавиатура по /start|/menu — своя для каждой темы
   if (cmd === "/start" || cmd === "/menu") {
-    await tgInv("Menu:", {
-      keyboard: [[{ text: "📦 Nhập hàng" }]],
-      resize_keyboard: true,
-      is_persistent: true,
-    });
+    if (inWriteoff) {
+      await tgWo("Menu:", { keyboard: [[{ text: "🗑 Hủy hàng" }]], resize_keyboard: true, is_persistent: true });
+    } else {
+      await tgInv("Menu:", { keyboard: [[{ text: "📦 Nhập hàng" }]], resize_keyboard: true, is_persistent: true });
+    }
     return;
   }
 
-  // /nhap или кнопка «📦 Nhập hàng» -> выбор ингредиента (только в теме «Nhập hàng»)
-  if (cmd === "/nhap" || trimmed === "📦 Nhập hàng") {
-    if (inInventory) await sendIngredientKeyboard();
+  if (inWriteoff) {
+    if (cmd === "/huy" || trimmed === "🗑 Hủy hàng") { await sendWriteoffKeyboard(); return; }
+    await handleWoInput(msg, trimmed, chatId, userId);
     return;
   }
 
-  // ввод «кол-во цена» обрабатываем только в теме «Nhập hàng»
-  if (!inInventory) return;
+  // inInventory
+  if (cmd === "/nhap" || trimmed === "📦 Nhập hàng") { await sendIngredientKeyboard(); return; }
+  await handleInvInput(trimmed, chatId, userId);
+}
 
-  // есть ли активное состояние ввода у этого пользователя в этом чате?
+/* Приход: ввод "кол-во" -> "цена" при активном состоянии (mode='in') */
+async function handleInvInput(trimmed: string, chatId: number, userId: number) {
   const st = (await sbGet(
-    `tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}&select=ingredient_id,step,amount,created_at&limit=1`,
+    `tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}&select=ingredient_id,mode,step,amount,created_at&limit=1`,
   ))[0];
-  if (!st) return; // обычное сообщение — игнорируем
-
-  // протухло (>10 мин) — удаляем и игнорируем
+  if (!st || st.mode === "out") return; // нет активного прихода
   if (Date.now() - new Date(st.created_at).getTime() > INPUT_TTL_MS) {
     await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
     return;
   }
 
-  // ждём ОДНО число (текущий шаг: вес или цена)
   const numM = trimmed.match(/^(\d+(?:[.,]\d+)?)$/);
   if (!numM) {
     await tgInv(st.step === "price" ? "❌ Sai định dạng. Nhập giá. Ví dụ: 500000" : "❌ Sai định dạng. Nhập số lượng. Ví dụ: 2000");
-    return; // состояние НЕ удаляем — можно повторить
+    return;
   }
   const num = Number(numM[1].replace(",", "."));
   const ing = (await sbGet(`ingredients?id=eq.${st.ingredient_id}&select=id,name,name_vn,unit`))[0];
@@ -325,7 +381,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
   const nameRu = ing?.name || `#${st.ingredient_id}`;
   const unit = ing?.unit || "g";
 
-  // Шаг 1: принят вес/кол-во -> просим цену
+  // Шаг 1: принято кол-во -> просим цену
   if (st.step !== "price") {
     await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`, {
       method: "PATCH",
@@ -336,26 +392,70 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
     return;
   }
 
-  // Шаг 2: принята цена -> оприходовать
+  // Шаг 2: принята цена -> оприходовать + касса
   const amount = Number(st.amount);
   const price = Math.round(num);
-
-  // приход на склад — stock пересчитает триггер
   await fetch(`${SUPABASE_URL}/rest/v1/movements`, {
     method: "POST",
     headers: { ...sbHeaders, Prefer: "return=minimal" },
     body: JSON.stringify({ ingredient_id: st.ingredient_id, type: "in", amount, source: "tg", note: "TG приход" }),
   });
-  // расход в кассу
   await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
     method: "POST",
     headers: { ...sbHeaders, Prefer: "return=minimal" },
     body: JSON.stringify({ amount: -price, source: "purchase", note: `TG: ${nameRu}` }),
   });
-  // состояние отработано — удаляем
   await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
-
   await tgInv(`✅ Đã nhập: ${nameVn} +${amount} ${unit} (${price}₫)`);
+}
+
+/* Списание (mode='out'): кол-во -> фото/примечание/"ok" -> movements out, БЕЗ кассы */
+async function handleWoInput(msg: any, trimmed: string, chatId: number, userId: number) {
+  const st = (await sbGet(
+    `tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}&select=ingredient_id,mode,step,pending_amount,created_at&limit=1`,
+  ))[0];
+  if (!st || st.mode !== "out") return; // нет активного списания
+  if (Date.now() - new Date(st.created_at).getTime() > INPUT_TTL_MS) {
+    await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
+    return;
+  }
+
+  const ing = (await sbGet(`ingredients?id=eq.${st.ingredient_id}&select=id,name,name_vn,unit`))[0];
+  const nameVn = ing?.name_vn || ing?.name || `#${st.ingredient_id}`;
+  const unit = ing?.unit || "g";
+
+  // Шаг 1: ждём количество
+  if (st.step !== "confirm") {
+    const numM = trimmed.match(/^(\d+(?:[.,]\d+)?)$/);
+    if (!numM) { await tgWo("❌ Sai định dạng. Nhập số lượng. Ví dụ: 500"); return; }
+    const qty = Number(numM[1].replace(",", "."));
+    await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`, {
+      method: "PATCH",
+      headers: { ...sbHeaders, Prefer: "return=minimal" },
+      body: JSON.stringify({ step: "confirm", pending_amount: qty, created_at: new Date().toISOString() }),
+    });
+    await tgWo(`Gửi ảnh (nếu có) hoặc gõ "ok" để xong. Có thể thêm ghi chú.`);
+    return;
+  }
+
+  // Шаг 2 (confirm): фото и/или примечание, либо "ok" -> списание
+  const amount = Number(st.pending_amount);
+  const photoFileId = (Array.isArray(msg.photo) && msg.photo.length)
+    ? msg.photo[msg.photo.length - 1].file_id   // самый крупный размер
+    : null;
+  const capText = String(msg.caption ?? msg.text ?? "").trim();
+  const note = (capText && capText.toLowerCase() !== "ok") ? capText : "Hủy hàng";
+
+  await fetch(`${SUPABASE_URL}/rest/v1/movements`, {
+    method: "POST",
+    headers: { ...sbHeaders, Prefer: "return=minimal" },
+    body: JSON.stringify({
+      ingredient_id: st.ingredient_id, type: "out", amount,
+      source: "writeoff", note, photo_file_id: photoFileId,
+    }),
+  });
+  await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
+  await tgWo(`✅ Đã hủy: ${nameVn} -${amount} ${unit}`);
 }
 
 serve(async (req) => {
@@ -378,7 +478,7 @@ serve(async (req) => {
     const text: string = msg?.text ?? "";
     const chatId = msg?.chat?.id;
 
-    // Приход товара через Telegram — ТОЛЬКО в группе «Кухня»
+    // Приход/списание товара через Telegram — ТОЛЬКО в группе «Кухня»
     if (msg && chatId != null && String(chatId) === KITCHEN_CHAT_ID) {
       await handleKitchenMessage(msg, text, chatId);
       return new Response("ok");
