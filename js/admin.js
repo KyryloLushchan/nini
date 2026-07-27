@@ -634,7 +634,7 @@ function cashAbs(n){
 const CASH_SOURCE = { order: 'Order', purchase: 'Purchase', manual: 'Manual' };
 
 let cashAll = [];   // все движения кассы (клиентская фильтрация по периоду)
-const RU_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 /* год-месяц (YYYY-MM) по времени Вьетнама */
 function ymVN(iso){
@@ -651,16 +651,16 @@ function fillCashPeriod(){
   let [y, m] = curYM().split('-').map(Number);
   let months = '';
   for(let i = 0; i < 12; i++){
-    months += `<option value="${y}-${String(m).padStart(2, '0')}">${RU_MONTHS[m - 1]} ${y}</option>`;
+    months += `<option value="${y}-${String(m).padStart(2, '0')}">${MONTHS_EN[m - 1]} ${y}</option>`;
     m--; if(m === 0){ m = 12; y--; }
   }
-  sel.innerHTML = '<option value="all">Всё время</option><option value="current">Текущий месяц</option>' + months;
+  sel.innerHTML = '<option value="all">All time</option><option value="current">Current month</option>' + months;
   if([...sel.options].some(o => o.value === prev)) sel.value = prev;
 }
 
 async function loadCash(){
   const body = $('cashBody');
-  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Loading…</div>';
   try{
     const { data, error } = await supa.from('cash_movements')
       .select('id, amount, source, order_id, note, created_at')
@@ -679,7 +679,7 @@ async function loadCash(){
     applyCashPeriod();
   }catch(e){
     $('cashBalance').textContent = '—';
-    body.innerHTML = '<p class="cash-empty">Не удалось загрузить кассу: ' + escapeHtml(e.message) + '</p>';
+    body.innerHTML = '<p class="cash-empty">Failed to load cash: ' + escapeHtml(e.message) + '</p>';
   }
 }
 
@@ -710,7 +710,7 @@ function applyCashPeriod(){
 function renderCash(rows){
   const body = $('cashBody');
   if(!rows.length){
-    body.innerHTML = '<p class="cash-empty">Операций за период нет</p>';
+    body.innerHTML = '<p class="cash-empty">No entries for this period</p>';
     return;
   }
   body.innerHTML = '<ul class="cash-list">' + rows.map(r=>{
@@ -1131,7 +1131,7 @@ function fillMovesIng(){
 
 async function loadMoves(){
   const body = $('movesBody');
-  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Loading…</div>';
   try{
     await ensureIngredients();
     fillMovesIng();
