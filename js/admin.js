@@ -119,6 +119,7 @@ function bindUI(){
   $('cashCancel').addEventListener('click', closeCashForm);
   $('cashSave').addEventListener('click', handleCashSave);
   $('cashRefreshBtn').addEventListener('click', loadCash);
+  $('cashPeriod').addEventListener('change', applyCashPeriod);
   // Редактирование/удаление движений кассы (прямой UPDATE/DELETE)
   $('cashBody').addEventListener('change', (e)=>{
     const amt = e.target.closest('.cash-amt-edit');
@@ -632,36 +633,84 @@ function cashAbs(n){
 }
 const CASH_SOURCE = { order: 'Order', purchase: 'Purchase', manual: 'Manual' };
 
+let cashAll = [];   // все движения кассы (клиентская фильтрация по периоду)
+const RU_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+/* год-месяц (YYYY-MM) по времени Вьетнама */
+function ymVN(iso){
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).slice(0, 7);
+}
+function curYM(){
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).slice(0, 7);
+}
+
+/* Всё время / Текущий месяц / последние 12 месяцев (сохраняя выбор) */
+function fillCashPeriod(){
+  const sel = $('cashPeriod');
+  const prev = sel.value || 'all';
+  let [y, m] = curYM().split('-').map(Number);
+  let months = '';
+  for(let i = 0; i < 12; i++){
+    months += `<option value="${y}-${String(m).padStart(2, '0')}">${RU_MONTHS[m - 1]} ${y}</option>`;
+    m--; if(m === 0){ m = 12; y--; }
+  }
+  sel.innerHTML = '<option value="all">Всё время</option><option value="current">Текущий месяц</option>' + months;
+  if([...sel.options].some(o => o.value === prev)) sel.value = prev;
+}
+
 async function loadCash(){
   const body = $('cashBody');
-  const balEl = $('cashBalance');
-  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Loading…</div>';
+  body.innerHTML = '<div class="center-load"><span class="spinner"></span> Загрузка…</div>';
   try{
-    const [balRes, histRes] = await Promise.all([
-      supa.from('cash_movements').select('amount'),                       // баланс — сумма ВСЕХ
-      supa.from('cash_movements')
-        .select('id, amount, source, order_id, note, created_at')
-        .order('created_at', { ascending: false })
-        .limit(50)
-    ]);
-    if(balRes.error) throw balRes.error;
-    if(histRes.error) throw histRes.error;
+    const { data, error } = await supa.from('cash_movements')
+      .select('id, amount, source, order_id, note, created_at')
+      .order('created_at', { ascending: false })
+      .limit(2000);
+    if(error) throw error;
+    cashAll = data || [];
 
-    const balance = (balRes.data || []).reduce((s, r)=> s + Number(r.amount || 0), 0);
+    // Общий баланс (всё время) — не зависит от фильтра
+    const balance = cashAll.reduce((s, r)=> s + Number(r.amount || 0), 0);
+    const balEl = $('cashBalance');
     balEl.textContent = (balance < 0 ? '−' : '') + cashAbs(balance);
     balEl.classList.toggle('is-neg', balance < 0);
 
-    renderCash(histRes.data || []);
+    fillCashPeriod();
+    applyCashPeriod();
   }catch(e){
-    balEl.textContent = '—';
-    body.innerHTML = '<p class="cash-empty">Failed to load cash: ' + escapeHtml(e.message) + '</p>';
+    $('cashBalance').textContent = '—';
+    body.innerHTML = '<p class="cash-empty">Не удалось загрузить кассу: ' + escapeHtml(e.message) + '</p>';
   }
+}
+
+/* записи выбранного периода */
+function cashFiltered(){
+  const period = $('cashPeriod').value;
+  if(period === 'all') return cashAll;
+  const targetYM = (period === 'current') ? curYM() : period;
+  return cashAll.filter(r => ymVN(r.created_at) === targetYM);
+}
+
+/* пересчитать показатели за период + перерисовать историю */
+function applyCashPeriod(){
+  const rows = cashFiltered();
+  let income = 0, expense = 0;
+  rows.forEach(r=>{ const a = Number(r.amount) || 0; if(a > 0) income += a; else expense += a; });
+  const periodTotal = income + expense;   // приход − |расход|
+
+  $('cashIncome').textContent = '+' + cashAbs(income);
+  $('cashExpense').textContent = (expense < 0 ? '−' : '') + cashAbs(expense);
+  const pt = $('cashPeriodTotal');
+  pt.textContent = (periodTotal < 0 ? '−' : '') + cashAbs(periodTotal);
+  pt.classList.toggle('is-neg', periodTotal < 0);
+
+  renderCash(rows);
 }
 
 function renderCash(rows){
   const body = $('cashBody');
   if(!rows.length){
-    body.innerHTML = '<p class="cash-empty">No entries yet</p>';
+    body.innerHTML = '<p class="cash-empty">Операций за период нет</p>';
     return;
   }
   body.innerHTML = '<ul class="cash-list">' + rows.map(r=>{

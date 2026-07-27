@@ -124,10 +124,19 @@
     .inv-del:hover{ background:var(--coral); color:#fff; }
 
     /* ---- Касса ---- */
-    .cash-balance-box{ text-align:center; margin-bottom:14px; }
-    .cash-balance__label{ font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; font-weight:700; }
-    .cash-balance__val{ font-family:var(--font-disp); font-weight:800; font-size:32px; margin-top:6px; }
-    .cash-balance__val.is-neg{ color:var(--coral); }
+    .cash-balance-box{ margin-bottom:14px; }
+    .cash-period{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-family:inherit; font-size:15px; background:var(--bg-soft); margin-bottom:14px; }
+    .cash-period:focus{ outline:none; border-color:var(--coral); background:#fff; }
+    .cash-metrics{ display:flex; gap:10px; }
+    .cash-metric{ flex:1; min-width:0; background:var(--bg-soft); border-radius:12px; padding:12px 8px; text-align:center; }
+    .cash-metric__label{ display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.02em; font-weight:700; margin-bottom:5px; }
+    .cash-metric__val{ font-family:var(--font-disp); font-weight:800; font-size:17px; white-space:nowrap; }
+    .cash-metric__val.pos{ color:#3DBB6B; }
+    .cash-metric__val.neg{ color:var(--coral); }
+    .cash-metric__val.is-neg{ color:var(--coral); }
+    .cash-overall{ margin-top:12px; font-size:13px; color:var(--muted); text-align:center; }
+    .cash-overall strong{ color:var(--ink); font-weight:800; }
+    .cash-overall strong.is-neg{ color:var(--coral); }
     .cash-top{ display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-bottom:10px; }
     .cash-top .btn{ padding:9px 16px; font-size:14px; }
     .cash-form{ margin-bottom:16px; }
@@ -322,8 +331,27 @@
       <!-- Cash -->
       <div id="panelCash" class="hidden">
         <div class="card-box cash-balance-box">
-          <div class="cash-balance__label">Cash balance</div>
-          <div id="cashBalance" class="cash-balance__val">…</div>
+          <select id="cashPeriod" class="cash-period">
+            <option value="all">Всё время</option>
+            <option value="current">Текущий месяц</option>
+          </select>
+
+          <div class="cash-metrics">
+            <div class="cash-metric">
+              <span class="cash-metric__label">Приход</span>
+              <span id="cashIncome" class="cash-metric__val pos">…</span>
+            </div>
+            <div class="cash-metric">
+              <span class="cash-metric__label">Расход</span>
+              <span id="cashExpense" class="cash-metric__val neg">…</span>
+            </div>
+            <div class="cash-metric">
+              <span class="cash-metric__label">Итог за период</span>
+              <span id="cashPeriodTotal" class="cash-metric__val">…</span>
+            </div>
+          </div>
+
+          <div class="cash-overall">Общий баланс (всё время): <strong id="cashBalance">…</strong></div>
         </div>
 
         <div class="cash-top">
