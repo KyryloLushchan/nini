@@ -21,7 +21,17 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
-    id: 44, cat: "rolls", sub: "new", price: 159000, neu: true, veg: true, img: "img/menu/44.jpg", // ФОТО: Teriyaki Eggplant roll VEGAN
+    id: 45, cat: "rolls", sub: "new", price: 210000, neu: true, img: "img/menu/45.jpg", // ФОТО: Філадельфія з вугром та авокадо
+    name: { ua: "Філадельфія з вугром та авокадо", ru: "Филадельфия с угрём и авокадо", en: "Philadelphia Eel & Avocado", vn: "Philadelphia lươn & bơ" },
+    desc: {
+      ua: "Вугор, тобіко, крем-сир Філадельфія, авокадо, теріякі",
+      ru: "Угорь, тобико, крем-сыр Филадельфия, авокадо, терияки",
+      en: "Eel, tobiko, Philadelphia cream cheese, avocado, teriyaki",
+      vn: "Lươn, tobiko, phô mai kem Philadelphia, bơ, teriyaki"
+    }
+  },
+  {
+    id: 44, cat: "rolls", sub: "new", price: 159000, neu: false, veg: true, img: "img/menu/44.jpg", // ФОТО: Teriyaki Eggplant roll VEGAN
     name: { ua: "Teriyaki Eggplant roll VEGAN", ru: "Teriyaki Eggplant roll VEGAN", en: "Teriyaki Eggplant roll VEGAN", vn: "Teriyaki Eggplant roll VEGAN" },
     desc: {
       ua: "Кеш'ю крем-сир, авокадо, огірок, баклажан, теріякі",
@@ -31,7 +41,7 @@ const MENU = [
     }
   },
   {
-    id: 43, cat: "rolls", sub: "new", price: 147500, neu: true, img: "img/menu/43.jpg", // ФОТО: Yamamoto set
+    id: 43, cat: "rolls", sub: "new", price: 147500, neu: false, img: "img/menu/43.jpg", // ФОТО: Yamamoto set
     name: { ua: "Yamamoto set", ru: "Yamamoto set", en: "Yamamoto set", vn: "Yamamoto set" },
     desc: {
       ua: "Лосось, тобіко, васабі, little bit спайсі майонез",
@@ -41,7 +51,7 @@ const MENU = [
     }
   },
   {
-    id: 38, cat: "rolls", sub: "new", price: 189000, neu: true, img: "img/menu/38.jpg", // ФОТО: Spicy Tokyo roll
+    id: 38, cat: "rolls", sub: "new", price: 189000, neu: false, img: "img/menu/38.jpg", // ФОТО: Spicy Tokyo roll
     name: { ua: "Spicy Tokyo roll", ru: "Spicy Tokyo roll", en: "Spicy Tokyo roll", vn: "Spicy Tokyo roll" },
     desc: {
       ua: "Лосось, Авокадо, Омлет, Крем-сир Філадельфія, Спайсі майонез",
@@ -80,16 +90,6 @@ const MENU = [
       ru: "Рис, Лосось, Огурец, Крем-сыр, Нори",
       en: "Rice, Salmon, Cucumber, Cream cheese, Nori",
       vn: "Cơm, Cá hồi, Dưa leo, Phô mai kem, Rong biển"
-    }
-  },
-  {
-    id: 45, cat: "rolls", sub: "philadelphia", price: 210000, img: "img/menu/45.jpg", // ФОТО: Філадельфія з вугром та авокадо
-    name: { ua: "Філадельфія з вугром та авокадо", ru: "Филадельфия с угрём и авокадо", en: "Philadelphia Eel & Avocado", vn: "Philadelphia lươn & bơ" },
-    desc: {
-      ua: "Вугор, тобіко, крем-сир Філадельфія, авокадо, теріякі",
-      ru: "Угорь, тобико, крем-сыр Филадельфия, авокадо, терияки",
-      en: "Eel, tobiko, Philadelphia cream cheese, avocado, teriyaki",
-      vn: "Lươn, tobiko, phô mai kem Philadelphia, bơ, teriyaki"
     }
   },
 
