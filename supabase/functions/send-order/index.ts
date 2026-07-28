@@ -61,6 +61,7 @@ const MENU: Record<string, Dish> = {
   "38":{"p":189000,"c":"rolls","n":{"ua":"Spicy Tokyo roll","ru":"Spicy Tokyo roll","en":"Spicy Tokyo roll","vn":"Spicy Tokyo roll"}},
   "43":{"p":147500,"c":"rolls","n":{"ua":"Yamamoto set","ru":"Yamamoto set","en":"Yamamoto set","vn":"Yamamoto set"}},
   "44":{"p":159000,"c":"rolls","n":{"ua":"Teriyaki Eggplant roll VEGAN","ru":"Teriyaki Eggplant roll VEGAN","en":"Teriyaki Eggplant roll VEGAN","vn":"Teriyaki Eggplant roll VEGAN"}},
+  "45":{"p":210000,"c":"rolls","n":{"ua":"Філадельфія з вугром та авокадо","ru":"Филадельфия с угрём и авокадо","en":"Philadelphia Eel & Avocado","vn":"Philadelphia lươn & bơ"}},
   "90":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія з лососем (Light)","ru":"Филадельфия с лососем (Light)","en":"Philadelphia with Salmon (Light)","vn":"Philadelphia cá hồi (Light)"}},
   "91":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія Гриль (Light)","ru":"Филадельфия Гриль (Light)","en":"Philadelphia Grill (Light)","vn":"Philadelphia nướng (Light)"}},
   "200":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Додатковий імбир","ru":"Дополнительный имбирь","en":"Extra ginger","vn":"Gừng thêm"}},

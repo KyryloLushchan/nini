@@ -82,6 +82,16 @@ const MENU = [
       vn: "Cơm, Cá hồi, Dưa leo, Phô mai kem, Rong biển"
     }
   },
+  {
+    id: 45, cat: "rolls", sub: "philadelphia", price: 210000, img: "img/menu/45.jpg", // ФОТО: Філадельфія з вугром та авокадо
+    name: { ua: "Філадельфія з вугром та авокадо", ru: "Филадельфия с угрём и авокадо", en: "Philadelphia Eel & Avocado", vn: "Philadelphia lươn & bơ" },
+    desc: {
+      ua: "Вугор, тобіко, крем-сир Філадельфія, авокадо, теріякі",
+      ru: "Угорь, тобико, крем-сыр Филадельфия, авокадо, терияки",
+      en: "Eel, tobiko, Philadelphia cream cheese, avocado, teriyaki",
+      vn: "Lươn, tobiko, phô mai kem Philadelphia, bơ, teriyaki"
+    }
+  },
 
   /* ---- LIGHT-версии Філадельфій (скрыты; доступны тумблером LUX/LIGHT на родительской карточке) ---- */
   {
