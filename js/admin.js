@@ -190,6 +190,7 @@ async function loadStock(){
     const { data, error } = await supa
       .from('ingredients')
       .select('id, name, unit, stock, min_stock, price')
+      .order('sort_order', { ascending: true })
       .order('name', { ascending: true });
     if(error) throw error;
     ingredients = data || [];
@@ -374,6 +375,7 @@ async function ensureIngredients(){
   const { data, error } = await supa
     .from('ingredients')
     .select('id, name, unit, stock, min_stock, price')
+    .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
   if(error) throw error;
   ingredients = data || [];

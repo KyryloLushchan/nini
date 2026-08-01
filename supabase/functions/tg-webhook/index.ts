@@ -243,7 +243,7 @@ const INPUT_TTL_MS = 10 * 60 * 1000; // состояние живёт 10 мин�
 
 /* /nhap -> клавиатура всех ингредиентов (name_vn), по 2 в ряд, в тему «Nhập hàng» */
 async function sendIngredientKeyboard() {
-  const rows = await sbGet("ingredients?select=id,name,name_vn&order=name_vn.asc");
+  const rows = await sbGet("ingredients?select=id,name,name_vn&order=sort_order.asc,name.asc");
   if (!rows.length) { await tgInv("Không có nguyên liệu"); return; }
   const btns = rows.map((r) => ({ text: r.name_vn || r.name, callback_data: `inv:${r.id}` }));
   const keyboard: unknown[] = [];
@@ -286,7 +286,7 @@ async function handleInvSelect(cq: any, ingredientId: string) {
 
 /* Списание: /huy -> клавиатура ингредиентов (name_vn), callback wo:<id> */
 async function sendWriteoffKeyboard() {
-  const rows = await sbGet("ingredients?select=id,name,name_vn&order=name_vn.asc");
+  const rows = await sbGet("ingredients?select=id,name,name_vn&order=sort_order.asc,name.asc");
   if (!rows.length) { await tgWo("Không có nguyên liệu"); return; }
   const btns = rows.map((r) => ({ text: r.name_vn || r.name, callback_data: `wo:${r.id}` }));
   const keyboard: unknown[] = [];
