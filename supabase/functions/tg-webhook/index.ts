@@ -85,7 +85,7 @@ async function answer(id: string, text = "") {
    Передаём исходные entities, чтобы сохранить форматирование (<code> с
    адресом остаётся копируемым по тапу); суффикс дописываем в КОНЕЦ, поэтому
    смещения существующих entities не меняются. */
-async function finalize(msg: any, suffix: string) {
+async function finalize(msg: any, suffix: string, reply_markup?: unknown) {
   const base: string = msg?.text ?? "";
   const body: Record<string, unknown> = {
     chat_id: msg.chat.id,
@@ -93,7 +93,88 @@ async function finalize(msg: any, suffix: string) {
     text: base ? `${base}\n\n${suffix}` : suffix,
   };
   if (Array.isArray(msg?.entities) && msg.entities.length) body.entities = msg.entities;
+  // reply_markup не передан -> Telegram убирает кнопки; передан -> ставит их
+  if (reply_markup !== undefined) body.reply_markup = reply_markup;
   await tg("editMessageText", body);
+}
+
+/* Расход ингредиентов по позициям заказа: [{ ingredient_id, amount }].
+   dishes.code = item.id -> recipe -> amount × qty, суммируем по ингредиентам.
+   Используется и при списании (approve), и при возврате (cancel). */
+async function orderIngredientTotals(items: any[]): Promise<{ ingredient_id: any; amount: number }[]> {
+  const codes = [...new Set(items.map((it) => String(it.id)))];
+  const dishesRows = codes.length ? await sbGet(`dishes?select=id,code&code=in.(${inList(codes)})`) : [];
+  const codeToDish: Record<string, any> = {};
+  for (const d of dishesRows) codeToDish[String(d.code)] = d.id;
+  const dishIds = [...new Set(Object.values(codeToDish))];
+  const recRows = dishIds.length
+    ? await sbGet(`recipe?select=dish_id,ingredient_id,amount&dish_id=in.(${inList(dishIds)})`)
+    : [];
+  const recByDish: Record<string, any[]> = {};
+  for (const r of recRows) (recByDish[r.dish_id] ??= []).push(r);
+  const totals = new Map<any, { ingredient_id: any; amount: number }>();
+  for (const it of items) {
+    const dishId = codeToDish[String(it.id)];
+    if (dishId == null) continue;
+    const qty = Number(it.qty) || 0;
+    if (qty <= 0) continue;
+    for (const r of (recByDish[dishId] || [])) {
+      const add = Number(r.amount) * qty;
+      if (!Number.isFinite(add) || add <= 0) continue;
+      const prev = totals.get(r.ingredient_id);
+      if (prev) prev.amount += add;
+      else totals.set(r.ingredient_id, { ingredient_id: r.ingredient_id, amount: add });
+    }
+  }
+  return [...totals.values()];
+}
+
+/* Отмена уже подтверждённого заказа: approved -> cancelled, вернуть склад и кассу. */
+async function handleCancel(cq: any, orderId: string) {
+  const msg = cq.message;
+  // Атомарно: только approved -> cancelled. Иначе (уже отменён и т.п.) — ничего.
+  const claim = await fetch(
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.approved&select=id,items,total`,
+    { method: "PATCH", headers: { ...sbHeaders, Prefer: "return=representation" }, body: JSON.stringify({ status: "cancelled" }) },
+  );
+  const claimed = await claim.json().catch(() => []);
+  if (!Array.isArray(claimed) || claimed.length === 0) { await answer(cq.id, "Вже скасовано"); return; }
+  const order = claimed[0];
+  const items: any[] = Array.isArray(order.items) ? order.items : [];
+
+  try {
+    // Возврат склада: те же количества, но type='in' (обратная операция к списанию)
+    const totals = await orderIngredientTotals(items);
+    const movements = totals.map((t) => ({
+      ingredient_id: t.ingredient_id, type: "in", amount: t.amount, source: "cancel", order_id: order.id,
+    }));
+    if (movements.length) {
+      const ins = await fetch(`${SUPABASE_URL}/rest/v1/movements`, {
+        method: "POST", headers: { ...sbHeaders, Prefer: "return=minimal" }, body: JSON.stringify(movements),
+      });
+      if (!ins.ok) {
+        // откат статуса обратно в approved, чтобы можно было повторить
+        await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`, {
+          method: "PATCH", headers: sbHeaders, body: JSON.stringify({ status: "approved" }),
+        });
+        await answer(cq.id, "Помилка, спробуйте ще раз");
+        return;
+      }
+    }
+    // Возврат кассы: сторно на ту же сумму (net = 0)
+    await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
+      method: "POST", headers: { ...sbHeaders, Prefer: "return=minimal" },
+      body: JSON.stringify({ amount: -Number(order.total || 0), source: "order", order_id: order.id, note: "Скасування замовлення" }),
+    });
+
+    await answer(cq.id, "Скасовано");
+    await finalize(msg, "❌ Скасовано"); // без reply_markup -> кнопка убирается
+  } catch (_e) {
+    await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`, {
+      method: "PATCH", headers: sbHeaders, body: JSON.stringify({ status: "approved" }),
+    });
+    await answer(cq.id, "Помилка, спробуйте ще раз");
+  }
 }
 
 /* in.(...) список для PostgREST: значения в кавычках, всё урл-кодируем */
@@ -110,6 +191,9 @@ async function handleCallback(cq: any) {
   // Списание: выбор ингредиента
   const mw = data.match(/^wo:(\d+)$/);
   if (mw) { await handleWoSelect(cq, mw[1]); return; }
+  // Отмена уже подтверждённого заказа
+  const mc = data.match(/^cancel:(.+)$/);
+  if (mc) { await handleCancel(cq, mc[1]); return; }
   const m = data.match(/^(ok|no):(.+)$/);
   if (!m) { await answer(cq.id); return; }
   const action = m[1];
@@ -225,7 +309,10 @@ async function handleCallback(cq: any) {
     }
 
     await answer(cq.id, "Списано зі складу");
-    await finalize(msg, "✅ Схвалено");
+    // Под «✅ Схвалено» — кнопка отмены уже подтверждённого заказа
+    await finalize(msg, "✅ Схвалено", {
+      inline_keyboard: [[{ text: "↩️ Скасувати", callback_data: `cancel:${order.id}` }]],
+    });
   } catch (_e) {
     // непредвиденная ошибка — возвращаем заказ в 'new'
     await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`, {
