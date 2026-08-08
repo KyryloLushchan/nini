@@ -86,6 +86,8 @@ function bindUI(){
   // Движения
   $('movesType').addEventListener('change', loadMoves);
   $('movesIng').addEventListener('change', loadMoves);
+  $('movFrom').addEventListener('change', loadMoves);
+  $('movTo').addEventListener('change', loadMoves);
   $('movesRefresh').addEventListener('click', loadMoves);
 
   $('incSubmit').addEventListener('click', handleIncome);
@@ -1137,20 +1139,43 @@ async function loadMoves(){
   try{
     await ensureIngredients();
     fillMovesIng();
+    const tf = $('movesType').value;
+    const inf = $('movesIng').value;
+    const from = $('movFrom').value;   // 'YYYY-MM-DD' или ''
+    const to = $('movTo').value;
+    const hasPeriod = !!(from || to);
+
     let query = supa.from('movements')
       .select('id, ingredient_id, type, amount, source, order_id, note, created_at')
       .order('created_at', { ascending: false })
-      .limit(100);
-    const tf = $('movesType').value;
-    const inf = $('movesIng').value;
+      .limit(hasPeriod ? 5000 : 100);   // за период берём все строки — для точного ИТОГО
     if(tf) query = query.eq('type', tf);
     if(inf) query = query.eq('ingredient_id', inf);
+    // границы дня по времени Вьетнама (created_at хранится в UTC)
+    if(from) query = query.gte('created_at', `${from}T00:00:00+07:00`);
+    if(to)   query = query.lte('created_at', `${to}T23:59:59+07:00`);
+
     const { data, error } = await query;
     if(error) throw error;
-    renderMoves(data || []);
+    const rows = data || [];
+    renderMoves(rows);
+    renderMovesTotal(rows, hasPeriod, inf);
   }catch(e){
     body.innerHTML = '<p class="moves-empty">Failed to load movements: ' + escapeHtml(e.message) + '</p>';
   }
+}
+
+/* строка ИТОГО за период (сумма QTY по отфильтрованным строкам) */
+function renderMovesTotal(rows, hasPeriod, ingId){
+  const el = $('movesTotal');
+  if(!el) return;
+  if(!hasPeriod){ el.classList.add('hidden'); el.textContent = ''; return; }
+  const sum = rows.reduce((s, r)=> s + (Number(r.amount) || 0), 0);
+  // единица: если выбран конкретный ингредиент — его ед., иначе 'g'
+  let unit = 'g';
+  if(ingId){ const ing = ingredients.find(x=> String(x.id) === String(ingId)); if(ing && ing.unit) unit = ing.unit; }
+  el.classList.remove('hidden');
+  el.textContent = `Разом за період: ${fmtNum(sum)} ${unit}`;
 }
 
 function renderMoves(rows){

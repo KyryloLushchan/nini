@@ -165,9 +165,13 @@
     .cash-del:hover{ background:var(--coral); color:#fff; }
 
     /* ---- Движения ---- */
-    .moves-filters{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+    .moves-filters{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px; align-items:center; }
     .moves-filters select{ flex:1; min-width:130px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:var(--bg-soft); }
     .moves-filters .btn{ margin-top:0; padding:9px 16px; font-size:14px; }
+    .moves-date{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); }
+    .moves-date input{ padding:8px 9px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:14px; background:var(--bg-soft); }
+    .moves-date input:focus{ outline:none; border-color:var(--coral); background:#fff; }
+    .moves-total{ margin-bottom:12px; padding:11px 14px; border:1px solid var(--coral); background:var(--coral-soft); border-radius:12px; font-family:var(--font-disp); font-weight:800; font-size:15px; color:var(--coral-dark); }
     table.moves{ width:100%; border-collapse:collapse; font-size:14px; }
     table.moves th, table.moves td{ padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; vertical-align:top; }
     table.moves th{ font-family:var(--font-disp); font-weight:700; font-size:12px; color:var(--muted); text-transform:uppercase; }
@@ -392,8 +396,11 @@
           <select id="movesIng">
             <option value="">All ingredients</option>
           </select>
+          <label class="moves-date">від <input type="date" id="movFrom"></label>
+          <label class="moves-date">до <input type="date" id="movTo"></label>
           <button id="movesRefresh" class="btn btn--ghost">Refresh</button>
         </div>
+        <div id="movesTotal" class="moves-total hidden"></div>
         <div id="movesBody">
           <div class="center-load"><span class="spinner"></span> Loading…</div>
         </div>
