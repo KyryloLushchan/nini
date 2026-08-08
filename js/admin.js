@@ -1175,7 +1175,7 @@ function renderMovesTotal(rows, hasPeriod, ingId){
   let unit = 'g';
   if(ingId){ const ing = ingredients.find(x=> String(x.id) === String(ingId)); if(ing && ing.unit) unit = ing.unit; }
   el.classList.remove('hidden');
-  el.textContent = `Разом за період: ${fmtNum(sum)} ${unit}`;
+  el.textContent = `Total for period: ${fmtNum(sum)} ${unit}`;
 }
 
 function renderMoves(rows){
