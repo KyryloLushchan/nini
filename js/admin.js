@@ -122,6 +122,9 @@ function bindUI(){
   $('cashSave').addEventListener('click', handleCashSave);
   $('cashRefreshBtn').addEventListener('click', loadCash);
   $('cashPeriod').addEventListener('change', applyCashPeriod);
+  $('cashMode').addEventListener('change', ()=>{ updateCashModeUI(); applyCashPeriod(); });
+  $('cashFrom').addEventListener('change', applyCashPeriod);
+  $('cashTo').addEventListener('change', applyCashPeriod);
   // Редактирование/удаление движений кассы (прямой UPDATE/DELETE)
   $('cashBody').addEventListener('change', (e)=>{
     const amt = e.target.closest('.cash-amt-edit');
@@ -680,6 +683,7 @@ async function loadCash(){
     balEl.classList.toggle('is-neg', balance < 0);
 
     fillCashPeriod();
+    updateCashModeUI();
     applyCashPeriod();
   }catch(e){
     $('cashBalance').textContent = '—';
@@ -687,8 +691,27 @@ async function loadCash(){
   }
 }
 
-/* записи выбранного периода */
+/* показать месяц-селект или диапазон дат в зависимости от режима */
+function updateCashModeUI(){
+  const isPeriod = $('cashMode').value === 'period';
+  $('cashPeriod').classList.toggle('hidden', isPeriod);
+  $('cashDateRange').classList.toggle('hidden', !isPeriod);
+}
+
+/* записи выбранного периода: режим «Месяц» или «Период» (диапазон дат) */
 function cashFiltered(){
+  if($('cashMode').value === 'period'){
+    const from = $('cashFrom').value, to = $('cashTo').value;
+    // границы дня по времени Вьетнама (created_at в UTC)
+    const fromT = from ? new Date(`${from}T00:00:00+07:00`).getTime() : null;
+    const toT = to ? new Date(`${to}T23:59:59+07:00`).getTime() : null;
+    return cashAll.filter(r=>{
+      const t = new Date(r.created_at).getTime();
+      if(fromT != null && t < fromT) return false;
+      if(toT != null && t > toT) return false;
+      return true;
+    });
+  }
   const period = $('cashPeriod').value;
   if(period === 'all') return cashAll;
   const targetYM = (period === 'current') ? curYM() : period;

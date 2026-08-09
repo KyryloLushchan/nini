@@ -127,6 +127,9 @@
     .cash-balance-box{ margin-bottom:14px; }
     .cash-period{ width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; font-family:inherit; font-size:15px; background:var(--bg-soft); margin-bottom:14px; }
     .cash-period:focus{ outline:none; border-color:var(--coral); background:#fff; }
+    .cash-filter-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
+    .cash-filter-row .cash-period{ flex:1; min-width:120px; width:auto; margin-bottom:0; }
+    .cash-date-range{ display:inline-flex; flex-wrap:wrap; gap:10px; align-items:center; }
     .cash-metrics{ display:flex; gap:10px; }
     .cash-metric{ flex:1; min-width:0; background:var(--bg-soft); border-radius:12px; padding:12px 8px; text-align:center; }
     .cash-metric__label{ display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.02em; font-weight:700; margin-bottom:5px; }
@@ -335,10 +338,20 @@
       <!-- Cash -->
       <div id="panelCash" class="hidden">
         <div class="card-box cash-balance-box">
-          <select id="cashPeriod" class="cash-period">
-            <option value="all">All time</option>
-            <option value="current">Current month</option>
-          </select>
+          <div class="cash-filter-row">
+            <select id="cashMode" class="cash-period">
+              <option value="month">Month</option>
+              <option value="period">Period</option>
+            </select>
+            <select id="cashPeriod" class="cash-period">
+              <option value="all">All time</option>
+              <option value="current">Current month</option>
+            </select>
+            <span id="cashDateRange" class="cash-date-range hidden">
+              <label class="moves-date">from <input type="date" id="cashFrom"></label>
+              <label class="moves-date">to <input type="date" id="cashTo"></label>
+            </span>
+          </div>
 
           <div class="cash-metrics">
             <div class="cash-metric">
