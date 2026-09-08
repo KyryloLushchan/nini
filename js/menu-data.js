@@ -21,7 +21,7 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
-    id: 46, cat: "rolls", sub: "new", price: 504000, neu: true, img: "img/menu/46.jpg", // ФОТО: Сет Філадельфія
+    id: 46, cat: "rolls", sub: "new", price: 525000, neu: true, img: "img/menu/46.jpg", // ФОТО: Сет Філадельфія
     name: { ua: "Сет Філадельфія", ru: "Сет Филадельфия", en: "Philadelphia Set", vn: "Set Philadelphia" },
     desc: {
       ua: "3 рулети: Філа Гриль (лосось, огірок, крем-сир), Філа Вугор (вугор, огірок, авокадо, крем-сир), Філа Макс (вугор, лосось, авокадо, крем-сир, тобіко)",
@@ -51,7 +51,7 @@ const MENU = [
     }
   },
   {
-    id: 49, cat: "rolls", sub: "new", price: 252000, neu: true, img: "img/menu/49.jpg", // ФОТО: Сет Гункан
+    id: 49, cat: "rolls", sub: "new", price: 210000, neu: true, img: "img/menu/49.jpg", // ФОТО: Сет Гункан
     name: { ua: "Сет Гункан", ru: "Сет Гункан", en: "Gunkan Set", vn: "Set Gunkan" },
     desc: {
       ua: "8 шт: 4 Гункан Лосось, 4 Гункан Вугор, рис",
