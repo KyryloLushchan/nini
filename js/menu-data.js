@@ -51,6 +51,16 @@ const MENU = [
     }
   },
   {
+    id: 49, cat: "rolls", sub: "new", price: 252000, neu: true, img: "img/menu/49.jpg", // ФОТО: Сет Гункан
+    name: { ua: "Сет Гункан", ru: "Сет Гункан", en: "Gunkan Set", vn: "Set Gunkan" },
+    desc: {
+      ua: "8 шт: 4 Гункан Лосось, 4 Гункан Вугор, рис",
+      ru: "8 шт: 4 Гункан Лосось, 4 Гункан Угорь, рис",
+      en: "8 pcs: 4 Gunkan Salmon, 4 Gunkan Eel, rice",
+      vn: "8 miếng: 4 Gunkan cá hồi, 4 Gunkan lươn, cơm"
+    }
+  },
+  {
     id: 45, cat: "rolls", sub: "new", price: 210000, neu: true, img: "img/menu/45.jpg", // ФОТО: Філадельфія з вугром та авокадо
     name: { ua: "Філадельфія з вугром та авокадо", ru: "Филадельфия с угрём и авокадо", en: "Philadelphia Eel & Avocado", vn: "Philadelphia lươn & bơ" },
     desc: {
@@ -250,18 +260,6 @@ const MENU = [
       ru: "Рис, Угорь, Нори ½",
       en: "Rice, Eel, Nori ½",
       vn: "Cơm, Lươn, Rong biển ½"
-    }
-  },
-
-  /* ---------- СУШИ · НОВИНКА ---------- */
-  {
-    id: 49, cat: "sushi", sub: "new", price: 252000, neu: true, img: "img/menu/49.jpg", // ФОТО: Сет Гункан
-    name: { ua: "Сет Гункан", ru: "Сет Гункан", en: "Gunkan Set", vn: "Set Gunkan" },
-    desc: {
-      ua: "8 шт: 4 Гункан Лосось, 4 Гункан Вугор, рис",
-      ru: "8 шт: 4 Гункан Лосось, 4 Гункан Угорь, рис",
-      en: "8 pcs: 4 Gunkan Salmon, 4 Gunkan Eel, rice",
-      vn: "8 miếng: 4 Gunkan cá hồi, 4 Gunkan lươn, cơm"
     }
   },
 
@@ -510,6 +508,6 @@ const I18N = {
 const CATEGORIES = ["rolls", "sushi", "drinks"];
 const SUBGROUPS = {
   rolls: ["new", "philadelphia", "baked", "spicy", "dragon", "maki"],
-  sushi: ["new", "gunkan", "nigiri"],
+  sushi: ["gunkan", "nigiri"],
   drinks: ["drinks"]
 };

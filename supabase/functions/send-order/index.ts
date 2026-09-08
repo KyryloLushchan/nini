@@ -65,7 +65,7 @@ const MENU: Record<string, Dish> = {
   "46":{"p":504000,"c":"rolls","n":{"ua":"Сет Філадельфія","ru":"Сет Филадельфия","en":"Philadelphia Set","vn":"Set Philadelphia"}},
   "47":{"p":207000,"c":"rolls","n":{"ua":"Філадельфія мікс","ru":"Филадельфия микс","en":"Philadelphia Mix","vn":"Philadelphia Mix"}},
   "48":{"p":225000,"c":"rolls","n":{"ua":"Філадельфія з креветкою","ru":"Филадельфия с креветкой","en":"Philadelphia Shrimp","vn":"Philadelphia tôm"}},
-  "49":{"p":252000,"c":"sushi","n":{"ua":"Сет Гункан","ru":"Сет Гункан","en":"Gunkan Set","vn":"Set Gunkan"}},
+  "49":{"p":252000,"c":"rolls","n":{"ua":"Сет Гункан","ru":"Сет Гункан","en":"Gunkan Set","vn":"Set Gunkan"}},
   "90":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія з лососем (Light)","ru":"Филадельфия с лососем (Light)","en":"Philadelphia with Salmon (Light)","vn":"Philadelphia cá hồi (Light)"}},
   "91":{"p":135000,"c":"rolls","n":{"ua":"Філадельфія Гриль (Light)","ru":"Филадельфия Гриль (Light)","en":"Philadelphia Grill (Light)","vn":"Philadelphia nướng (Light)"}},
   "200":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Додатковий імбир","ru":"Дополнительный имбирь","en":"Extra ginger","vn":"Gừng thêm"}},
