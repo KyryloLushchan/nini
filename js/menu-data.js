@@ -21,6 +21,36 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
+    id: 46, cat: "rolls", sub: "new", price: 504000, neu: true, img: "img/menu/46.jpg", // ФОТО: Сет Філадельфія
+    name: { ua: "Сет Філадельфія", ru: "Сет Филадельфия", en: "Philadelphia Set", vn: "Set Philadelphia" },
+    desc: {
+      ua: "3 рулети: Філа Гриль (лосось, огірок, крем-сир), Філа Вугор (вугор, огірок, авокадо, крем-сир), Філа Макс (вугор, лосось, авокадо, крем-сир, тобіко)",
+      ru: "3 ролла: Фила Гриль (лосось, огурец, крем-сыр), Фила Угорь (угорь, огурец, авокадо, крем-сыр), Фила Макс (угорь, лосось, авокадо, крем-сыр, тобико)",
+      en: "3 rolls: Philadelphia Grill (salmon, cucumber, cream cheese), Philadelphia Eel (eel, cucumber, avocado, cream cheese), Philadelphia Max (eel, salmon, avocado, cream cheese, tobiko)",
+      vn: "3 loại cuốn: Philadelphia Grill (cá hồi, dưa leo, phô mai kem), Philadelphia Lươn (lươn, dưa leo, bơ, phô mai kem), Philadelphia Max (lươn, cá hồi, bơ, phô mai kem, tobiko)"
+    }
+  },
+  {
+    id: 47, cat: "rolls", sub: "new", price: 207000, neu: true, img: "img/menu/47.jpg", // ФОТО: Філадельфія мікс
+    name: { ua: "Філадельфія мікс", ru: "Филадельфия микс", en: "Philadelphia Mix", vn: "Philadelphia Mix" },
+    desc: {
+      ua: "Лосось, вугор, норі, крем-сир Філадельфія, огірок",
+      ru: "Лосось, угорь, нори, крем-сыр Филадельфия, огурец",
+      en: "Salmon, eel, nori, Philadelphia cream cheese, cucumber",
+      vn: "Cá hồi, lươn, rong biển, phô mai kem Philadelphia, dưa leo"
+    }
+  },
+  {
+    id: 48, cat: "rolls", sub: "new", price: 225000, neu: true, img: "img/menu/48.jpg", // ФОТО: Філадельфія з креветкою
+    name: { ua: "Філадельфія з креветкою", ru: "Филадельфия с креветкой", en: "Philadelphia Shrimp", vn: "Philadelphia tôm" },
+    desc: {
+      ua: "Лосось, норі, рис, огірок, креветка, крем-сир",
+      ru: "Лосось, нори, рис, огурец, креветка, крем-сыр",
+      en: "Salmon, nori, rice, cucumber, shrimp, cream cheese",
+      vn: "Cá hồi, rong biển, cơm, dưa leo, tôm, phô mai kem"
+    }
+  },
+  {
     id: 45, cat: "rolls", sub: "new", price: 210000, neu: true, img: "img/menu/45.jpg", // ФОТО: Філадельфія з вугром та авокадо
     name: { ua: "Філадельфія з вугром та авокадо", ru: "Филадельфия с угрём и авокадо", en: "Philadelphia Eel & Avocado", vn: "Philadelphia lươn & bơ" },
     desc: {
@@ -220,6 +250,18 @@ const MENU = [
       ru: "Рис, Угорь, Нори ½",
       en: "Rice, Eel, Nori ½",
       vn: "Cơm, Lươn, Rong biển ½"
+    }
+  },
+
+  /* ---------- СУШИ · НОВИНКА ---------- */
+  {
+    id: 49, cat: "sushi", sub: "new", price: 252000, neu: true, img: "img/menu/49.jpg", // ФОТО: Сет Гункан
+    name: { ua: "Сет Гункан", ru: "Сет Гункан", en: "Gunkan Set", vn: "Set Gunkan" },
+    desc: {
+      ua: "8 шт: 4 Гункан Лосось, 4 Гункан Вугор, рис",
+      ru: "8 шт: 4 Гункан Лосось, 4 Гункан Угорь, рис",
+      en: "8 pcs: 4 Gunkan Salmon, 4 Gunkan Eel, rice",
+      vn: "8 miếng: 4 Gunkan cá hồi, 4 Gunkan lươn, cơm"
     }
   },
 
@@ -468,6 +510,6 @@ const I18N = {
 const CATEGORIES = ["rolls", "sushi", "drinks"];
 const SUBGROUPS = {
   rolls: ["new", "philadelphia", "baked", "spicy", "dragon", "maki"],
-  sushi: ["gunkan", "nigiri"],
+  sushi: ["new", "gunkan", "nigiri"],
   drinks: ["drinks"]
 };
