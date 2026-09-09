@@ -263,6 +263,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(Cart.count() === 0) return;
     closeCart();
     openModal('quickOrderModal');
+    if(typeof ensureQuickTurnstile === 'function') ensureQuickTurnstile();
   });
 
   // закрытие модалок

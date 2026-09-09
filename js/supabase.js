@@ -37,6 +37,20 @@ let currentUser = null;
 function turnstileGet(id){ try{ const el=document.getElementById(id); return (window.turnstile && el) ? (turnstile.getResponse(el) || '') : ''; }catch(_e){ return ''; } }
 function turnstileReset(id){ try{ const el=document.getElementById(id); if(window.turnstile && el) turnstile.reset(el); }catch(_e){} }
 
+/* quickTurnstile НЕ имеет класса cf-turnstile — он скрыт в модалке при загрузке страницы,
+   и авто-рендер Cloudflare может отрисовать его нерабочим. Рендерим явно в момент открытия модалки. */
+let quickTurnstileWidgetId = null;
+function ensureQuickTurnstile(){
+  if(quickTurnstileWidgetId !== null) return;
+  if(!window.turnstile || !document.getElementById('quickTurnstile')){
+    setTimeout(ensureQuickTurnstile, 200);
+    return;
+  }
+  quickTurnstileWidgetId = turnstile.render('#quickTurnstile', {
+    sitekey: '0x4AAAAAADnyoSrGF4AbPEDy'
+  });
+}
+
 async function refreshUser(){
   if(!supa) return;
   const { data } = await supa.auth.getUser();
