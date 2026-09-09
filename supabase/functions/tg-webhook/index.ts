@@ -326,7 +326,7 @@ async function handleCallback(cq: any) {
     // Если sendMessage упал — ничего не откатываем, заказ уже одобрен и списан.
     if (KITCHEN_CHAT_ID) {
       try {
-        const lines = items.map((it) => `• ${it.name} × ${it.qty}`).join("\n");
+        const lines = items.map((it) => `• ${it.name}${it.grill ? " 🔥Grill" : ""} × ${it.qty}`).join("\n");
         let kText = `🍣 Order #${order.id}\n\n${lines}`;
         if (order.people) kText += `\n\n👥 Số người: ${order.people}`;
         if (order.comment) kText += `\n📝 ${await translateToVietnamese(String(order.comment))}`;
