@@ -311,7 +311,7 @@ serve(async (req) => {
             Prefer: "return=representation",
           },
           body: JSON.stringify({
-            customer_name: name, phone, address, comment,
+            customer_name: name, phone, address, comment, people,
             items: lines, total: totalFinal,
             lat: lat || null, lng: lng || null,
             user_id, status: "new",

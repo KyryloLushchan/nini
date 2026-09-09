@@ -33,6 +33,36 @@ const sbHeaders = {
   "Content-Type": "application/json",
 };
 
+// Переклад коментаря клієнта на в'єтнамську для повідомлення на кухню (fail-open:
+// без ключа GPT_API або при помилці OpenAI — повертаємо оригінальний текст).
+async function translateToVietnamese(text: string): Promise<string> {
+  const KEY = Deno.env.get("GPT_API");
+  if (!KEY || !text) return text;
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0,
+        messages: [
+          {
+            role: "system",
+            content: "Translate the customer's food-order note to Vietnamese. Reply with ONLY the translated text, no quotes, no explanation. If it is already in Vietnamese, return it unchanged.",
+          },
+          { role: "user", content: text },
+        ],
+      }),
+    });
+    if (!r.ok) return text;
+    const data = await r.json().catch(() => null);
+    const out = data?.choices?.[0]?.message?.content?.trim();
+    return out || text;
+  } catch {
+    return text;
+  }
+}
+
 const GREETING =
   "🍣 Вітаємо в NiNi Sushi!\n\n" +
   "Свіжі суші та роли з доставкою 🥢\n" +
@@ -216,7 +246,7 @@ async function handleCallback(cq: any) {
   // action === "ok": атомарно «занимаем» заказ new -> approved (защита от двойного списания).
   // Списываем ТОЛЬКО если этот PATCH реально перевёл строку из status='new'.
   const claim = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items,total`,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items,total,people,comment`,
     { method: "PATCH", headers: { ...sbHeaders, Prefer: "return=representation" }, body: JSON.stringify({ status: "approved" }) },
   );
   const claimed = await claim.json().catch(() => []);
@@ -297,9 +327,12 @@ async function handleCallback(cq: any) {
     if (KITCHEN_CHAT_ID) {
       try {
         const lines = items.map((it) => `• ${it.name} × ${it.qty}`).join("\n");
+        let kText = `🍣 Order #${order.id}\n\n${lines}`;
+        if (order.people) kText += `\n\n👥 Số người: ${order.people}`;
+        if (order.comment) kText += `\n📝 ${await translateToVietnamese(String(order.comment))}`;
         const kBody: Record<string, unknown> = {
           chat_id: KITCHEN_CHAT_ID,
-          text: `🍣 Order #${order.id}\n\n${lines}`,
+          text: kText,
         };
         if (KITCHEN_TOPIC_ORDERS) kBody.message_thread_id = Number(KITCHEN_TOPIC_ORDERS);
         await tg("sendMessage", kBody);
