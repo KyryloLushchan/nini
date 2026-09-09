@@ -24,6 +24,36 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Переклад коментаря клієнта на в'єтнамську для кухні (fail-open: без ключа
+// або при помилці OpenAI — повертаємо оригінальний текст, замовлення не блокуємо).
+async function translateToVietnamese(text: string): Promise<string> {
+  const KEY = Deno.env.get("GPT_API");
+  if (!KEY || !text) return text;
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0,
+        messages: [
+          {
+            role: "system",
+            content: "Translate the customer's food-order note to Vietnamese. Reply with ONLY the translated text, no quotes, no explanation. If it is already in Vietnamese, return it unchanged.",
+          },
+          { role: "user", content: text },
+        ],
+      }),
+    });
+    if (!r.ok) return text;
+    const data = await r.json().catch(() => null);
+    const out = data?.choices?.[0]?.message?.content?.trim();
+    return out || text;
+  } catch {
+    return text;
+  }
+}
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -283,12 +313,15 @@ serve(async (req) => {
     if (quick) msg += `🔔 Contact via Telegram for details (no address/phone given)\n`;
     // Адрес: в <code> — тап по нему в Telegram = копирование одним касанием.
     if (address) msg += `📍 <code>${escHtml(address)}</code>\n`;
-    if (people) msg += `👥 People: ${people}\n`;
+    if (people) msg += `👥 Số người: ${people}\n`;
     if (lat && lng) {
       msg += `📍 Coordinates: ${escHtml(lat)},${escHtml(lng)}\n`;
       msg += `🗺 https://maps.google.com/?q=${escHtml(lat)},${escHtml(lng)}\n`;
     }
-    if (comment) msg += `📝 ${escHtml(comment)}\n`;
+    if (comment) {
+      const commentVn = await translateToVietnamese(comment);
+      msg += `📝 ${escHtml(commentVn)}\n`;
+    }
     msg += `\n— — —\n`;
     for (const l of lines) msg += `• ${escHtml(l.name)}${l.grill ? " 🔥Grill" : ""} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
     msg += `— — —\n`;
