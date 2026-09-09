@@ -240,6 +240,7 @@ function renderMyOrders(orders){
 /* ---------- ОТПРАВКА ЗАКАЗА ---------- */
 function initOrderUI(){
   document.getElementById('orderSend').addEventListener('click', sendOrder);
+  document.getElementById('quickSend').addEventListener('click', sendQuickOrder);
 }
 
 async function sendOrder(){
@@ -338,6 +339,95 @@ async function sendOrder(){
     sendBtn.innerHTML = sendBtnHTML;
     // токен Turnstile одноразовый — сбрасываем виджет для следующей попытки
     turnstileReset('ordTurnstile');
+  }
+}
+
+/* ---------- ШВИДКЕ ЗАМОВЛЕННЯ (лише Telegram) ---------- */
+async function sendQuickOrder(){
+  const lang = window.currentLang || 'ua';
+  const note = document.getElementById('quickNote');
+  note.className = 'form__note';
+
+  let telegram = document.getElementById('quickTelegram').value.trim();
+
+  const errMissing = {
+    ua: '⚠️ Вкажіть Telegram', ru: '⚠️ Укажите Telegram',
+    en: '⚠️ Enter your Telegram', vn: '⚠️ Nhập Telegram'
+  };
+  if(!telegram){
+    note.textContent = errMissing[lang] || errMissing.en;
+    note.classList.add('is-error');
+    return;
+  }
+  if(telegram[0] !== '@') telegram = '@' + telegram;
+  if(Cart.count() === 0){ note.textContent = 'Кошик порожній'; note.classList.add('is-error'); return; }
+
+  const tsToken = turnstileGet('quickTurnstile');
+  if(!tsToken){
+    const errBot = {
+      ua: '⚠️ Підтвердіть, що ви не робот', ru: '⚠️ Подтвердите, что вы не робот',
+      en: '⚠️ Please confirm you are not a robot', vn: '⚠️ Vui lòng xác nhận bạn không phải robot'
+    };
+    note.textContent = errBot[lang] || errBot.en;
+    note.classList.add('is-error');
+    return;
+  }
+
+  const items = Cart.list(lang);
+  let userToken = '';
+  if(supa){
+    try{ const { data } = await supa.auth.getSession(); userToken = data?.session?.access_token || ''; }catch(_e){}
+  }
+
+  const payload = {
+    quick: true,
+    telegram, lang,
+    turnstileToken: tsToken,
+    userToken,
+    items: items.map(i => ({ id: i.id, qty: i.qty, grill: !!i.grill }))
+  };
+
+  const sendBtn = document.getElementById('quickSend');
+  const sendBtnHTML = sendBtn.innerHTML;
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<span class="spinner spinner--btn"></span>';
+  try{
+    const res = await fetch("https://rdxlvebvwjzfmzvguqaf.supabase.co/functions/v1/send-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": CONFIG.SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + CONFIG.SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(res.status === 403 && data.error === 'region not allowed'){
+      const msg = {
+        ua: '🚫 Доставка доступна лише у В\'єтнамі',
+        ru: '🚫 Доставка доступна только во Вьетнаме',
+        en: '🚫 Delivery is available only in Vietnam',
+        vn: '🚫 Chỉ giao hàng trong Việt Nam'
+      };
+      note.textContent = msg[lang] || msg.en;
+      note.classList.add('is-error');
+      return;
+    }
+    if(!res.ok || !data.ok) throw new Error('Edge Function response not ok');
+
+    note.textContent = '';
+    Cart.clear();
+    closeModal('quickOrderModal');
+    openModal('quickSuccessModal');
+    document.getElementById('quickTelegram').value = '';
+  }catch(e){
+    console.warn('Edge Function error', e);
+    note.textContent = '❌ Sending failed, please try again';
+    note.classList.add('is-error');
+  }finally{
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = sendBtnHTML;
+    turnstileReset('quickTurnstile');
   }
 }
 

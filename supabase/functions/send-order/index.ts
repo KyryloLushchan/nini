@@ -160,6 +160,7 @@ serve(async (req) => {
     if (!body || typeof body !== "object") return json({ ok: false, error: "bad body" }, 400);
 
     const lang = ["ua", "ru", "en", "vn"].includes(body.lang) ? body.lang : "ua";
+    const quick = !!body.quick;
     const name = clean(body.name, 120);
     const phone = clean(body.phone, 40);
     const telegram = clean(body.telegram, 80);
@@ -171,8 +172,12 @@ serve(async (req) => {
     const lat = clean(body.lat, 40);
     const lng = clean(body.lng, 40);
 
-    // Обязательные поля
-    if (!name || !phone || !address) return json({ ok: false, error: "missing fields" }, 400);
+    // Обязательные поля: обычный заказ — ім'я+телефон+адреса; швидкий — лише Telegram
+    if (quick) {
+      if (!telegram) return json({ ok: false, error: "missing fields" }, 400);
+    } else if (!name || !phone || !address) {
+      return json({ ok: false, error: "missing fields" }, 400);
+    }
 
     // Позиции: только из меню, qty 1..30, максимум 40 строк
     const raw = Array.isArray(body.items) ? body.items.slice(0, 40) : [];
@@ -224,7 +229,7 @@ serve(async (req) => {
     }
 
     // Анти-спам: надёжный rate-limit/дедуп через БД (общий для всех инстансов)
-    const fp = `${phone}|${lines.map((l) => l.name + "x" + l.qty).join(",")}`;
+    const fp = `${phone || telegram}|${lines.map((l) => l.name + "x" + l.qty).join(",")}`;
     {
       const sbUrl = Deno.env.get("SUPABASE_URL");
       const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -271,11 +276,13 @@ serve(async (req) => {
 
     // Текст заказа собирает СЕРВЕР (всегда на английском). parse_mode: HTML —
     // все пользовательские поля ОБЯЗАТЕЛЬНО через escHtml.
-    let msg = `🍣 NEW ORDER NiNi Sushi\n\n`;
-    msg += `👤 ${escHtml(name)}\n📞 ${escHtml(phone)}\n`;
+    let msg = quick ? `⚡ QUICK ORDER NiNi Sushi\n\n` : `🍣 NEW ORDER NiNi Sushi\n\n`;
+    if (name) msg += `👤 ${escHtml(name)}\n`;
+    if (phone) msg += `📞 ${escHtml(phone)}\n`;
     if (telegram) msg += `✈️ ${escHtml(telegram)}\n`;
+    if (quick) msg += `🔔 Contact via Telegram for details (no address/phone given)\n`;
     // Адрес: в <code> — тап по нему в Telegram = копирование одним касанием.
-    msg += `📍 <code>${escHtml(address)}</code>\n`;
+    if (address) msg += `📍 <code>${escHtml(address)}</code>\n`;
     if (people) msg += `👥 People: ${people}\n`;
     if (lat && lng) {
       msg += `📍 Coordinates: ${escHtml(lat)},${escHtml(lng)}\n`;

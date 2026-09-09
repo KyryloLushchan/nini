@@ -258,6 +258,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(typeof initOrderMap === 'function') initOrderMap();
   });
 
+  // швидке замовлення (лише Telegram)
+  document.getElementById('quickOrderBtn').addEventListener('click', ()=>{
+    if(Cart.count() === 0) return;
+    closeCart();
+    openModal('quickOrderModal');
+  });
+
   // закрытие модалок
   document.querySelectorAll('[data-close]').forEach(b=>{
     b.addEventListener('click', ()=> b.closest('.modal').classList.remove('is-open'));

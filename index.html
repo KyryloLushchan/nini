@@ -139,6 +139,7 @@
         <strong id="cartTotal">0₫</strong>
       </div>
       <button class="btn btn--primary btn--full" id="checkoutBtn" data-i18n="checkout">Оформити замовлення</button>
+      <button class="btn btn--ghost btn--full" id="quickOrderBtn" data-i18n="quick_order">⚡ Швидке замовлення</button>
     </div>
   </aside>
 
@@ -190,6 +191,35 @@
         <button class="btn btn--primary btn--full" id="orderSend" data-i18n="order_send">Підтвердити замовлення</button>
         <p class="form__note" id="orderNote"></p>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== МОДАЛКА ШВИДКОГО ЗАМОВЛЕННЯ ===== -->
+  <div class="modal" id="quickOrderModal">
+    <div class="modal__box">
+      <button class="modal__close" data-close>✕</button>
+      <h3 data-i18n="quick_order">⚡ Швидке замовлення</h3>
+      <p class="map-hint" data-i18n="quick_order_hint">Вкажіть лише Telegram — з вами зв'яжуться для уточнення деталей</p>
+      <div class="form">
+        <label data-i18n="order_telegram">Telegram</label>
+        <input type="text" id="quickTelegram" placeholder="@username" autocomplete="off">
+        <div class="cf-turnstile" id="quickTurnstile" data-sitekey="0x4AAAAAADnyoSrGF4AbPEDy"></div>
+        <button class="btn btn--primary btn--full" id="quickSend" data-i18n="order_send">Підтвердити замовлення</button>
+        <p class="form__note" id="quickNote"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== МОДАЛКА УСПЕШНОГО ШВИДКОГО ЗАМОВЛЕННЯ ===== -->
+  <div class="modal" id="quickSuccessModal">
+    <div class="modal__box modal__box--center">
+      <button class="modal__close" data-close>✕</button>
+      <div class="success__icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="success__title" data-i18n="quick_success_title">✅ Дякуємо за замовлення!</h3>
+      <p class="success__text" data-i18n="quick_success_text">З вами зв'яжуться в Telegram.</p>
+      <button class="btn btn--primary btn--full" data-close data-i18n="success_ok">Добре</button>
     </div>
   </div>
 
