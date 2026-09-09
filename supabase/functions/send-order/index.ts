@@ -176,7 +176,7 @@ serve(async (req) => {
 
     // Позиции: только из меню, qty 1..30, максимум 40 строк
     const raw = Array.isArray(body.items) ? body.items.slice(0, 40) : [];
-    const lines: { id: number; name: string; qty: number; price: number; sum: number }[] = [];
+    const lines: { id: number; name: string; qty: number; price: number; sum: number; grill: boolean }[] = [];
     let total = 0;
     for (const it of raw) {
       const dish = MENU[String(it?.id)];
@@ -187,7 +187,7 @@ serve(async (req) => {
       const price = dishPrice(dish);
       const sum = price * qty;
       total += sum;
-      lines.push({ id: Number(it.id), name: dish.n.en ?? dish.n.ua, qty, price, sum });
+      lines.push({ id: Number(it.id), name: dish.n.en ?? dish.n.ua, qty, price, sum, grill: !!it?.grill });
     }
     if (lines.length === 0) return json({ ok: false, error: "empty cart" }, 400);
 
@@ -283,7 +283,7 @@ serve(async (req) => {
     }
     if (comment) msg += `📝 ${escHtml(comment)}\n`;
     msg += `\n— — —\n`;
-    for (const l of lines) msg += `• ${escHtml(l.name)} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
+    for (const l of lines) msg += `• ${escHtml(l.name)}${l.grill ? " 🔥Grill" : ""} × ${l.qty} = ${fmtPrice(l.sum)}\n`;
     msg += `— — —\n`;
     if (discountPercent > 0) {
       msg += `💰 Subtotal: ${fmtPrice(total)}\n`;

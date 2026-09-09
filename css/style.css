@@ -232,6 +232,19 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .variant-switch.is-light .vtoggle{ background:#3DBB6B; }
 .vtoggle__knob{ position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:left .2s ease; }
 .variant-switch.is-light .vtoggle__knob{ left:29px; }
+/* кнопка "Grill" — пожелание к приготовлению, без изменения цены */
+.grill-toggle{
+  display:inline-flex; align-items:center; gap:5px; align-self:flex-start;
+  margin:0 0 10px; padding:6px 12px; border-radius:999px;
+  border:1px solid var(--line); background:#fff;
+  font-family:var(--font-disp); font-weight:700; font-size:12px; color:var(--muted);
+  transition:.15s;
+}
+.grill-toggle__flame{ font-size:13px; filter:grayscale(1) opacity(.55); transition:filter .15s; }
+.grill-toggle:hover{ border-color:#FF6A2B; color:var(--ink); }
+.grill-toggle.is-on{ border-color:#FF6A2B; background:#FFF1E9; color:#D9480F; }
+.grill-toggle.is-on .grill-toggle__flame{ filter:none; animation:grillFlame 1s ease-in-out infinite alternate; }
+@keyframes grillFlame{ from{ transform:scale(1); } to{ transform:scale(1.18); } }
 .card__foot{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
 .card__price{ font-family:var(--font-disp); font-weight:800; font-size:18px; }
 
@@ -349,6 +362,7 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .cart-item__img{ width:60px; height:60px; border-radius:12px; object-fit:cover; background:var(--bg-soft); flex:0 0 auto; }
 .cart-item__info{ flex:1; min-width:0; }
 .cart-item__name{ font-family:var(--font-disp); font-weight:700; font-size:14px; }
+.cart-item__grill{ font-size:11px; font-weight:800; color:#D9480F; }
 .cart-item__price{ color:var(--muted); font-size:13px; margin-top:2px; }
 .cart-item__ctrl{ display:flex; align-items:center; gap:8px; margin-top:8px; }
 .qty-btn{ width:26px; height:26px; border-radius:8px; background:var(--bg-soft); font-weight:800; font-size:16px; display:flex; align-items:center; justify-content:center; transition:.15s; }

@@ -294,7 +294,7 @@ async function sendOrder(){
     lang,
     turnstileToken: tsToken,
     userToken,
-    items: items.map(i => ({ id: i.id, qty: i.qty }))
+    items: items.map(i => ({ id: i.id, qty: i.qty, grill: !!i.grill }))
   };
 
   const sendBtn = document.getElementById('orderSend');

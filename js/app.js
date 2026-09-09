@@ -50,6 +50,12 @@ function cardHTML(d, lang, t){
 
   const saleBadge = hasSale(d) ? `<span class="sale-badge">−20%</span>` : '';
 
+  const grillHTML = d.grillOption
+    ? `<button type="button" class="grill-toggle${Cart.grill[d.id] ? ' is-on' : ''}" data-grill-id="${d.id}" onclick="Cart.toggleGrill(${d.id})">
+         <span class="grill-toggle__flame">🔥</span> Grill
+       </button>`
+    : '';
+
   // Тумблер LUX/LIGHT (если у блюда есть лайт-версия или это сама лайт-версия)
   const isLite = !!d.luxId;
   const counterpartId = isLite ? d.luxId : d.liteId;
@@ -73,6 +79,7 @@ function cardHTML(d, lang, t){
         <h4 class="card__name">${d.name[lang]}</h4>
         <p class="card__desc">${d.desc[lang]}</p>
         ${toggleHTML}
+        ${grillHTML}
         <div class="card__foot">
           ${priceHTML}
           <div class="card__ctrl" data-id="${d.id}">${cardCtrlHTML(d, t)}</div>
@@ -109,6 +116,9 @@ function syncMenuControls(){
   document.querySelectorAll('.card__ctrl').forEach(el=>{
     const d = MENU.find(x => x.id == el.dataset.id);
     if(d) el.innerHTML = cardCtrlHTML(d, t);
+  });
+  document.querySelectorAll('.grill-toggle').forEach(btn=>{
+    btn.classList.toggle('is-on', !!Cart.grill[btn.dataset.grillId]);
   });
 }
 

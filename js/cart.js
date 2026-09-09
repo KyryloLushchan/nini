@@ -5,6 +5,7 @@
 
 const Cart = {
   items: {},   // { id: qty }
+  grill: {},   // { id: true } — пожелание "Grill" по позиции, без изменения цены
   discountPercent: 0,   // персональная скидка залогиненного клиента (только отображение)
 
   // сумма скидки (та же формула, что на сервере)
@@ -44,6 +45,12 @@ const Cart = {
   },
   remove(id){
     delete this.items[id];
+    delete this.grill[id];
+    this.render();
+  },
+  toggleGrill(id){
+    if(this.grill[id]) delete this.grill[id];
+    else this.grill[id] = true;
     this.render();
   },
   setQty(id, qty){
@@ -53,6 +60,7 @@ const Cart = {
   },
   clear(){
     this.items = {};
+    this.grill = {};
     this.render();
   },
   count(){
@@ -69,7 +77,7 @@ const Cart = {
     return Object.entries(this.items).map(([id,qty])=>{
       const d = MENU.find(x => x.id == id);
       const p = dishPrice(d);
-      return { id:+id, name:d.name[lang], qty, price:p, sum:p*qty };
+      return { id:+id, name:d.name[lang], qty, price:p, sum:p*qty, grill: !!this.grill[id] };
     });
   },
 
@@ -96,7 +104,7 @@ const Cart = {
             <img class="cart-item__img" src="${d.img || `img/menu/${d.id}.jpg`}" alt=""
                  onerror="this.style.background='var(--coral-soft)';this.src='';">
             <div class="cart-item__info">
-              <div class="cart-item__name">${d.name[lang]}</div>
+              <div class="cart-item__name">${d.name[lang]}${this.grill[id] ? ' <span class="cart-item__grill">🔥 Grill</span>' : ''}</div>
               <div class="cart-item__price">${
                 hasSale(d)
                   ? `<span class="price-old">${fmtPrice(d.price)}</span> <span class="price-new">${fmtPrice(dishPrice(d))}</span>`

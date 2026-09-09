@@ -21,7 +21,7 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
-    id: 46, cat: "rolls", sub: "new", price: 525000, neu: true, img: "img/menu/46.jpg", // ФОТО: Сет Філадельфія
+    id: 46, cat: "rolls", sub: "new", price: 525000, neu: true, grillOption: true, img: "img/menu/46.jpg", // ФОТО: Сет Філадельфія
     name: { ua: "Сет Філадельфія", ru: "Сет Филадельфия", en: "Philadelphia Set", vn: "Set Philadelphia" },
     desc: {
       ua: "3 рулети: Філа Гриль (лосось, огірок, крем-сир), Філа Вугор (вугор, огірок, авокадо, крем-сир), Філа Макс (вугор, лосось, авокадо, крем-сир, тобіко)",
@@ -31,7 +31,7 @@ const MENU = [
     }
   },
   {
-    id: 47, cat: "rolls", sub: "new", price: 207000, neu: true, img: "img/menu/47.jpg", // ФОТО: Філадельфія мікс
+    id: 47, cat: "rolls", sub: "new", price: 207000, neu: true, grillOption: true, img: "img/menu/47.jpg", // ФОТО: Філадельфія мікс
     name: { ua: "Філадельфія мікс", ru: "Филадельфия микс", en: "Philadelphia Mix", vn: "Philadelphia Mix" },
     desc: {
       ua: "Лосось, вугор, норі, крем-сир Філадельфія, огірок",
@@ -41,7 +41,7 @@ const MENU = [
     }
   },
   {
-    id: 48, cat: "rolls", sub: "new", price: 225000, neu: true, img: "img/menu/48.jpg", // ФОТО: Філадельфія з креветкою
+    id: 48, cat: "rolls", sub: "new", price: 225000, neu: true, grillOption: true, img: "img/menu/48.jpg", // ФОТО: Філадельфія з креветкою
     name: { ua: "Філадельфія з креветкою", ru: "Филадельфия с креветкой", en: "Philadelphia Shrimp", vn: "Philadelphia tôm" },
     desc: {
       ua: "Лосось, норі, рис, огірок, креветка, крем-сир",
@@ -103,7 +103,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · ФІЛАДЕЛЬФІЯ ---------- */
   {
-    id: 1, cat: "rolls", sub: "philadelphia", price: 189000, img: "img/menu/1.jpg", liteId: 90, // ФОТО: Філадельфія з лососем
+    id: 1, cat: "rolls", sub: "philadelphia", price: 189000, grillOption: true, img: "img/menu/1.jpg", liteId: 90, // ФОТО: Філадельфія з лососем
     name: { ua: "Філадельфія з лососем", ru: "Филадельфия с лососем", en: "Philadelphia with Salmon", vn: "Philadelphia cá hồi" },
     desc: {
       ua: "Рис, Лосось, Огірок, Крем-сир, Норі",
@@ -113,7 +113,7 @@ const MENU = [
     }
   },
   {
-    id: 2, cat: "rolls", sub: "philadelphia", price: 199000, img: "img/menu/37.jpg", // ФОТО: Філадельфія з лососем та авокадо
+    id: 2, cat: "rolls", sub: "philadelphia", price: 199000, grillOption: true, img: "img/menu/37.jpg", // ФОТО: Філадельфія з лососем та авокадо
     name: { ua: "Філадельфія з лососем та авокадо", ru: "Филадельфия с лососем и авокадо", en: "Philadelphia Salmon & Avocado", vn: "Philadelphia cá hồi & bơ" },
     desc: {
       ua: "Рис, Лосось, Авокадо, Крем-сир, Тобіко, Норі",
@@ -191,7 +191,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · ДРАКОНИ ---------- */
   {
-    id: 12, cat: "rolls", sub: "dragon", price: 219000, img: "img/menu/12.jpg", // ФОТО: Червоний Дракон
+    id: 12, cat: "rolls", sub: "dragon", price: 219000, grillOption: true, img: "img/menu/12.jpg", // ФОТО: Червоний Дракон
     name: { ua: "Червоний Дракон", ru: "Красный Дракон", en: "Red Dragon", vn: "Rồng đỏ" },
     desc: {
       ua: "Рис, Лосось, Вугор, Авокадо, Тобіко, Омлет, Норі",
