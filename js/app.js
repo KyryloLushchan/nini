@@ -88,14 +88,17 @@ function cardHTML(d, lang, t){
     </article>`;
 }
 
-/* Контрол карточки: кнопка "У кошик" либо степпер −/+, если товар уже в корзине */
+/* Контрол карточки: кнопка "У кошик" либо степпер −/+, если товар уже в корзине.
+   Для позиций с Grill-переключателем степпер отражает количество ИМЕННО текущего
+   варианта (Grill вкл/викл) — это отдельная строка корзины (см. cartKeyFor). */
 function cardCtrlHTML(d, t){
-  const qty = Cart.items[d.id] || 0;
+  const key = cartKeyFor(d.id, !!(d.grillOption && Cart.grill[d.id]));
+  const qty = Cart.items[key] || 0;
   if(qty > 0){
     return `<div class="card-stepper">
-      <button class="step-btn" onclick="Cart.setQty(${d.id}, ${qty-1})" aria-label="−">−</button>
+      <button class="step-btn" onclick="Cart.setQtyKey('${key}', ${qty-1})" aria-label="−">−</button>
       <span class="step-val">${qty}</span>
-      <button class="step-btn" onclick="Cart.setQty(${d.id}, ${qty+1})" aria-label="+">+</button>
+      <button class="step-btn" onclick="Cart.setQtyKey('${key}', ${qty+1})" aria-label="+">+</button>
     </div>`;
   }
   return `<button class="card__add" onclick="Cart.add(${d.id})">${t.add}</button>`;

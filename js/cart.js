@@ -3,9 +3,18 @@
    Хранится в памяти страницы (без localStorage).
    ============================================================ */
 
+/* Ключ строки корзины: "id" (обычная) или "id:grill" (с пожеланием Grill) —
+   одна и та же страва Grill/не-Grill хранится как 2 отдельные строки. */
+function cartKeyFor(id, grill){ return grill ? `${id}:grill` : String(id); }
+function parseCartKey(key){
+  const s = String(key);
+  const isGrill = s.endsWith(':grill');
+  return { id: Number(isGrill ? s.slice(0, -6) : s), grill: isGrill };
+}
+
 const Cart = {
-  items: {},   // { id: qty }
-  grill: {},   // { id: true } — пожелание "Grill" по позиции, без изменения цены
+  items: {},   // { key: qty }, key = cartKeyFor(id, grill)
+  grill: {},   // { id: true } — текущее положение переключателя Grill на картці меню (не зберігається в самій позиції)
   discountPercent: 0,   // персональная скидка залогиненного клиента (только отображение)
 
   // сумма скидки (та же формула, что на сервере)
@@ -39,13 +48,18 @@ const Cart = {
   },
 
   add(id){
-    this.items[id] = (this.items[id] || 0) + 1;
+    const d = MENU.find(x => x.id == id);
+    const key = cartKeyFor(id, !!(d && d.grillOption && this.grill[id]));
+    this.items[key] = (this.items[key] || 0) + 1;
     this.render();
     if(typeof notifyAdd === 'function') notifyAdd();
   },
   remove(id){
     delete this.items[id];
-    delete this.grill[id];
+    this.render();
+  },
+  removeKey(key){
+    delete this.items[key];
     this.render();
   },
   toggleGrill(id){
@@ -58,6 +72,11 @@ const Cart = {
     this.items[id] = qty;
     this.render();
   },
+  setQtyKey(key, qty){
+    if(qty <= 0){ this.removeKey(key); return; }
+    this.items[key] = qty;
+    this.render();
+  },
   clear(){
     this.items = {};
     this.grill = {};
@@ -67,17 +86,19 @@ const Cart = {
     return Object.values(this.items).reduce((a,b)=>a+b, 0);
   },
   total(){
-    return Object.entries(this.items).reduce((sum,[id,qty])=>{
+    return Object.entries(this.items).reduce((sum,[key,qty])=>{
+      const { id } = parseCartKey(key);
       const dish = MENU.find(d => d.id == id);
       return sum + (dish ? dishPrice(dish) * qty : 0);
     }, 0);
   },
-  // список для отправки в заказ
+  // список для отправки в заказ (каждая строка — своя пара id+grill)
   list(lang){
-    return Object.entries(this.items).map(([id,qty])=>{
+    return Object.entries(this.items).map(([key,qty])=>{
+      const { id, grill } = parseCartKey(key);
       const d = MENU.find(x => x.id == id);
       const p = dishPrice(d);
-      return { id:+id, name:d.name[lang], qty, price:p, sum:p*qty, grill: !!this.grill[id] };
+      return { id, name:d.name[lang], qty, price:p, sum:p*qty, grill };
     });
   },
 
@@ -90,31 +111,33 @@ const Cart = {
 
     // тело корзины (допы показываем отдельным блоком, не в общем списке)
     const box = document.getElementById('cartItems');
-    const entries = Object.entries(this.items).filter(([id])=>{
+    const entries = Object.entries(this.items).filter(([key])=>{
+      const { id } = parseCartKey(key);
       const d = MENU.find(x => x.id == id);
       return !d || d.cat !== 'addon';
     });
     if(entries.length === 0){
       box.innerHTML = `<div class="cart-empty">${t.cart_empty}</div>`;
     } else {
-      box.innerHTML = entries.map(([id,qty])=>{
+      box.innerHTML = entries.map(([key,qty])=>{
+        const { id, grill } = parseCartKey(key);
         const d = MENU.find(x => x.id == id);
         return `
           <div class="cart-item">
             <img class="cart-item__img" src="${d.img || `img/menu/${d.id}.jpg`}" alt=""
                  onerror="this.style.background='var(--coral-soft)';this.src='';">
             <div class="cart-item__info">
-              <div class="cart-item__name">${d.name[lang]}${this.grill[id] ? ' <span class="cart-item__grill">🔥 Grill</span>' : ''}</div>
+              <div class="cart-item__name">${d.name[lang]}${grill ? ' <span class="cart-item__grill">🔥 Grill</span>' : ''}</div>
               <div class="cart-item__price">${
                 hasSale(d)
                   ? `<span class="price-old">${fmtPrice(d.price)}</span> <span class="price-new">${fmtPrice(dishPrice(d))}</span>`
                   : fmtPrice(d.price)
               }</div>
               <div class="cart-item__ctrl">
-                <button class="qty-btn" onclick="Cart.setQty(${d.id}, ${qty-1})">−</button>
+                <button class="qty-btn" onclick="Cart.setQtyKey('${key}', ${qty-1})">−</button>
                 <span class="qty-val">${qty}</span>
-                <button class="qty-btn" onclick="Cart.setQty(${d.id}, ${qty+1})">+</button>
-                <button class="cart-item__rm" onclick="Cart.remove(${d.id})">✕</button>
+                <button class="qty-btn" onclick="Cart.setQtyKey('${key}', ${qty+1})">+</button>
+                <button class="cart-item__rm" onclick="Cart.removeKey('${key}')">✕</button>
               </div>
             </div>
           </div>`;
