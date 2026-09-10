@@ -6,18 +6,15 @@
 //   тап по блюду     -> +1 в корзину (grab_cart), сообщение перерисовывается;
 //   «🧹 Очистить»     -> очистить корзину;
 //   «📝 Комментарий»  -> просим текст, следующее сообщение сохраняется как комментарий;
-//   «✅ Отправить»    -> заказ СРАЗУ авто-одобряется:
-//       - INSERT orders (customer_name:'Grab', status:'approved') — так же,
-//         как обычный заказ с сайта, только без source-колонки (её нет и не добавляем);
-//       - списание склада по recipe (как при обычном одобрении, stock трогает триггер);
-//       - касса: +total*0.9 (минус 10% — комиссия/скидка Grab), source:'grab';
-//       - дублирование в группу «Кухня» (тема Orders) и в группу «Orders» —
-//         через ОСНОВНОЙ бот TELEGRAM_BOT_TOKEN (он состоит в этих группах,
-//         grab-bot — нет).
+//   «✅ Отправить»    -> INSERT orders (customer_name:'Grab', status:'new',
+//       total уже с учётом Grab −10%) и сообщение с кнопками ✅/❌ (ok:<id>/no:<id>)
+//       в группу «Orders» — ЧЕРЕЗ ОСНОВНОЙ бот (grab-bot не состоит в группах).
+//       Автоодобрения НЕТ: списание склада, касса и дубль на кухню происходят
+//       только когда кто-то нажмёт «✅ Одобрить» — это уже существующая логика
+//       approve в tg-webhook, её не трогаем.
 //
 // Секреты: GRAB_BOT_TOKEN, GRAB_WEBHOOK_SECRET (свои), плюс уже существующие
-// TELEGRAM_BOT_TOKEN, KITCHEN_CHAT_ID, KITCHEN_TOPIC_ORDERS, TELEGRAM_CHAT_ID,
-// SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+// TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 //
 // send-order и tg-webhook НЕ трогаем — независимый источник заказов в ту же БД.
 //
@@ -32,8 +29,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const GRAB_BOT_TOKEN = Deno.env.get("GRAB_BOT_TOKEN") || "";
 const GRAB_WEBHOOK_SECRET = Deno.env.get("GRAB_WEBHOOK_SECRET") || "";
 const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
-const KITCHEN_CHAT_ID = Deno.env.get("KITCHEN_CHAT_ID") || "";
-const KITCHEN_TOPIC_ORDERS = Deno.env.get("KITCHEN_TOPIC_ORDERS") || "";
 const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID") || "";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -188,7 +183,10 @@ async function handleMessage(msg: any) {
   await tgGrab("sendMessage", { chat_id: chatId, text: `📝 Комментарий сохранён: ${text}` });
 }
 
-/* ---------- Отправка заказа: авто-одобрение + склад + касса + кухня/Orders ---------- */
+/* ---------- Отправка заказа: создаём НОВЫЙ заказ и ждём подтверждения в группе
+   Orders — точно как обычные заказы с сайта. Автоодобрения больше нет: склад,
+   касса и дубль на кухню происходят автоматически при «✅ Одобрить»
+   (существующая логика approve в tg-webhook, её не трогаем). ---------- */
 async function handleSend(cq: any, chatId: number, messageId: number) {
   const cart = await loadCart(chatId);
   if (!cart.items.length) { await answer(cq.id, "Корзина пуста"); return; }
@@ -201,18 +199,22 @@ async function handleSend(cq: any, chatId: number, messageId: number) {
   for (const d of dishRows) dishByCode[d.code] = d;
 
   const items: { id: number; name: string; qty: number; price: number; sum: number }[] = [];
-  let total = 0;
+  let rawTotal = 0;
   for (const it of cart.items) {
     const d = dishByCode[it.code];
     if (!d) continue;
     const price = Number(d.price) || 0;
     const sum = price * it.qty;
-    total += sum;
+    rawTotal += sum;
     items.push({ id: Number(it.code), name: d.name_en || it.code, qty: it.qty, price, sum });
   }
   if (!items.length) { await answer(cq.id, "Позиции не найдены в меню"); return; }
 
-  // 1) Заказ — сразу approved (это ручной ввод уже принятого заказа Grab)
+  // Итог со скидкой Grab −10% — то, что попадёт в кассу при одобрении: approve
+  // в tg-webhook кладёт в кассу ровно orders.total, поэтому скидку закладываем
+  // в сам total (tg-webhook не трогаем и не учит его отдельно считать Grab).
+  const total = Math.round(rawTotal * 0.9);
+
   const ins = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: "POST",
     headers: { ...sbHeaders, Prefer: "return=representation" },
@@ -221,7 +223,7 @@ async function handleSend(cq: any, chatId: number, messageId: number) {
       comment: cart.comment || null,
       items,
       total,
-      status: "approved",
+      status: "new",
     }),
   });
   const insRows = await ins.json().catch(() => []);
@@ -232,83 +234,37 @@ async function handleSend(cq: any, chatId: number, messageId: number) {
   }
   const orderId = insRows[0].id;
 
-  // 2) Списание склада по recipe (dishes.code -> recipe.amount × qty, суммируем по ингредиентам)
-  try {
-    const dishIds = [...new Set(dishRows.map((d) => d.id))];
-    const recRows = dishIds.length
-      ? await sbGet(`recipe?select=dish_id,ingredient_id,amount&dish_id=in.(${inList(dishIds)})`)
-      : [];
-    const recByDish: Record<string, any[]> = {};
-    for (const r of recRows) (recByDish[r.dish_id] ??= []).push(r);
+  // Сообщение в группу Orders — с теми же кнопками ok:/no:, что и обычные заказы
+  // (их обрабатывает существующий handleCallback в tg-webhook).
+  const lines = items.map((it) => `• ${it.name} × ${it.qty} = ${fmtPrice(it.sum)}`).join("\n");
+  let oText = `🛵 GRAB Order #${orderId}\n\n${lines}\n— — —\n`;
+  oText += `💰 Sum: ${fmtPrice(rawTotal)}\n🏷 Grab −10%\n💰 TOTAL: ${fmtPrice(total)}`;
+  if (cart.comment) oText += `\n📝 ${cart.comment}`;
 
-    const totals = new Map<any, { ingredient_id: any; amount: number }>();
-    for (const it of cart.items) {
-      const dishId = dishByCode[it.code]?.id;
-      if (dishId == null) continue;
-      for (const r of (recByDish[dishId] || [])) {
-        const add = Number(r.amount) * it.qty;
-        if (!Number.isFinite(add) || add <= 0) continue;
-        const prev = totals.get(r.ingredient_id);
-        if (prev) prev.amount += add;
-        else totals.set(r.ingredient_id, { ingredient_id: r.ingredient_id, amount: add });
-      }
-    }
-    const movements = [...totals.values()].map((t) => ({
-      ingredient_id: t.ingredient_id, type: "out", amount: t.amount, source: "grab", order_id: orderId,
-    }));
-    if (movements.length) {
-      await fetch(`${SUPABASE_URL}/rest/v1/movements`, {
-        method: "POST", headers: { ...sbHeaders, Prefer: "return=minimal" }, body: JSON.stringify(movements),
-      });
-    }
-  } catch (e) {
-    console.log("GRAB stock deduction failed:", e);
-  }
-
-  // 3) Касса: минус 10% (комиссия/скидка Grab), отдельным источником 'grab'
-  const cashAmount = Math.round(total * 0.9);
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
-      method: "POST",
-      headers: { ...sbHeaders, Prefer: "return=minimal" },
-      body: JSON.stringify({ amount: cashAmount, source: "grab", order_id: orderId, note: `Grab #${orderId}` }),
-    });
-  } catch (e) {
-    console.log("GRAB cash insert failed:", e);
-  }
-
-  const lines = items.map((it) => `• ${it.name} × ${it.qty}`).join("\n");
-
-  // 4) Кухня (та же группа/тема, что и обычные заказы) — через ОСНОВНОЙ бот
-  if (KITCHEN_CHAT_ID) {
-    try {
-      let kText = `🛵 GRAB Order #${orderId}\n\n${lines}`;
-      if (cart.comment) kText += `\n📝 ${cart.comment}`;
-      const kBody: Record<string, unknown> = { chat_id: KITCHEN_CHAT_ID, text: kText };
-      if (KITCHEN_TOPIC_ORDERS) kBody.message_thread_id = Number(KITCHEN_TOPIC_ORDERS);
-      await tgMain("sendMessage", kBody);
-    } catch (e) {
-      console.log("GRAB kitchen sendMessage failed:", e);
-    }
-  }
-
-  // 5) Группа Orders — для сведения, БЕЗ кнопок (заказ уже одобрен)
   if (TELEGRAM_CHAT_ID) {
     try {
-      const oText = `🛵 GRAB Order #${orderId} (авто-одобрен)\n${lines}\n💰 Касса: +${fmtPrice(cashAmount)} (Grab −10%)`;
-      await tgMain("sendMessage", { chat_id: TELEGRAM_CHAT_ID, text: oText });
+      await tgMain("sendMessage", {
+        chat_id: TELEGRAM_CHAT_ID,
+        text: oText,
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "✅ Одобрить", callback_data: `ok:${orderId}` },
+            { text: "❌ Отклонить", callback_data: `no:${orderId}` },
+          ]],
+        },
+      });
     } catch (e) {
       console.log("GRAB orders-group sendMessage failed:", e);
     }
   }
 
-  // 6) Очистить корзину менеджера, подтвердить
+  // Очистить корзину менеджера, подтвердить
   await saveCart(chatId, [], null);
-  await answer(cq.id, `Заказ #${orderId} на кухне`);
+  await answer(cq.id, `Заказ #${orderId} отправлен на подтверждение`);
   await tgGrab("editMessageText", {
     chat_id: chatId,
     message_id: messageId,
-    text: `✅ Заказ #${orderId} на кухне`,
+    text: `📨 Заказ #${orderId} отправлен, ждёт подтверждения в Orders`,
   });
 }
 
