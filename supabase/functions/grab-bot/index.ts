@@ -110,7 +110,7 @@ async function saveCart(userId: number, items: CartItem[], comment: string | nul
 
 /* ---------- Меню / клавиатура ---------- */
 async function loadDishes(): Promise<any[]> {
-  return await sbGet(`dishes?select=id,code,name_en,price&active=eq.true&order=category.asc,name_en.asc`);
+  return await sbGet(`dishes?select=id,code,name_en,price&active=eq.true&order=sort_order.asc,name_en.asc`);
 }
 
 function buildKeyboard(dishes: any[]) {
