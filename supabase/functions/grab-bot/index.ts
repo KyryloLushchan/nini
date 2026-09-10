@@ -86,6 +86,12 @@ function fmtPrice(v: number): string {
   return v.toLocaleString("ru-RU").replace(/,/g, " ") + "₫";
 }
 
+/* ---------- Доступ: whitelist по Telegram user ID (grab_users) ---------- */
+async function isAllowed(userId: number): Promise<boolean> {
+  const rows = await sbGet(`grab_users?select=user_id&user_id=eq.${userId}`);
+  return rows.length > 0;
+}
+
 /* ---------- Корзина менеджера (таблица grab_cart, ключ — chat/user id) ---------- */
 async function loadCart(userId: number): Promise<Cart> {
   const rows = await sbGet(`grab_cart?select=items,comment&user_id=eq.${userId}`);
@@ -161,8 +167,15 @@ async function redrawMenu(chatId: number, messageId: number, cart: Cart) {
 /* ---------- Текстовые сообщения менеджера ---------- */
 async function handleMessage(msg: any) {
   const chatId = msg?.chat?.id;
+  const userId = msg?.from?.id;
   const text: string = (msg?.text ?? "").trim();
   if (chatId == null || !text) return;
+
+  // Доступ — ДО любых действий (склад/касса/просмотр меню)
+  if (userId == null || !(await isAllowed(userId))) {
+    await tgGrab("sendMessage", { chat_id: chatId, text: `⛔ Доступ запрещён. Ваш ID: ${userId ?? "?"}` });
+    return;
+  }
 
   if (text === "/start" || text === "/grab") {
     await sendMenu(chatId);
@@ -304,7 +317,14 @@ async function handleCallback(cq: any) {
   const data: string = cq?.data ?? "";
   const chatId = cq?.message?.chat?.id;
   const messageId = cq?.message?.message_id;
+  const userId = cq?.from?.id;
   if (chatId == null || messageId == null) { await answer(cq.id); return; }
+
+  // Доступ — ДО любых действий (склад/касса/просмотр меню)
+  if (userId == null || !(await isAllowed(userId))) {
+    await answer(cq.id, "⛔ Нет доступа");
+    return;
+  }
 
   if (data === "g:clear") {
     await saveCart(chatId, [], null);
