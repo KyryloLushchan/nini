@@ -215,7 +215,6 @@ async function handleSend(cq: any, chatId: number, messageId: number) {
   // её сводят вручную, поэтому −10% нигде в total не закладываем, только
   // показываем ориентировочно в сообщении менеджеру/в группе.
   const total = rawTotal;
-  const netAfterGrab = Math.round(rawTotal * 0.9);
 
   const ins = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: "POST",
@@ -241,8 +240,7 @@ async function handleSend(cq: any, chatId: number, messageId: number) {
   // автоматически — только списание склада при одобрении.
   const lines = items.map((it) => `• ${it.name} × ${it.qty} = ${fmtPrice(it.sum)}`).join("\n");
   let oText = `🛵 GRAB Order #${orderId}\n\n${lines}\n— — —\n`;
-  oText += `💰 TOTAL: ${fmtPrice(total)}\n🏷 Ориентировочно после Grab −10%: ${fmtPrice(netAfterGrab)}`;
-  oText += `\n💵 Касса НЕ пополняется автоматически — сводится вручную`;
+  oText += `💰 TOTAL: ${fmtPrice(total)}`;
   if (cart.comment) oText += `\n📝 ${cart.comment}`;
 
   if (TELEGRAM_CHAT_ID) {
