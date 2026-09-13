@@ -164,7 +164,7 @@ async function handleCancel(cq: any, orderId: string) {
   const msg = cq.message;
   // Атомарно: только approved -> cancelled. Иначе (уже отменён и т.п.) — ничего.
   const claim = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.approved&select=id,items,total`,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.approved&select=id,items,total,customer_name`,
     { method: "PATCH", headers: { ...sbHeaders, Prefer: "return=representation" }, body: JSON.stringify({ status: "cancelled" }) },
   );
   const claimed = await claim.json().catch(() => []);
@@ -191,11 +191,14 @@ async function handleCancel(cq: any, orderId: string) {
         return;
       }
     }
-    // Возврат кассы: сторно на ту же сумму (net = 0)
-    await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
-      method: "POST", headers: { ...sbHeaders, Prefer: "return=minimal" },
-      body: JSON.stringify({ amount: -Number(order.total || 0), source: "order", order_id: order.id, note: "Скасування замовлення" }),
-    });
+    // Возврат кассы: сторно на ту же сумму (net = 0). Grab-заказы кассу не трогали
+    // при одобрении — сторнировать тут нечего.
+    if (order.customer_name !== "Grab") {
+      await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
+        method: "POST", headers: { ...sbHeaders, Prefer: "return=minimal" },
+        body: JSON.stringify({ amount: -Number(order.total || 0), source: "order", order_id: order.id, note: "Скасування замовлення" }),
+      });
+    }
 
     await answer(cq.id, "Скасовано");
     await finalize(msg, "❌ Скасовано"); // без reply_markup -> кнопка убирается
@@ -246,7 +249,7 @@ async function handleCallback(cq: any) {
   // action === "ok": атомарно «занимаем» заказ new -> approved (защита от двойного списания).
   // Списываем ТОЛЬКО если этот PATCH реально перевёл строку из status='new'.
   const claim = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items,total,people,comment`,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items,total,people,comment,customer_name`,
     { method: "PATCH", headers: { ...sbHeaders, Prefer: "return=representation" }, body: JSON.stringify({ status: "approved" }) },
   );
   const claimed = await claim.json().catch(() => []);
@@ -314,13 +317,17 @@ async function handleCallback(cq: any) {
     // Выручка в кассу — ровно ОДНА строка на заказ (привязано к атомарному claim выше).
     // best-effort: заказ уже approved и склад списан, поэтому при сбое НЕ откатываем
     // (иначе повторное одобрение задвоило бы списание ингредиентов).
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
-        method: "POST",
-        headers: { ...sbHeaders, Prefer: "return=minimal" },
-        body: JSON.stringify({ amount: order.total, source: "order", order_id: order.id, note: null }),
-      });
-    } catch (_e) { /* запись в кассу не критична для одобрения */ }
+    // Grab-заказы (customer_name:'Grab') в кассу НЕ пишем — оплата идёт через
+    // приложение Grab, кассу по ним сводят вручную; списание склада при этом идёт как обычно.
+    if (order.customer_name !== "Grab") {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
+          method: "POST",
+          headers: { ...sbHeaders, Prefer: "return=minimal" },
+          body: JSON.stringify({ amount: order.total, source: "order", order_id: order.id, note: null }),
+        });
+      } catch (_e) { /* запись в кассу не критична для одобрения */ }
+    }
 
     // Дублируем заказ на кухню (best-effort): только название + количество.
     // Если sendMessage упал — ничего не откатываем, заказ уже одобрен и списан.

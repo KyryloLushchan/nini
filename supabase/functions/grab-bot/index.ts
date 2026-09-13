@@ -210,10 +210,12 @@ async function handleSend(cq: any, chatId: number, messageId: number) {
   }
   if (!items.length) { await answer(cq.id, "Позиции не найдены в меню"); return; }
 
-  // Итог со скидкой Grab −10% — то, что попадёт в кассу при одобрении: approve
-  // в tg-webhook кладёт в кассу ровно orders.total, поэтому скидку закладываем
-  // в сам total (tg-webhook не трогаем и не учит его отдельно считать Grab).
-  const total = Math.round(rawTotal * 0.9);
+  // total = реальная сумма позиций. Кассу по Grab-заказам больше не пишем
+  // автоматически (tg-webhook пропускает cash_movements для customer_name:'Grab') —
+  // её сводят вручную, поэтому −10% нигде в total не закладываем, только
+  // показываем ориентировочно в сообщении менеджеру/в группе.
+  const total = rawTotal;
+  const netAfterGrab = Math.round(rawTotal * 0.9);
 
   const ins = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: "POST",
@@ -235,10 +237,12 @@ async function handleSend(cq: any, chatId: number, messageId: number) {
   const orderId = insRows[0].id;
 
   // Сообщение в группу Orders — с теми же кнопками ok:/no:, что и обычные заказы
-  // (их обрабатывает существующий handleCallback в tg-webhook).
+  // (их обрабатывает существующий handleCallback в tg-webhook). Касса не пишется
+  // автоматически — только списание склада при одобрении.
   const lines = items.map((it) => `• ${it.name} × ${it.qty} = ${fmtPrice(it.sum)}`).join("\n");
   let oText = `🛵 GRAB Order #${orderId}\n\n${lines}\n— — —\n`;
-  oText += `💰 Sum: ${fmtPrice(rawTotal)}\n🏷 Grab −10%\n💰 TOTAL: ${fmtPrice(total)}`;
+  oText += `💰 TOTAL: ${fmtPrice(total)}\n🏷 Ориентировочно после Grab −10%: ${fmtPrice(netAfterGrab)}`;
+  oText += `\n💵 Касса НЕ пополняется автоматически — сводится вручную`;
   if (cart.comment) oText += `\n📝 ${cart.comment}`;
 
   if (TELEGRAM_CHAT_ID) {
