@@ -334,7 +334,8 @@ async function handleCallback(cq: any) {
     if (KITCHEN_CHAT_ID) {
       try {
         const lines = items.map((it) => `• ${it.name}${it.grill ? " 🔥Grill" : ""} × ${it.qty}`).join("\n");
-        let kText = `🍣 Order #${order.id}\n\n${lines}`;
+        const grabTag = order.customer_name === "Grab" ? " 🛵 GRAB" : "";
+        let kText = `🍣 Order #${order.id}${grabTag}\n\n${lines}`;
         if (order.people) kText += `\n\n👥 Số người: ${order.people}`;
         if (order.comment) kText += `\n📝 ${await translateToVietnamese(String(order.comment))}`;
         const kBody: Record<string, unknown> = {
