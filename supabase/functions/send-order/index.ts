@@ -63,6 +63,7 @@ const MENU: Record<string, Dish> = {
   "44":{"p":159000,"c":"rolls","n":{"ua":"Teriyaki Eggplant roll VEGAN","ru":"Teriyaki Eggplant roll VEGAN","en":"Teriyaki Eggplant roll VEGAN","vn":"Teriyaki Eggplant roll VEGAN"}},
   "45":{"p":210000,"c":"rolls","n":{"ua":"Філадельфія з вугром та авокадо","ru":"Филадельфия с угрём и авокадо","en":"Philadelphia Eel & Avocado","vn":"Philadelphia lươn & bơ"}},
   "46":{"p":525000,"c":"rolls","n":{"ua":"Сет Філадельфія","ru":"Сет Филадельфия","en":"Philadelphia Set","vn":"Set Philadelphia"}},
+  "50":{"p":287500,"c":"rolls","n":{"ua":"Запечений з крабом","ru":"Запечённый с крабом","en":"Baked Crab","vn":"Cuộn nướng cua"}},
   "47":{"p":207000,"c":"rolls","n":{"ua":"Філадельфія мікс","ru":"Филадельфия микс","en":"Philadelphia Mix","vn":"Philadelphia Mix"}},
   "48":{"p":225000,"c":"rolls","n":{"ua":"Філадельфія з креветкою","ru":"Филадельфия с креветкой","en":"Philadelphia Shrimp","vn":"Philadelphia tôm"}},
   "49":{"p":210000,"c":"rolls","n":{"ua":"Сет Гункан","ru":"Сет Гункан","en":"Gunkan Set","vn":"Set Gunkan"}},

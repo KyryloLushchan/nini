@@ -21,6 +21,16 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
+    id: 50, cat: "rolls", sub: "new", price: 287500, neu: true, img: "img/menu/50.jpg", // ФОТО: Baked Crab
+    name: { ua: "Запечений з крабом", ru: "Запечённый с крабом", en: "Baked Crab", vn: "Cuộn nướng cua" },
+    desc: {
+      ua: "Лосось, вугор, авокадо, крем-сир Філадельфія, крабова паличка, сир чедер, ікра ебіко, теріякі",
+      ru: "Лосось, угорь, авокадо, крем-сыр Филадельфия, крабовая палочка, сыр чедер, икра эбико, терияки",
+      en: "Salmon, eel, avocado, Philadelphia cream cheese, crab stick, cheddar cheese, ebiko caviar, teriyaki",
+      vn: "Cá hồi, lươn, bơ, phô mai kem Philadelphia, thanh cua, phô mai Cheddar, trứng cá Ebiko, teriyaki"
+    }
+  },
+  {
     id: 46, cat: "rolls", sub: "new", price: 525000, neu: true, grillOption: true, img: "img/menu/46.jpg", // ФОТО: Сет Філадельфія
     name: { ua: "Сет Філадельфія", ru: "Сет Филадельфия", en: "Philadelphia Set", vn: "Set Philadelphia" },
     desc: {
