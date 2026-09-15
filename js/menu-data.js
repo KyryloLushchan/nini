@@ -21,7 +21,7 @@
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
-    id: 50, cat: "rolls", sub: "new", price: 287500, neu: true, img: "img/menu/50.jpg", // ФОТО: Baked Crab
+    id: 50, cat: "rolls", sub: "new", price: 230000, neu: true, img: "img/menu/50.jpg", // ФОТО: Baked Crab
     name: { ua: "Запечений з крабом", ru: "Запечённый с крабом", en: "Baked Crab", vn: "Cuộn nướng cua" },
     desc: {
       ua: "Лосось, вугор, авокадо, крем-сир Філадельфія, крабова паличка, сир чедер, ікра ебіко, теріякі",
