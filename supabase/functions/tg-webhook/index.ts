@@ -33,6 +33,26 @@ const sbHeaders = {
   "Content-Type": "application/json",
 };
 
+const SHEETS_WEBHOOK_URL = Deno.env.get("SHEETS_WEBHOOK_URL") || "";
+const SHEETS_SECRET = Deno.env.get("SHEETS_SECRET") || "";
+
+/* Best-effort дублирование одобренного заказа в Google Sheets (Apps Script).
+   Ответ может быть 302-редиректом на googleusercontent — тело не важно,
+   достаточно что запрос ушёл. Ошибка сюда НЕ должна ронять одобрение заказа. */
+async function sendToSheets(payload: Record<string, unknown>) {
+  if (!SHEETS_WEBHOOK_URL) return;
+  try {
+    await fetch(SHEETS_WEBHOOK_URL, {
+      method: "POST",
+      redirect: "follow",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: SHEETS_SECRET, ...payload }),
+    });
+  } catch (e) {
+    console.log("Sheets webhook failed:", e);
+  }
+}
+
 // Переклад коментаря клієнта на в'єтнамську для повідомлення на кухню (fail-open:
 // без ключа GPT_API або при помилці OpenAI — повертаємо оригінальний текст).
 async function translateToVietnamese(text: string): Promise<string> {
@@ -249,7 +269,7 @@ async function handleCallback(cq: any) {
   // action === "ok": атомарно «занимаем» заказ new -> approved (защита от двойного списания).
   // Списываем ТОЛЬКО если этот PATCH реально перевёл строку из status='new'.
   const claim = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items,total,people,comment,customer_name`,
+    `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&status=eq.new&select=id,items,total,people,comment,customer_name,phone,address`,
     { method: "PATCH", headers: { ...sbHeaders, Prefer: "return=representation" }, body: JSON.stringify({ status: "approved" }) },
   );
   const claimed = await claim.json().catch(() => []);
@@ -347,6 +367,23 @@ async function handleCallback(cq: any) {
       } catch (e) {
         console.log("KITCHEN sendMessage failed:", e);
       }
+    }
+
+    // Дублируем одобренный заказ в Google Sheets (best-effort, сайт + Grab)
+    {
+      const isGrab = order.customer_name === "Grab";
+      const itemsStr = items.map((it) => `${it.name} × ${it.qty}`).join(", ");
+      await sendToSheets({
+        order_id: order.id,
+        source: isGrab ? "Grab" : "Сайт",
+        name: order.customer_name || (isGrab ? "Grab" : ""),
+        phone: order.phone || "",
+        address: order.address || "",
+        items: itemsStr,
+        total: order.total,
+        status: "approved",
+        comment: order.comment || "",
+      });
     }
 
     await answer(cq.id, "Списано зі складу");
