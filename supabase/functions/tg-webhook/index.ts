@@ -373,11 +373,13 @@ async function handleCallback(cq: any) {
     {
       const isGrab = order.customer_name === "Grab";
       const itemsStr = items.map((it) => `${it.name} × ${it.qty}`).join(", ");
+      // И имя, и Telegram-ник (если оба есть) — не выбираем одно вместо другого
+      const nameParts = [order.customer_name, order.telegram].filter((v) => v && String(v).trim());
+      const sheetName = nameParts.length ? nameParts.join(" / ") : (isGrab ? "Grab" : "");
       await sendToSheets({
         order_id: order.id,
         source: isGrab ? "Grab" : "Сайт",
-        // ⚡ Швидке замовлення не собирает имя — используем Telegram-ник как имя
-        name: order.customer_name || order.telegram || (isGrab ? "Grab" : ""),
+        name: sheetName,
         phone: order.phone || "",
         address: order.address || "",
         items: itemsStr,
