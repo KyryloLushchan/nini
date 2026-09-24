@@ -189,7 +189,7 @@ const MENU = [
 
   /* ---------- РОЛЛЫ · SPICY TUNA ROLL ---------- */
   {
-    id: 20, cat: "rolls", sub: "spicy", price: 199000, spicy: true, img: "img/menu/39.jpg", // ФОТО: Spicy Tuna roll
+    id: 20, cat: "rolls", sub: "spicy", price: 199000, spicy: true, salePercent: 15, img: "img/menu/39.jpg", // ФОТО: Spicy Tuna roll
     name: { ua: "Spicy Tuna roll", ru: "Spicy Tuna roll", en: "Spicy Tuna roll", vn: "Spicy Tuna roll" },
     desc: {
       ua: "Рис, Тунець, Крем-сир, Авокадо, Огірок, Тобіко, Салат айсберг, Шірача + Майонез, Норі",
@@ -221,7 +221,7 @@ const MENU = [
     }
   },
   {
-    id: 15, cat: "rolls", sub: "dragon", price: 175000,             // ФОТО: Зелений Дракон
+    id: 15, cat: "rolls", sub: "dragon", price: 175000, salePercent: 15, // ФОТО: Зелений Дракон
     name: { ua: "Зелений Дракон", ru: "Зелёный Дракон", en: "Green Dragon", vn: "Rồng xanh" },
     desc: {
       ua: "Рис, Креветка, Манго, Крем-сир, Авокадо, Норі",
@@ -275,7 +275,7 @@ const MENU = [
 
   /* ---------- СУШИ · ГУНКАН (всі гострі) ---------- */
   {
-    id: 27, cat: "sushi", sub: "gunkan", price: 59000, spicy: true, // ФОТО: Гункан Лосось
+    id: 27, cat: "sushi", sub: "gunkan", price: 59000, spicy: true, salePercent: 15, // ФОТО: Гункан Лосось
     name: { ua: "Гункан Лосось", ru: "Гункан Лосось", en: "Gunkan Salmon", vn: "Gunkan cá hồi" },
     desc: {
       ua: "Рис, Лосось, Майонез, Шірача, Норі смужка",
@@ -285,7 +285,7 @@ const MENU = [
     }
   },
   {
-    id: 28, cat: "sushi", sub: "gunkan", price: 59000, spicy: true, // ФОТО: Гункан Тунець спайсі
+    id: 28, cat: "sushi", sub: "gunkan", price: 59000, spicy: true, salePercent: 15, // ФОТО: Гункан Тунець спайсі
     name: { ua: "Гункан Тунець спайсі", ru: "Гункан Тунец спайси", en: "Gunkan Spicy Tuna", vn: "Gunkan cá ngừ cay" },
     desc: {
       ua: "Рис, Тунець, Майонез, Шірача, Норі смужка",
@@ -295,7 +295,7 @@ const MENU = [
     }
   },
   {
-    id: 29, cat: "sushi", sub: "gunkan", price: 59000, spicy: true, // ФОТО: Гункан Креветка
+    id: 29, cat: "sushi", sub: "gunkan", price: 59000, spicy: true, salePercent: 15, // ФОТО: Гункан Креветка
     name: { ua: "Гункан Креветка", ru: "Гункан Креветка", en: "Gunkan Shrimp", vn: "Gunkan tôm" },
     desc: {
       ua: "Рис, Креветка, Майонез, Шірача, Норі смужка",
@@ -305,7 +305,7 @@ const MENU = [
     }
   },
   {
-    id: 30, cat: "sushi", sub: "gunkan", price: 79000, spicy: true, img: "img/menu/31.png", // ФОТО: Гункан Вугор
+    id: 30, cat: "sushi", sub: "gunkan", price: 79000, spicy: true, salePercent: 15, img: "img/menu/31.png", // ФОТО: Гункан Вугор
     name: { ua: "Гункан Вугор", ru: "Гункан Угорь", en: "Gunkan Eel", vn: "Gunkan lươn" },
     desc: {
       ua: "Рис, Вугор, Майонез, Шірача, Норі смужка",
@@ -400,12 +400,18 @@ const MENU = [
 /* id платных допов (для блока в корзине) */
 const ADDON_IDS = [200, 201, 202];
 
-/* ===== СКИДКА −20% на всё, кроме напитков (drinks) ===== */
+/* ===== СКИДКА −20% на всё, кроме напитков (drinks); у отдельных блюд —
+   свой процент через поле salePercent (например 15) ===== */
 const SALE = 0.20;
+/* Процент скидки конкретного блюда (в %, напр. 20) */
+function dishSalePercent(d){
+  return (d && Number.isFinite(d.salePercent)) ? d.salePercent : SALE * 100;
+}
 /* Действующая цена блюда: со скидкой, кроме категории drinks */
 function dishPrice(d){
   if(!d) return 0;
-  return (d.cat === 'drinks' || d.noSale) ? d.price : Math.round(d.price * (1 - SALE));
+  if(d.cat === 'drinks' || d.noSale) return d.price;
+  return Math.round(d.price * (1 - dishSalePercent(d) / 100));
 }
 /* Есть ли скидка у блюда (для бейджа и зачёркнутой цены) */
 function hasSale(d){ return !!d && d.cat !== 'drinks' && !d.noSale; }

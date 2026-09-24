@@ -31,7 +31,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 /* ===== Серверное меню (источник правды для цен/названий) ===== */
-type Dish = { p: number; c: string; n: Record<string, string>; noSale?: boolean };
+type Dish = { p: number; c: string; n: Record<string, string>; noSale?: boolean; salePercent?: number };
 const MENU: Record<string, Dish> = {
   "1":{"p":189000,"c":"rolls","n":{"ua":"Філадельфія з лососем","ru":"Филадельфия с лососем","en":"Philadelphia with Salmon","vn":"Philadelphia cá hồi"}},
   "2":{"p":199000,"c":"rolls","n":{"ua":"Філадельфія з лососем та авокадо","ru":"Филадельфия с лососем и авокадо","en":"Philadelphia Salmon & Avocado","vn":"Philadelphia cá hồi & bơ"}},
@@ -42,16 +42,16 @@ const MENU: Record<string, Dish> = {
   "11":{"p":105000,"c":"rolls","n":{"ua":"Макі Вугор","ru":"Маки с угрем","en":"Maki Eel","vn":"Maki lươn"}},
   "12":{"p":219000,"c":"rolls","n":{"ua":"Червоний Дракон","ru":"Красный Дракон","en":"Red Dragon","vn":"Rồng đỏ"}},
   "13":{"p":219000,"c":"rolls","n":{"ua":"Золотий Дракон","ru":"Золотой Дракон","en":"Golden Dragon","vn":"Rồng vàng"}},
-  "15":{"p":175000,"c":"rolls","n":{"ua":"Зелений Дракон","ru":"Зелёный Дракон","en":"Green Dragon","vn":"Rồng xanh"}},
-  "20":{"p":199000,"c":"rolls","n":{"ua":"Spicy Tuna roll","ru":"Spicy Tuna roll","en":"Spicy Tuna roll","vn":"Spicy Tuna roll"}},
+  "15":{"p":175000,"c":"rolls","salePercent":15,"n":{"ua":"Зелений Дракон","ru":"Зелёный Дракон","en":"Green Dragon","vn":"Rồng xanh"}},
+  "20":{"p":199000,"c":"rolls","salePercent":15,"n":{"ua":"Spicy Tuna roll","ru":"Spicy Tuna roll","en":"Spicy Tuna roll","vn":"Spicy Tuna roll"}},
   "23":{"p":49000,"c":"sushi","n":{"ua":"Нігірі Лосось","ru":"Нигири Лосось","en":"Nigiri Salmon","vn":"Nigiri cá hồi"}},
   "24":{"p":49000,"c":"sushi","n":{"ua":"Нігірі Тунець","ru":"Нигири Тунец","en":"Nigiri Tuna","vn":"Nigiri cá ngừ"}},
   "25":{"p":49000,"c":"sushi","n":{"ua":"Нігірі Креветка","ru":"Нигири Креветка","en":"Nigiri Shrimp","vn":"Nigiri tôm"}},
   "26":{"p":69000,"c":"sushi","n":{"ua":"Нігірі Вугор","ru":"Нигири Угорь","en":"Nigiri Eel","vn":"Nigiri lươn"}},
-  "27":{"p":59000,"c":"sushi","n":{"ua":"Гункан Лосось","ru":"Гункан Лосось","en":"Gunkan Salmon","vn":"Gunkan cá hồi"}},
-  "28":{"p":59000,"c":"sushi","n":{"ua":"Гункан Тунець спайсі","ru":"Гункан Тунец спайси","en":"Gunkan Spicy Tuna","vn":"Gunkan cá ngừ cay"}},
-  "29":{"p":59000,"c":"sushi","n":{"ua":"Гункан Креветка","ru":"Гункан Креветка","en":"Gunkan Shrimp","vn":"Gunkan tôm"}},
-  "30":{"p":79000,"c":"sushi","n":{"ua":"Гункан Вугор","ru":"Гункан Угорь","en":"Gunkan Eel","vn":"Gunkan lươn"}},
+  "27":{"p":59000,"c":"sushi","salePercent":15,"n":{"ua":"Гункан Лосось","ru":"Гункан Лосось","en":"Gunkan Salmon","vn":"Gunkan cá hồi"}},
+  "28":{"p":59000,"c":"sushi","salePercent":15,"n":{"ua":"Гункан Тунець спайсі","ru":"Гункан Тунец спайси","en":"Gunkan Spicy Tuna","vn":"Gunkan cá ngừ cay"}},
+  "29":{"p":59000,"c":"sushi","salePercent":15,"n":{"ua":"Гункан Креветка","ru":"Гункан Креветка","en":"Gunkan Shrimp","vn":"Gunkan tôm"}},
+  "30":{"p":79000,"c":"sushi","salePercent":15,"n":{"ua":"Гункан Вугор","ru":"Гункан Угорь","en":"Gunkan Eel","vn":"Gunkan lươn"}},
   "31":{"p":15000,"c":"drinks","n":{"ua":"Вода","ru":"Вода","en":"Water","vn":"Nước"}},
   "32":{"p":20000,"c":"drinks","n":{"ua":"Pepsi","ru":"Pepsi","en":"Pepsi","vn":"Pepsi"}},
   "33":{"p":20000,"c":"drinks","n":{"ua":"Pepsi Zero","ru":"Pepsi Zero","en":"Pepsi Zero","vn":"Pepsi Zero"}},
@@ -74,7 +74,11 @@ const MENU: Record<string, Dish> = {
   "202":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Соєвий соус","ru":"Соевый соус","en":"Soy sauce","vn":"Nước tương"}},
 };
 const SALE = 0.20;
-const dishPrice = (d: Dish) => (d.c === "drinks" || d.noSale) ? d.p : Math.round(d.p * (1 - SALE));
+const dishPrice = (d: Dish) => {
+  if (d.c === "drinks" || d.noSale) return d.p;
+  const pct = Number.isFinite(d.salePercent) ? (d.salePercent as number) : SALE * 100;
+  return Math.round(d.p * (1 - pct / 100));
+};
 const fmtPrice = (v: number) => v.toLocaleString("ru-RU").replace(/,/g, " ") + "₫";
 const clean = (s: unknown, max = 300) => String(s ?? "").trim().slice(0, max);
 /* экранирование для parse_mode: HTML (& < > обязательно) */

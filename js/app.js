@@ -48,7 +48,7 @@ function cardHTML(d, lang, t){
     ? `<span class="card__price"><span class="price-old">${fmtPrice(d.price)}</span> <span class="price-new">${fmtPrice(dishPrice(d))}</span></span>`
     : `<span class="card__price">${fmtPrice(d.price)}</span>`;
 
-  const saleBadge = hasSale(d) ? `<span class="sale-badge">−20%</span>` : '';
+  const saleBadge = hasSale(d) ? `<span class="sale-badge">−${dishSalePercent(d)}%</span>` : '';
 
   const grillHTML = d.grillOption
     ? `<button type="button" class="grill-toggle${Cart.grill[d.id] ? ' is-on' : ''}" data-grill-id="${d.id}" onclick="Cart.toggleGrill(${d.id})">
