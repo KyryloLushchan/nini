@@ -18,6 +18,15 @@
    Имя файла = "<id>.jpg" (расширение не важно, главное чтобы совпадало).
    ============================================================ */
 
+/* ===== Вихідний день: понеділок за часом В'єтнаму (Asia/Ho_Chi_Minh, UTC+07:00) =====
+   Перевіряється один раз при завантаженні сторінки (не за годинником пристрою). */
+function isVietnamMonday(){
+  const wd = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'short' });
+  return wd === 'Mon';
+}
+const ORDERS_BLOCKED = isVietnamMonday();
+const MONDAY_MESSAGE = "🍣 Понеділок — вихідний. Замовлення не приймаються. Чекаємо на вас завтра! 🍣";
+
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */
   {
