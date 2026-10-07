@@ -75,6 +75,32 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 }
 .btn-icon:hover{ background:var(--coral-soft); color:var(--coral); }
 
+/* ---------- БАНЕР «ВИХІДНИЙ» (тільки понеділок) ---------- */
+.monday-banner{
+  background:linear-gradient(135deg, var(--coral), var(--salmon));
+  color:#fff; text-align:center; font-family:var(--font-disp);
+  line-height:1.4; padding:26px 20px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.monday-banner__title{
+  font-size:30px; font-weight:800; letter-spacing:.3px;
+}
+.monday-banner__text{
+  font-size:18px; font-weight:700; opacity:.96;
+}
+.monday-banner--small{
+  border-radius:16px; margin-bottom:16px; padding:20px 16px; gap:6px;
+}
+.monday-banner--small .monday-banner__title{ font-size:22px; }
+.monday-banner--small .monday-banner__text{ font-size:15px; }
+@media (max-width:560px){
+  .monday-banner{ padding:20px 14px; }
+  .monday-banner__title{ font-size:23px; }
+  .monday-banner__text{ font-size:15px; }
+  .monday-banner--small .monday-banner__title{ font-size:19px; }
+  .monday-banner--small .monday-banner__text{ font-size:14px; }
+}
+
 /* ---------- ШАПКА ---------- */
 .header{
   position:sticky; top:0; z-index:50;
@@ -144,6 +170,14 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 .hero__tagline{
   font-size:clamp(17px,2.4vw,23px); color:rgba(255,255,255,.94); margin:16px 0 0;
   text-shadow:0 2px 14px rgba(0,0,0,.5);
+}
+.hero__closed-day{
+  display:inline-block; margin:18px auto 0;
+  font-family:var(--font-disp); font-weight:800;
+  font-size:clamp(17px,2.6vw,22px); color:#fff;
+  background:linear-gradient(135deg, var(--coral), var(--salmon));
+  padding:10px 22px; border-radius:999px;
+  box-shadow:0 6px 20px rgba(251,75,35,.4);
 }
 .hours{
   display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
