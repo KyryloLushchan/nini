@@ -19,13 +19,26 @@
    ============================================================ */
 
 /* ===== Вихідний день: понеділок за часом В'єтнаму (Asia/Ho_Chi_Minh, UTC+07:00) =====
-   Перевіряється один раз при завантаженні сторінки (не за годинником пристрою). */
-function isVietnamMonday(){
-  const wd = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'short' });
-  return wd === 'Mon';
-}
-const ORDERS_BLOCKED = isVietnamMonday();
+   "Зараз" беремо НЕ з годинника пристрою (він у клієнта може бути виставлений
+   невірно), а з заголовка Date відповіді сервера — і лише переводимо цей
+   момент у часовий пояс В'єтнаму. Перевіряється один раз при завантаженні
+   сторінки, ДО першого рендера меню (див. app.js). */
+let ORDERS_BLOCKED = false;
 const MONDAY_MESSAGE = "🍣 Понеділок — вихідний. Замовлення не приймаються. Чекаємо на вас завтра! 🍣";
+
+function vietnamWeekdayOf(date){
+  return date.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'short' });
+}
+
+async function detectOrdersBlocked(){
+  let now = new Date(); // fallback, якщо мережа недоступна
+  try{
+    const res = await fetch(location.href, { method: 'HEAD', cache: 'no-store' });
+    const serverDate = res.headers.get('Date');
+    if(serverDate) now = new Date(serverDate);
+  }catch(_e){ /* офлайн і т.п. — лишаємось на годиннику пристрою */ }
+  ORDERS_BLOCKED = vietnamWeekdayOf(now) === 'Mon';
+}
 
 const MENU = [
   /* ---------- РОЛЛЫ · НОВИНКА ---------- */

@@ -231,7 +231,11 @@ function buildMobileNav(){
 }
 
 /* ---------- ИНИЦИАЛИЗАЦИЯ ---------- */
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // Визначаємо вихідний (понеділок за часом В'єтнаму, за годинником СЕРВЕРА)
+  // ДО першого рендера меню, щоб кнопки одразу малювались у потрібному стані.
+  if(typeof detectOrdersBlocked === 'function') await detectOrdersBlocked();
+
   renderMenu();
   Cart.render();
   buildMobileNav();
