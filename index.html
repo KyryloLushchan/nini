@@ -29,6 +29,12 @@
 </head>
 <body>
 
+  <!-- ===== БАНЕР «ВИХІДНИЙ» (тільки понеділок, час В'єтнаму) ===== -->
+  <div class="monday-banner" id="mondayBanner" hidden>
+    <span class="monday-banner__title">🍣 Понеділок — вихідний</span>
+    <span class="monday-banner__text">Замовлення не приймаються. Чекаємо на вас завтра! 🍣</span>
+  </div>
+
   <!-- ===== ШАПКА ===== -->
   <header class="header" id="header">
     <div class="container header__inner">
@@ -85,6 +91,7 @@
         <img src="img/logo.jpg" alt="NiNi Sushi" class="hero__logo">
         <h1 class="hero__title">NiNi <span>Sushi</span></h1>
         <p class="hero__tagline" data-i18n="hero_tagline">Свіжі суші з доставкою</p>
+        <p class="hero__closed-day" id="heroClosedDay" hidden>📅 Понеділок — вихідний</p>
       </div>
     </div>
   </section>
@@ -130,6 +137,10 @@
     </div>
     <div class="cart-panel__body" id="cartItems"></div>
     <div class="cart-panel__foot">
+      <div class="monday-banner monday-banner--small" id="mondayBannerCart" hidden>
+        <span class="monday-banner__title">🍣 Понеділок — вихідний</span>
+        <span class="monday-banner__text">Замовлення не приймаються. Чекаємо на вас завтра! 🍣</span>
+      </div>
       <div class="cart-addons hidden" id="cartAddons"></div>
       <div class="cart-panel__discount hidden" id="cartDiscountRow">
         <span id="cartDiscountText"></span>

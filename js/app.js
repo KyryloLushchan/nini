@@ -92,6 +92,9 @@ function cardHTML(d, lang, t){
    Для позиций с Grill-переключателем степпер отражает количество ИМЕННО текущего
    варианта (Grill вкл/викл) — это отдельная строка корзины (см. cartKeyFor). */
 function cardCtrlHTML(d, t){
+  if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){
+    return `<button class="card__add" disabled title="${MONDAY_MESSAGE}">${t.add}</button>`;
+  }
   const key = cartKeyFor(d.id, !!(d.grillOption && Cart.grill[d.id]));
   const qty = Cart.items[key] || 0;
   if(qty > 0){
@@ -234,24 +237,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
   buildMobileNav();
   initScrollSpy();
 
-  /* ===== ВРЕМЕННАЯ ДИАГНОСТИКА (можно удалить) =====
-     Показывает, что реально возвращает определение дня, чтобы понять,
-     почему isMonday бывает true не в понедельник. */
-  try {
-    const now = new Date();
-    const dayVN  = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'short' });
-    const dayDev = now.toLocaleDateString('en-US', { weekday: 'short' });
-    const isMon  = (typeof isVietnamMonday === 'function') ? isVietnamMonday() : (dayVN === 'Mon');
-    const dbg = document.createElement('div');
-    dbg.id = 'debugMonday';
-    dbg.style.cssText = 'position:relative;z-index:9999;background:#111;color:#0f0;font:13px/1.4 monospace;padding:8px 12px;text-align:center;word-break:break-word;';
-    dbg.textContent =
-      `DEBUG: day(VN) = ${dayVN}, day(device) = ${dayDev}, isMonday = ${isMon} | ` +
-      `device time = ${now.toString()} | VN full = ${now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })}`;
-    document.body.insertBefore(dbg, document.body.firstChild);
-    console.log('[DEBUG Monday]', { dayVN, dayDev, isMon, deviceTime: now.toString() });
-  } catch (e) {
-    console.log('[DEBUG Monday] error', e);
+  // Вихідний (ТІЛЬКИ понеділок за часом В'єтнаму) — баннери/плашка/блокування.
+  // У будь-який інший день ORDERS_BLOCKED === false, і цей блок нічого не робить.
+  if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){
+    const banner = document.getElementById('mondayBanner');
+    const bannerCart = document.getElementById('mondayBannerCart');
+    const heroClosedDay = document.getElementById('heroClosedDay');
+    if(banner) banner.hidden = false;
+    if(bannerCart) bannerCart.hidden = false;
+    if(heroClosedDay) heroClosedDay.hidden = false;
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const quickOrderBtn = document.getElementById('quickOrderBtn');
+    if(checkoutBtn) checkoutBtn.disabled = true;
+    if(quickOrderBtn) quickOrderBtn.disabled = true;
   }
 
   // язык
@@ -275,6 +273,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   // checkout
   document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+    if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){ alert(MONDAY_MESSAGE); return; }
     if(Cart.count() === 0) return;
     closeCart();
     openModal('orderModal');
@@ -283,6 +282,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   // швидке замовлення (лише Telegram)
   document.getElementById('quickOrderBtn').addEventListener('click', ()=>{
+    if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){ alert(MONDAY_MESSAGE); return; }
     if(Cart.count() === 0) return;
     closeCart();
     openModal('quickOrderModal');

@@ -262,6 +262,12 @@ async function sendOrder(){
   const note = document.getElementById('orderNote');
   note.className = 'form__note';
 
+  if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){
+    note.textContent = MONDAY_MESSAGE;
+    note.classList.add('is-error');
+    return;
+  }
+
   const name    = document.getElementById('ordName').value.trim();
   const phone   = document.getElementById('ordPhone').value.trim();
   let   telegram= document.getElementById('ordTelegram').value.trim();
@@ -361,6 +367,12 @@ async function sendQuickOrder(){
   const lang = window.currentLang || 'ua';
   const note = document.getElementById('quickNote');
   note.className = 'form__note';
+
+  if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){
+    note.textContent = MONDAY_MESSAGE;
+    note.classList.add('is-error');
+    return;
+  }
 
   let telegram = document.getElementById('quickTelegram').value.trim();
 
