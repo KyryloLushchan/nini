@@ -234,6 +234,26 @@ document.addEventListener('DOMContentLoaded', ()=>{
   buildMobileNav();
   initScrollSpy();
 
+  /* ===== ВРЕМЕННАЯ ДИАГНОСТИКА (можно удалить) =====
+     Показывает, что реально возвращает определение дня, чтобы понять,
+     почему isMonday бывает true не в понедельник. */
+  try {
+    const now = new Date();
+    const dayVN  = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', weekday: 'short' });
+    const dayDev = now.toLocaleDateString('en-US', { weekday: 'short' });
+    const isMon  = (typeof isVietnamMonday === 'function') ? isVietnamMonday() : (dayVN === 'Mon');
+    const dbg = document.createElement('div');
+    dbg.id = 'debugMonday';
+    dbg.style.cssText = 'position:relative;z-index:9999;background:#111;color:#0f0;font:13px/1.4 monospace;padding:8px 12px;text-align:center;word-break:break-word;';
+    dbg.textContent =
+      `DEBUG: day(VN) = ${dayVN}, day(device) = ${dayDev}, isMonday = ${isMon} | ` +
+      `device time = ${now.toString()} | VN full = ${now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })}`;
+    document.body.insertBefore(dbg, document.body.firstChild);
+    console.log('[DEBUG Monday]', { dayVN, dayDev, isMon, deviceTime: now.toString() });
+  } catch (e) {
+    console.log('[DEBUG Monday] error', e);
+  }
+
   // язык
   document.getElementById('langBtn').addEventListener('click', (e)=>{
     e.stopPropagation();
