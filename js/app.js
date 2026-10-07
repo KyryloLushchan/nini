@@ -92,9 +92,6 @@ function cardHTML(d, lang, t){
    Для позиций с Grill-переключателем степпер отражает количество ИМЕННО текущего
    варианта (Grill вкл/викл) — это отдельная строка корзины (см. cartKeyFor). */
 function cardCtrlHTML(d, t){
-  if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){
-    return `<button class="card__add" disabled title="${MONDAY_MESSAGE}">${t.add}</button>`;
-  }
   const key = cartKeyFor(d.id, !!(d.grillOption && Cart.grill[d.id]));
   const qty = Cart.items[key] || 0;
   if(qty > 0){
@@ -231,27 +228,11 @@ function buildMobileNav(){
 }
 
 /* ---------- ИНИЦИАЛИЗАЦИЯ ---------- */
-document.addEventListener('DOMContentLoaded', async ()=>{
-  // Визначаємо вихідний (понеділок за часом В'єтнаму, за годинником СЕРВЕРА)
-  // ДО першого рендера меню, щоб кнопки одразу малювались у потрібному стані.
-  if(typeof detectOrdersBlocked === 'function') await detectOrdersBlocked();
-
+document.addEventListener('DOMContentLoaded', ()=>{
   renderMenu();
   Cart.render();
   buildMobileNav();
   initScrollSpy();
-
-  // Вихідний (понеділок за часом В'єтнаму) — баннер + блокування кнопок замовлення
-  if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){
-    const banner = document.getElementById('mondayBanner');
-    const bannerCart = document.getElementById('mondayBannerCart');
-    if(banner) banner.hidden = false;
-    if(bannerCart) bannerCart.hidden = false;
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    const quickOrderBtn = document.getElementById('quickOrderBtn');
-    if(checkoutBtn) checkoutBtn.disabled = true;
-    if(quickOrderBtn) quickOrderBtn.disabled = true;
-  }
 
   // язык
   document.getElementById('langBtn').addEventListener('click', (e)=>{
@@ -274,7 +255,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   // checkout
   document.getElementById('checkoutBtn').addEventListener('click', ()=>{
-    if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){ alert(MONDAY_MESSAGE); return; }
     if(Cart.count() === 0) return;
     closeCart();
     openModal('orderModal');
@@ -283,7 +263,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   // швидке замовлення (лише Telegram)
   document.getElementById('quickOrderBtn').addEventListener('click', ()=>{
-    if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){ alert(MONDAY_MESSAGE); return; }
     if(Cart.count() === 0) return;
     closeCart();
     openModal('quickOrderModal');

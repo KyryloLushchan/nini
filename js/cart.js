@@ -48,10 +48,6 @@ const Cart = {
   },
 
   add(id){
-    if(typeof ORDERS_BLOCKED !== 'undefined' && ORDERS_BLOCKED){
-      if(typeof MONDAY_MESSAGE !== 'undefined') alert(MONDAY_MESSAGE);
-      return;
-    }
     const d = MENU.find(x => x.id == id);
     const key = cartKeyFor(id, !!(d && d.grillOption && this.grill[id]));
     this.items[key] = (this.items[key] || 0) + 1;
