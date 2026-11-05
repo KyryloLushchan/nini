@@ -73,7 +73,7 @@ const MENU: Record<string, Dish> = {
   "201":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Додатковий васабі","ru":"Дополнительный васаби","en":"Extra wasabi","vn":"Wasabi thêm"}},
   "202":{"p":20000,"c":"addon","noSale":true,"n":{"ua":"Соєвий соус","ru":"Соевый соус","en":"Soy sauce","vn":"Nước tương"}},
 };
-const SALE = 0.20;
+const SALE = 0.15;
 const dishPrice = (d: Dish) => {
   if (d.c === "drinks" || d.noSale) return d.p;
   const pct = Number.isFinite(d.salePercent) ? (d.salePercent as number) : SALE * 100;
