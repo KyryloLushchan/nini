@@ -509,7 +509,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
     if (inWriteoff) {
       await tgWo("Menu:", { keyboard: [[{ text: "🗑 Hủy hàng" }]], resize_keyboard: true, is_persistent: true });
     } else {
-      await tgInv("Menu:", { keyboard: [[{ text: "📦 Nhập hàng" }, { text: "💸 Chi phí chung" }]], resize_keyboard: true, is_persistent: true });
+      await tgInv("Menu:", { keyboard: [[{ text: "📦 Nhập hàng" }, { text: "💸 Chi phí chung (общий расход)" }]], resize_keyboard: true, is_persistent: true });
     }
     return;
   }
@@ -522,7 +522,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
 
   // inInventory
   if (cmd === "/nhap" || trimmed === "📦 Nhập hàng") { await sendIngredientKeyboard(); return; }
-  if (cmd === "/chiphi" || trimmed === "💸 Chi phí chung") { await startExpense(chatId, userId); return; }
+  if (cmd === "/chiphi" || trimmed === "💸 Chi phí chung (общий расход)" || trimmed === "💸 Chi phí chung") { await startExpense(chatId, userId); return; }
   await handleInvInput(trimmed, chatId, userId);
 }
 
