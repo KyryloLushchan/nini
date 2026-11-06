@@ -638,7 +638,7 @@ function cashAbs(n){
   const s = String(Math.abs(Math.round(Number(n) || 0)));
   return s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₫';
 }
-const CASH_SOURCE = { order: 'Order', purchase: 'Purchase', manual: 'Manual' };
+const CASH_SOURCE = { order: 'Order', purchase: 'Purchase', manual: 'Manual', expense: 'Загальні витрати' };
 
 let cashAll = [];   // все движения кассы (клиентская фильтрация по периоду)
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];

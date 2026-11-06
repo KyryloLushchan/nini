@@ -509,7 +509,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
     if (inWriteoff) {
       await tgWo("Menu:", { keyboard: [[{ text: "🗑 Hủy hàng" }]], resize_keyboard: true, is_persistent: true });
     } else {
-      await tgInv("Menu:", { keyboard: [[{ text: "📦 Nhập hàng" }]], resize_keyboard: true, is_persistent: true });
+      await tgInv("Menu:", { keyboard: [[{ text: "📦 Nhập hàng" }, { text: "💸 Chi phí chung" }]], resize_keyboard: true, is_persistent: true });
     }
     return;
   }
@@ -522,6 +522,7 @@ async function handleKitchenMessage(msg: any, text: string, chatId: number) {
 
   // inInventory
   if (cmd === "/nhap" || trimmed === "📦 Nhập hàng") { await sendIngredientKeyboard(); return; }
+  if (cmd === "/chiphi" || trimmed === "💸 Chi phí chung") { await startExpense(chatId, userId); return; }
   await handleInvInput(trimmed, chatId, userId);
 }
 
@@ -531,6 +532,7 @@ async function handleInvInput(trimmed: string, chatId: number, userId: number) {
     `tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}&select=ingredient_id,mode,step,amount,created_at&limit=1`,
   ))[0];
   if (!st || st.mode === "out") return; // нет активного прихода
+  if (st.mode === "expense") { await handleExpenseInput(trimmed, chatId, userId, st); return; }
   if (Date.now() - new Date(st.created_at).getTime() > INPUT_TTL_MS) {
     await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
     return;
@@ -573,6 +575,47 @@ async function handleInvInput(trimmed: string, chatId: number, userId: number) {
   });
   await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
   await tgInv(`✅ Đã nhập: ${nameVn} +${amount} ${unit} (${price}₫)`);
+}
+
+/* «Общие расходы»: кнопка -> состояние mode='expense' (без ингредиента), просим сумму */
+async function startExpense(chatId: number, userId: number) {
+  await fetch(`${SUPABASE_URL}/rest/v1/tg_input_state`, {
+    method: "POST",
+    headers: { ...sbHeaders, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      user_id: userId,
+      ingredient_id: null,
+      mode: "expense",
+      step: "amount",
+      amount: null,
+      pending_amount: null,
+      created_at: new Date().toISOString(),
+    }),
+  });
+  await tgInv("💸 Загальні витрати: введіть суму (₫).\nНапр.: 150000");
+}
+
+/* Ввод суммы общих расходов (mode='expense') -> cash_movements (расход), без movements */
+async function handleExpenseInput(trimmed: string, chatId: number, userId: number, st: { created_at: string }) {
+  if (Date.now() - new Date(st.created_at).getTime() > INPUT_TTL_MS) {
+    await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
+    return;
+  }
+  const numM = trimmed.match(/^(\d+)$/);
+  const sum = numM ? Number(numM[1]) : 0;
+  if (!numM || !Number.isSafeInteger(sum) || sum <= 0) {
+    await tgInv("❌ Невірний формат. Введіть суму цілим числом. Напр.: 150000");
+    return;
+  }
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/cash_movements`, {
+    method: "POST",
+    headers: { ...sbHeaders, Prefer: "return=minimal" },
+    body: JSON.stringify({ amount: -sum, source: "expense", note: "TG: загальні витрати" }),
+  });
+  if (!r.ok) { await tgInv("❌ Помилка запису, спробуйте ще раз"); return; } // состояние не сбрасываем
+  await sbDelete(`tg_input_state?chat_id=eq.${chatId}&user_id=eq.${userId}`);
+  await tgInv(`✅ Витрату додано: ${sum}₫`);
 }
 
 /* Списание (mode='out'): кол-во -> фото/примечание/"ok" -> movements out, БЕЗ кассы */
