@@ -1,0 +1,10 @@
+project_id = "nini-sushi"
+
+# Telegram-боты: Telegram не шлёт JWT, доступ проверяется внутри функции (секрет вебхука).
+[functions.tg-webhook]
+verify_jwt = false
+
+[functions.grab-bot]
+verify_jwt = false
+
+# send-order: сайт шлёт Bearer (anon key), JWT нужен — по умолчанию verify_jwt = true.
