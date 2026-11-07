@@ -241,6 +241,14 @@ async function handleCallback(cq: any) {
   // Приход через Telegram: выбор ингредиента (только в группе Кухня)
   const mi = data.match(/^inv:(\d+)$/);
   if (mi) { await handleInvSelect(cq, mi[1]); return; }
+  // Общие расходы: кнопка под списком ингредиентов (только в группе Кухня)
+  if (data === "exp") {
+    const chatId = cq.message?.chat?.id;
+    const userId = cq.from?.id;
+    if (String(chatId) === KITCHEN_CHAT_ID && userId != null) await startExpense(chatId, userId);
+    await answer(cq.id);
+    return;
+  }
   // Списание: выбор ингредиента
   const mw = data.match(/^wo:(\d+)$/);
   if (mw) { await handleWoSelect(cq, mw[1]); return; }
@@ -414,6 +422,7 @@ async function sendIngredientKeyboard() {
   const btns = rows.map((r) => ({ text: r.name_vn || r.name, callback_data: `inv:${r.id}` }));
   const keyboard: unknown[] = [];
   for (let i = 0; i < btns.length; i += 2) keyboard.push(btns.slice(i, i + 2));
+  keyboard.push([{ text: "💸 Chi phí chung (общий расход)", callback_data: "exp" }]); // общие расходы — без ингредиента
   await tgInv("Chọn nguyên liệu:", { inline_keyboard: keyboard });
 }
 
